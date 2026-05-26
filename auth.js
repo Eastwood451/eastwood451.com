@@ -1,6 +1,6 @@
 (function () {
   const AUTH_KEY = "eastwood451-auth";
-  const PASSWORD_HASH = "b18694640e3f5";
+  const PASSWORD_HASH = "115964a71a8f37";
 
   function cyrb53(str, seed = 0) {
     let h1 = 0xdeadbeef ^ seed;
