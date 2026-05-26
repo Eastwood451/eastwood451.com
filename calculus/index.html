@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="da">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculus Træner</title>
+    <meta name="description" content="Øv afledte, stamfunktioner og integration ved substitution med en Duolingo-inspireret app.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+            svg: { fontCache: 'global' },
+            startup: { ready() { MathJax.startup.defaultReady(); window.mathJaxReady = true; } }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+</head>
+
+<body>
+    <!-- Menu Screen -->
+    <section id="menu-screen">
+        <div id="menu-header">
+            <div id="menu-logo">∫</div>
+            <h1 id="menu-title">Calculus Tr&aelig;ner</h1>
+            <p id="menu-subtitle">V&aelig;lg en &oslash;velse</p>
+        </div>
+        <div id="menu-cards">
+            <div class="menu-card" data-mode="formulas" role="button" tabindex="0">
+                <div class="menu-card-icon">📐</div>
+                <div class="menu-card-body">
+                    <div class="menu-card-title">Formler: Afledte &amp; Stamfunktioner</div>
+                    <div class="menu-card-desc">&Oslash;v alle standard-afledte og stamfunktioner fra formelarket</div>
+                    <div class="menu-card-toggles">
+                        <div class="toggle-group">
+                            <span class="toggle-label">Tilstand</span>
+                            <div class="toggle-container" id="formula-toggle-container">
+                                <button class="toggle-btn" data-filter="antiderivatives">Stamfunktioner</button>
+                                <button class="toggle-btn" data-filter="derivatives">Afledte</button>
+                                <button class="toggle-btn active" data-filter="both">Begge</button>
+                            </div>
+                        </div>
+                        <div class="toggle-group">
+                            <span class="toggle-label">Konstanter</span>
+                            <div class="toggle-container" id="formula-constant-container">
+                                <button class="toggle-btn active" data-const="symbols">Symboler</button>
+                                <button class="toggle-btn" data-const="numbers">Tal (2-20)</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="menu-card-badge" id="formula-badge">36 sp&oslash;rgsm&aring;l</div>
+            </div>
+            <div class="menu-card" data-mode="substitution" role="button" tabindex="0">
+                <div class="menu-card-icon">🔄</div>
+                <div class="menu-card-body">
+                    <div class="menu-card-title">Integration ved Substitution</div>
+                    <div class="menu-card-desc">L&oslash;s integraler trin-for-trin med substitutionsmetoden</div>
+                </div>
+                <div class="menu-card-badge">10 opgaver</div>
+            </div>
+        </div>
+        <button id="menu-formula-ref-btn" class="overlay-secondary-btn" style="margin-top: 24px;">
+            📋 Vis og tilpas formelark
+        </button>
+    </section>
+
+    <!-- Top Bar -->
+    <header id="top-bar" class="hidden">
+        <button id="back-btn" title="Tilbage til menu">&#8592;</button>
+        <div id="progress-section">
+            <div id="progress-bar-track">
+                <div id="progress-bar-fill"></div>
+            </div>
+            <span id="progress-label">1 / 10</span>
+        </div>
+        <div id="stats">
+            <div id="hearts-display" title="Liv">
+                <span class="stat-icon">❤️</span>
+                <span id="hearts-count">3</span>
+            </div>
+            <div id="xp-display" title="XP">
+                <span class="stat-icon">⚡</span>
+                <span id="xp-count">0</span>
+            </div>
+            <div id="streak-display" title="Streak">
+                <span class="stat-icon">🔥</span>
+                <span id="streak-count">0</span>
+            </div>
+        </div>
+        <button id="formula-ref-btn" class="hidden" title="Formelark">📋</button>
+    </header>
+
+    <!-- Formula Reference Overlay -->
+    <div id="formula-ref-overlay" class="hidden">
+        <div id="formula-ref-card">
+            <div id="formula-ref-header">
+                <h2>Formelark</h2>
+                <button id="formula-ref-close" title="Luk">&#10005;</button>
+            </div>
+            <div id="formula-ref-table-wrap"></div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main id="app" class="hidden">
+        <!-- Problem Card -->
+        <section id="problem-card">
+            <div id="problem-label">Bestem integralet</div>
+            <div id="problem-integral"></div>
+            <div id="problem-graph" class="hidden"></div>
+        </section>
+
+        <!-- Step Prompt -->
+        <section id="step-section">
+            <div id="step-header">
+                <h2 id="step-prompt"></h2>
+                <button id="hint-btn" class="hidden" title="Vis hint">💡</button>
+            </div>
+            <div id="hint-bubble" class="hidden">
+                <div id="hint-content"></div>
+            </div>
+            <div id="choices-grid"></div>
+        </section>
+
+        <!-- Feedback Toast -->
+        <div id="feedback-toast" class="hidden">
+            <div id="feedback-icon"></div>
+            <div id="feedback-text">
+                <div id="feedback-title"></div>
+                <div id="feedback-explanation"></div>
+            </div>
+        </div>
+
+        <!-- Continue / Check Button -->
+        <div id="action-bar">
+            <button id="continue-btn" class="hidden" disabled>Tjek</button>
+        </div>
+
+        <!-- Game Over / Complete Screens -->
+        <div id="overlay" class="hidden">
+            <div id="overlay-card">
+                <div id="overlay-icon"></div>
+                <h2 id="overlay-title"></h2>
+                <p id="overlay-message"></p>
+                <button id="overlay-btn"></button>
+                <button id="overlay-menu-btn" class="overlay-secondary-btn">Tilbage til menu</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="formulas.js"></script>
+    <script src="app.js"></script>
+    <script src="hints.js"></script>
+</body>
+
+</html>
