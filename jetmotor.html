@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="da">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interaktiv 3D Jetmotor Cutaway</title>
+    <style>
+      :root {
+        --bg: #05070b;
+        --panel: #111823;
+        --panel-2: #172232;
+        --line: rgba(255, 255, 255, 0.14);
+        --text: #f2f6fb;
+        --muted: #9fb0c3;
+        --blue: #1eb7ff;
+        --orange: #ff8c1a;
+        --red: #ff3d25;
+        --yellow: #ffd85a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow: hidden;
+        color: var(--text);
+        background: var(--bg);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .app {
+        display: grid;
+        grid-template-columns: 310px minmax(0, 1fr);
+        min-height: 100vh;
+      }
+
+      aside {
+        z-index: 5;
+        padding: 18px;
+        background: linear-gradient(180deg, rgba(17, 24, 35, 0.98), rgba(8, 12, 18, 0.98));
+        border-right: 1px solid var(--line);
+        overflow-y: auto;
+      }
+
+      h1 {
+        margin: 0 0 6px;
+        font-size: 1.1rem;
+        line-height: 1.2;
+      }
+
+      p {
+        margin: 0 0 16px;
+        color: var(--muted);
+        line-height: 1.45;
+        font-size: 0.92rem;
+      }
+
+      .control {
+        padding: 12px 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .control label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 8px;
+        font-size: 0.86rem;
+        font-weight: 700;
+      }
+
+      .value {
+        color: var(--blue);
+        font-variant-numeric: tabular-nums;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        accent-color: var(--blue);
+      }
+
+      .toggle {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .toggle input {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--blue);
+      }
+
+      .legend {
+        display: grid;
+        gap: 8px;
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.84rem;
+      }
+
+      .legend span {
+        display: grid;
+        grid-template-columns: 12px 1fr;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .home-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 14px;
+        color: var(--muted);
+        font-size: 0.84rem;
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .home-link:hover,
+      .home-link:focus-visible {
+        color: var(--text);
+      }
+
+      .swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+
+      #sceneWrap {
+        position: relative;
+        min-width: 0;
+        background:
+          linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+          radial-gradient(circle at 50% 44%, #121a26, #05070b 62%);
+        background-size: 42px 42px, 42px 42px, auto;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .hud {
+        position: absolute;
+        left: 18px;
+        right: 18px;
+        bottom: 16px;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        pointer-events: none;
+      }
+
+      .metric {
+        min-width: 0;
+        border: 1px solid var(--line);
+        background: rgba(6, 10, 16, 0.7);
+        padding: 9px 10px;
+        border-radius: 8px;
+        backdrop-filter: blur(12px);
+      }
+
+      .metric strong {
+        display: block;
+        color: var(--text);
+        font-size: 0.98rem;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .metric span {
+        color: var(--muted);
+        font-size: 0.74rem;
+      }
+
+      .label {
+        position: absolute;
+        padding: 5px 7px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 6px;
+        color: #eef8ff;
+        background: rgba(4, 8, 12, 0.72);
+        font-size: 0.74rem;
+        font-weight: 700;
+        white-space: nowrap;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        text-shadow: 0 1px 2px #000;
+      }
+
+      @media (max-width: 850px) {
+        body {
+          overflow: auto;
+        }
+
+        .app {
+          grid-template-columns: 1fr;
+          min-height: 100vh;
+        }
+
+        aside {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+
+        #sceneWrap {
+          height: 70vh;
+        }
+
+        .hud {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.165.0/build/three.module.js"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <main class="app">
+      <aside>
+        <a class="home-link" href="index.html">&larr; Til start</a>
+        <h1>Jetmotor Cutaway</h1>
+        <p>Interaktiv turbofan/turbojet-tværsnit med synlige kompressortrin, forbrænding, turbine og dyse.</p>
+
+        <div class="control">
+          <label for="throttle">Throttle <span id="throttleVal" class="value">72%</span></label>
+          <input id="throttle" type="range" min="0" max="100" value="72" />
+        </div>
+
+        <div class="control">
+          <label for="cutaway">Cutaway <span id="cutawayVal" class="value">64%</span></label>
+          <input id="cutaway" type="range" min="20" max="90" value="64" />
+        </div>
+
+        <div class="control">
+          <label for="pitch">Blade pitch <span id="pitchVal" class="value">28°</span></label>
+          <input id="pitch" type="range" min="0" max="52" value="28" />
+        </div>
+
+        <div class="control">
+          <label for="flow">Flow density <span id="flowVal" class="value">78%</span></label>
+          <input id="flow" type="range" min="0" max="100" value="78" />
+        </div>
+
+        <div class="control toggle">
+          <label for="labels">Labels</label>
+          <input id="labels" type="checkbox" checked />
+        </div>
+
+        <div class="legend">
+          <span><i class="swatch" style="background: var(--blue)"></i>Kold luft og bypass-flow</span>
+          <span><i class="swatch" style="background: var(--orange)"></i>Forbrænding og varm gas</span>
+          <span><i class="swatch" style="background: var(--yellow)"></i>Roterende aksel og energiudtag</span>
+        </div>
+      </aside>
+
+      <section id="sceneWrap">
+        <div id="labelsLayer"></div>
+        <div class="hud">
+          <div class="metric"><strong id="rpmText">0</strong><span>RPM</span></div>
+          <div class="metric"><strong id="tempText">0°C</strong><span>Turbine inlet temp</span></div>
+          <div class="metric"><strong id="pressureText">0:1</strong><span>Pressure ratio</span></div>
+          <div class="metric"><strong id="thrustText">0 kN</strong><span>Thrust</span></div>
+        </div>
+      </section>
+    </main>
+
+    <script type="module">
+      import * as THREE from 'three';
+      import { OrbitControls } from 'https://unpkg.com/three@0.165.0/examples/jsm/controls/OrbitControls.js';
+
+      const state = {
+        throttle: 72,
+        cutaway: 0.64,
+        pitch: 28,
+        flow: 0.78,
+        labels: true,
+      };
+
+      const wrap = document.getElementById('sceneWrap');
+      const labelsLayer = document.getElementById('labelsLayer');
+      const rpmText = document.getElementById('rpmText');
+      const tempText = document.getElementById('tempText');
+      const pressureText = document.getElementById('pressureText');
+      const thrustText = document.getElementById('thrustText');
+
+      const scene = new THREE.Scene();
+      scene.background = null;
+
+      const camera = new THREE.PerspectiveCamera(42, wrap.clientWidth / wrap.clientHeight, 0.1, 120);
+      camera.position.set(0, 3.9, 18);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.shadowMap.enabled = true;
+      wrap.prepend(renderer.domElement);
+
+      const orbit = new OrbitControls(camera, renderer.domElement);
+      orbit.enableDamping = true;
+      orbit.target.set(0.4, 0, 0);
+      orbit.minDistance = 7;
+      orbit.maxDistance = 30;
+
+      scene.add(new THREE.HemisphereLight(0xddeeff, 0x151515, 1.55));
+      const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
+      keyLight.position.set(3, 8, 8);
+      scene.add(keyLight);
+      const rimLight = new THREE.DirectionalLight(0x63c8ff, 1.6);
+      rimLight.position.set(-5, -2, -6);
+      scene.add(rimLight);
+
+      const root = new THREE.Group();
+      scene.add(root);
+
+      const materials = {
+        casing: new THREE.MeshStandardMaterial({ color: 0x9ca8b3, metalness: 0.72, roughness: 0.34, transparent: true, opacity: 0.42, side: THREE.DoubleSide }),
+        casingEdge: new THREE.MeshStandardMaterial({ color: 0xe0e7ef, metalness: 0.85, roughness: 0.25 }),
+        dark: new THREE.MeshStandardMaterial({ color: 0x1a2430, metalness: 0.75, roughness: 0.35 }),
+        blade: new THREE.MeshStandardMaterial({ color: 0xcbd6df, metalness: 0.9, roughness: 0.22 }),
+        stator: new THREE.MeshStandardMaterial({ color: 0x5c6876, metalness: 0.8, roughness: 0.3 }),
+        blue: new THREE.MeshBasicMaterial({ color: 0x1eb7ff, transparent: true, opacity: 0.82, depthWrite: false }),
+        orange: new THREE.MeshBasicMaterial({ color: 0xff8c1a, transparent: true, opacity: 0.84, depthWrite: false }),
+        red: new THREE.MeshStandardMaterial({ color: 0xff3d25, metalness: 0.2, roughness: 0.45 }),
+        yellow: new THREE.MeshStandardMaterial({ color: 0xffd85a, metalness: 0.55, roughness: 0.22 }),
+      };
+
+      function cylinder(radiusTop, radiusBottom, length, mat, radial = 64, open = true, thetaLength = Math.PI * 1.42) {
+        const geo = new THREE.CylinderGeometry(radiusTop, radiusBottom, length, radial, 1, open, -Math.PI * 0.72, thetaLength);
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.rotation.z = Math.PI / 2;
+        return mesh;
+      }
+
+      function fullCylinder(radiusTop, radiusBottom, length, mat, radial = 48, open = false) {
+        const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radiusTop, radiusBottom, length, radial, 1, open), mat);
+        mesh.rotation.z = Math.PI / 2;
+        return mesh;
+      }
+
+      const shellGroup = new THREE.Group();
+      root.add(shellGroup);
+
+      const intake = cylinder(1.85, 2.25, 2.0, materials.casing);
+      intake.position.x = -6.6;
+      shellGroup.add(intake);
+
+      const compressorCasing = cylinder(1.35, 1.8, 5.5, materials.casing);
+      compressorCasing.position.x = -3.35;
+      shellGroup.add(compressorCasing);
+
+      const coreCasing = cylinder(1.55, 1.35, 2.2, materials.casing);
+      coreCasing.position.x = 0.65;
+      shellGroup.add(coreCasing);
+
+      const turbineCasing = cylinder(1.55, 1.25, 2.0, materials.casing);
+      turbineCasing.position.x = 2.8;
+      shellGroup.add(turbineCasing);
+
+      const nozzle = cylinder(0.7, 1.5, 2.5, materials.red, 64, true, Math.PI * 1.55);
+      nozzle.position.x = 5.2;
+      shellGroup.add(nozzle);
+
+      const rings = [];
+      [-7.6, -5.7, -0.4, 1.85, 3.75, 6.45].forEach((x, index) => {
+        const radius = [2.25, 1.82, 1.42, 1.55, 1.3, 0.72][index];
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.035, 12, 90, Math.PI * 1.52), materials.casingEdge);
+        ring.rotation.y = Math.PI / 2;
+        ring.rotation.z = -Math.PI * 0.76;
+        ring.position.x = x;
+        shellGroup.add(ring);
+        rings.push(ring);
+      });
+
+      const shaft = fullCylinder(0.18, 0.18, 11.4, materials.yellow, 36);
+      shaft.position.x = -0.7;
+      root.add(shaft);
+
+      const spinner = new THREE.Mesh(new THREE.ConeGeometry(0.72, 1.1, 64), materials.casingEdge);
+      spinner.rotation.z = -Math.PI / 2;
+      spinner.position.x = -7.35;
+      root.add(spinner);
+
+      const compressor = new THREE.Group();
+      root.add(compressor);
+      const turbine = new THREE.Group();
+      root.add(turbine);
+
+      const rotatingGroups = [];
+      const variableBlades = [];
+
+      function makeBlade(length, width, colorMaterial, twist = 0) {
+        const shape = new THREE.Shape();
+        shape.moveTo(-width * 0.5, 0);
+        shape.lineTo(width * 0.55, length * 0.12);
+        shape.lineTo(width * 0.18, length);
+        shape.lineTo(-width * 0.35, length * 0.9);
+        shape.lineTo(-width * 0.5, 0);
+        const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.035, bevelEnabled: false });
+        geo.translate(0, 0, -0.0175);
+        const mesh = new THREE.Mesh(geo, colorMaterial);
+        mesh.rotation.y = twist;
+        return mesh;
+      }
+
+      function addRotorStage(parent, x, radius, bladeLength, bladeCount, mat, scale = 1) {
+        const stage = new THREE.Group();
+        stage.position.x = x;
+        parent.add(stage);
+        const hub = fullCylinder(0.34 * scale, 0.34 * scale, 0.18, materials.dark, 36);
+        stage.add(hub);
+
+        for (let i = 0; i < bladeCount; i++) {
+          const holder = new THREE.Group();
+          holder.rotation.x = (i / bladeCount) * Math.PI * 2;
+          const blade = makeBlade(bladeLength, 0.22 * scale, mat, THREE.MathUtils.degToRad(state.pitch));
+          blade.position.y = radius;
+          holder.add(blade);
+          stage.add(holder);
+          variableBlades.push(blade);
+        }
+
+        rotatingGroups.push(stage);
+        return stage;
+      }
+
+      function addStatorStage(parent, x, radius, bladeLength, bladeCount) {
+        const stage = new THREE.Group();
+        stage.position.x = x;
+        parent.add(stage);
+
+        for (let i = 0; i < bladeCount; i++) {
+          const holder = new THREE.Group();
+          holder.rotation.x = (i / bladeCount) * Math.PI * 2 + Math.PI / bladeCount;
+          const vane = makeBlade(bladeLength, 0.11, materials.stator, THREE.MathUtils.degToRad(-18));
+          vane.position.y = radius;
+          holder.add(vane);
+          stage.add(holder);
+        }
+
+        return stage;
+      }
+
+      for (let i = 0; i < 11; i++) {
+        const x = -6.55 + i * 0.43;
+        const radius = 0.46 + i * 0.075;
+        const length = 0.82 + i * 0.045;
+        addRotorStage(compressor, x, radius, length, 22, materials.blade);
+        addStatorStage(compressor, x + 0.2, radius + 0.03, length * 0.88, 22);
+      }
+
+      for (let i = 0; i < 4; i++) {
+        const stage = addRotorStage(turbine, 2.1 + i * 0.42, 0.62 + i * 0.05, 0.78, 20, materials.red, 1.1);
+        stage.scale.setScalar(1.06 + i * 0.03);
+      }
+
+      const combustorGroup = new THREE.Group();
+      root.add(combustorGroup);
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        const pod = fullCylinder(0.28, 0.38, 1.55, materials.orange, 26);
+        pod.position.set(0.55, Math.cos(angle) * 1.05, Math.sin(angle) * 1.05);
+        pod.rotation.x = angle;
+        combustorGroup.add(pod);
+
+        const liner = fullCylinder(0.2, 0.26, 1.25, new THREE.MeshBasicMaterial({ color: 0xffd15d, transparent: true, opacity: 0.52 }), 24);
+        liner.position.copy(pod.position);
+        liner.rotation.copy(pod.rotation);
+        combustorGroup.add(liner);
+      }
+
+      const mixerCone = new THREE.Mesh(new THREE.ConeGeometry(0.78, 1.65, 64), materials.casingEdge);
+      mixerCone.rotation.z = Math.PI / 2;
+      mixerCone.position.x = 4.3;
+      root.add(mixerCone);
+
+      function makeArrow(colorMaterial, length = 1.1, radius = 0.04) {
+        const group = new THREE.Group();
+        const shaftMesh = fullCylinder(radius, radius, length, colorMaterial, 16);
+        shaftMesh.position.x = -length * 0.18;
+        group.add(shaftMesh);
+        const head = new THREE.Mesh(new THREE.ConeGeometry(radius * 3.0, radius * 9.0, 24), colorMaterial);
+        head.rotation.z = -Math.PI / 2;
+        head.position.x = length * 0.42;
+        group.add(head);
+        return group;
+      }
+
+      const arrows = [];
+      function addFlowLine(y, z, xStart, xEnd, count, mat, wave = 0) {
+        for (let i = 0; i < count; i++) {
+          const arrow = makeArrow(mat, 0.82, 0.035);
+          arrow.userData = { xStart, xEnd, baseY: y, baseZ: z, phase: i / count, wave };
+          arrow.position.set(THREE.MathUtils.lerp(xStart, xEnd, i / count), y, z);
+          root.add(arrow);
+          arrows.push(arrow);
+        }
+      }
+
+      addFlowLine(0.55, 0.7, -8.2, -0.8, 16, materials.blue, 0.08);
+      addFlowLine(-0.55, -0.7, -8.2, -0.8, 16, materials.blue, 0.08);
+      addFlowLine(1.65, 0, -7.7, 5.8, 18, materials.blue, 0.06);
+      addFlowLine(-1.65, 0, -7.7, 5.8, 18, materials.blue, 0.06);
+      addFlowLine(0.72, 0, -0.2, 3.8, 9, materials.orange, 0.12);
+      addFlowLine(-0.72, 0, -0.2, 3.8, 9, materials.orange, 0.12);
+      addFlowLine(0, 0.52, 2.4, 6.8, 11, materials.orange, 0.11);
+      addFlowLine(0, -0.52, 2.4, 6.8, 11, materials.orange, 0.11);
+
+      const labelData = [
+        { text: 'Indtag', pos: new THREE.Vector3(-7.2, 2.35, 0) },
+        { text: 'Kompressor', pos: new THREE.Vector3(-4.5, 2.25, 0) },
+        { text: 'Forbrændingskamre', pos: new THREE.Vector3(0.55, 2.05, 0) },
+        { text: 'Turbine', pos: new THREE.Vector3(2.7, 2.0, 0) },
+        { text: 'Dyse', pos: new THREE.Vector3(5.5, 1.72, 0) },
+        { text: 'Aksel', pos: new THREE.Vector3(-0.6, -1.35, 0) },
+      ];
+
+      const labelEls = labelData.map((item) => {
+        const el = document.createElement('div');
+        el.className = 'label';
+        el.textContent = item.text;
+        labelsLayer.appendChild(el);
+        return { ...item, el };
+      });
+
+      function setLabelPosition(item) {
+        const projected = item.pos.clone().project(camera);
+        const x = (projected.x * 0.5 + 0.5) * wrap.clientWidth;
+        const y = (-projected.y * 0.5 + 0.5) * wrap.clientHeight;
+        item.el.style.left = `${x}px`;
+        item.el.style.top = `${y}px`;
+        item.el.style.display = state.labels && projected.z < 1 ? 'block' : 'none';
+      }
+
+      function updateCutaway() {
+        const opacity = THREE.MathUtils.mapLinear(state.cutaway, 0.2, 0.9, 0.78, 0.2);
+        materials.casing.opacity = opacity;
+        shellGroup.rotation.x = THREE.MathUtils.mapLinear(state.cutaway, 0.2, 0.9, 0.55, -0.25);
+        rings.forEach((ring) => {
+          ring.material.opacity = 0.35 + (1 - opacity) * 0.7;
+        });
+      }
+
+      function updateHud() {
+        const rpm = Math.round(2200 + state.throttle * 118);
+        const temp = Math.round(430 + state.throttle * 9.6);
+        const pressure = (1.4 + state.throttle * 0.36).toFixed(1);
+        const thrust = Math.round((state.throttle * 1.7 + state.flow * 42) * (0.75 + state.pitch / 95));
+        rpmText.textContent = rpm.toLocaleString('da-DK');
+        tempText.textContent = `${temp}°C`;
+        pressureText.textContent = `${pressure}:1`;
+        thrustText.textContent = `${thrust} kN`;
+      }
+
+      const controls = [
+        ['throttle', 'throttleVal', (value) => `${value}%`, (value) => { state.throttle = value; }],
+        ['cutaway', 'cutawayVal', (value) => `${value}%`, (value) => { state.cutaway = value / 100; updateCutaway(); }],
+        ['pitch', 'pitchVal', (value) => `${value}°`, (value) => {
+          state.pitch = value;
+          variableBlades.forEach((blade) => {
+            blade.rotation.y = THREE.MathUtils.degToRad(value);
+          });
+        }],
+        ['flow', 'flowVal', (value) => `${value}%`, (value) => { state.flow = value / 100; }],
+      ];
+
+      controls.forEach(([id, labelId, format, apply]) => {
+        const input = document.getElementById(id);
+        const label = document.getElementById(labelId);
+        input.addEventListener('input', () => {
+          const value = Number(input.value);
+          label.textContent = format(value);
+          apply(value);
+          updateHud();
+        });
+      });
+
+      document.getElementById('labels').addEventListener('change', (event) => {
+        state.labels = event.target.checked;
+      });
+
+      updateCutaway();
+      updateHud();
+
+      const clock = new THREE.Clock();
+
+      function animate() {
+        requestAnimationFrame(animate);
+        const elapsed = clock.getElapsedTime();
+        const speed = 0.018 + state.throttle * 0.0015;
+
+        rotatingGroups.forEach((group, index) => {
+          const direction = index % 2 === 0 ? 1 : -0.72;
+          group.rotation.x += speed * direction;
+        });
+
+        shaft.rotation.x += speed * 0.9;
+        mixerCone.rotation.x += speed * 0.35;
+
+        arrows.forEach((arrow) => {
+          const user = arrow.userData;
+          const distance = user.xEnd - user.xStart;
+          const phase = (user.phase + elapsed * (0.08 + state.throttle * 0.0025)) % 1;
+          arrow.position.x = user.xStart + phase * distance;
+          arrow.position.y = user.baseY + Math.sin(elapsed * 5 + phase * Math.PI * 2) * user.wave;
+          arrow.position.z = user.baseZ + Math.cos(elapsed * 4 + phase * Math.PI * 2) * user.wave;
+          arrow.visible = state.flow > 0.04;
+          arrow.scale.setScalar(0.35 + state.flow * 0.95);
+          arrow.children.forEach((child) => {
+            child.material.opacity = THREE.MathUtils.clamp(0.12 + state.flow * 0.88, 0.12, 1);
+          });
+        });
+
+        combustorGroup.children.forEach((child, index) => {
+          if (child.material.opacity !== undefined) {
+            child.material.opacity = 0.34 + state.throttle * 0.004 + Math.sin(elapsed * 8 + index) * 0.04;
+          }
+        });
+
+        labelEls.forEach(setLabelPosition);
+        orbit.update();
+        renderer.render(scene, camera);
+      }
+
+      animate();
+
+      window.addEventListener('resize', () => {
+        camera.aspect = wrap.clientWidth / wrap.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+      });
+    </script>
+  </body>
+</html>
