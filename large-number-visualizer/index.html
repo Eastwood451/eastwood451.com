@@ -1,0 +1,2434 @@
+<!DOCTYPE html>
+<html lang="da">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Tal Visualisering - Antigravity</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            overflow: hidden;
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 300px;
+            height: 100vh;
+            padding: 20px;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 100%);
+            pointer-events: none;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .ui-overlay>* {
+            pointer-events: auto;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            color: #2c3e50;
+        }
+
+        .input-section {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        input[type="number"] {
+            flex: 1;
+            padding: 12px 20px;
+            font-size: 1.3em;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: #fff;
+            color: #333;
+            font-weight: bold;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            padding: 10px 15px;
+            font-size: 0.95em;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .presets {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+        }
+
+        .preset-btn {
+            padding: 8px 4px;
+            font-size: 0.75em;
+            background: rgba(102, 126, 234, 0.1);
+            color: #333;
+        }
+
+        .info-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            font-size: 0.95em;
+            max-width: 350px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-panel h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .info-panel p {
+            margin: 5px 0;
+            line-height: 1.4;
+            color: #333;
+        }
+
+        .controls-help {
+            position: absolute;
+            bottom: 300px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            font-size: 0.9em;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .controls-help h3 {
+            color: #764ba2;
+            margin-bottom: 10px;
+        }
+
+        .controls-help p {
+            margin: 3px 0;
+            color: #555;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2em;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.98);
+            padding: 40px;
+            border-radius: 20px;
+            border: 3px solid #667eea;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .spinner {
+            border: 4px solid rgba(102, 126, 234, 0.2);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .highlight {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .speed-indicator {
+            position: absolute;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            font-size: 0.9em;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .speed-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            align-items: center;
+        }
+
+        .speed-btn {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .landmarks-panel {
+            position: absolute;
+            top: 50%;
+            left: 20px;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            font-size: 0.85em;
+            max-width: 200px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .landmarks-panel h3 {
+            color: #764ba2;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .landmarks-panel p {
+            margin: 3px 0;
+            color: #555;
+        }
+
+        .minimap {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 250px;
+            height: 250px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            border: 2px solid #667eea;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            z-index: 200;
+        }
+
+        .minimap h3 {
+            margin: 0;
+            padding: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px 8px 0 0;
+            font-size: 0.9em;
+            text-align: center;
+        }
+
+        .minimap canvas {
+            display: block;
+            margin: 0;
+            cursor: grab;
+        }
+
+        .minimap canvas:active {
+            cursor: grabbing;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="canvas-container"></div>
+
+    <div class="ui-overlay">
+        <h1 class="title">∞ 3D Tal Visualisering - Hul Kube ∞</h1>
+        <div class="input-section">
+            <div class="input-group">
+                <input type="number" id="numberInput" placeholder="Indtast et tal..." value="1000" min="1">
+                <button onclick="visualize()">KUBE 🚀</button>
+                <button onclick="visualizeGumballs()">GUMBALLS 🍬</button>
+                <button onclick="visualizeFlat()">FLADE 📏</button>
+                <button onclick="toggleSticks()" id="sticksBtn" style="margin-top: 4px; background: #2c3e50;">PINDE
+                    🥢</button>
+            </div>
+            <div class="input-group" style="margin-top: 10px;">
+                <label style="padding: 12px; font-size: 1.1em; color: #333;">Banebredde (meter):</label>
+                <input type="number" id="flatHeightInput" placeholder="F.eks. 50" value="50" min="1" style="flex: 0.5;">
+            </div>
+            <div class="presets">
+                <button class="preset-btn" onclick="setNumber(8)">8 (2³)</button>
+                <button class="preset-btn" onclick="setNumber(27)">27 (3³)</button>
+                <button class="preset-btn" onclick="setNumber(1000)">1,000 (10³)</button>
+                <button class="preset-btn" onclick="setNumber(8000)">8,000 (20³)</button>
+                <button class="preset-btn" onclick="setNumber(27000)">27,000 (30³)</button>
+                <button class="preset-btn" onclick="setNumber(125000)">125,000 (50³)</button>
+                <button class="preset-btn" onclick="setNumber(1000000)">1 Million (100³)</button>
+                <button class="preset-btn" onclick="setNumber(8000000)">8 Millioner (200³)</button>
+                <button class="preset-btn" onclick="setNumber(1000000000)">1 Milliard (1000³)</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-panel" id="infoPanel">
+        <h3>📊 Information</h3>
+        <p>Klik på VISUALISÉR for at se dit tal!</p>
+        <p><strong>📏 Hver kasse = 1×1×1 meter</strong></p>
+    </div>
+
+    <div class="landmarks-panel">
+        <h3>🌍 Skala-Referencer</h3>
+        <p>🗽 Frihedsgudinden: 93m</p>
+        <p>🗼 Eiffeltårnet: 330m</p>
+        <p>🏙️ Burj Khalifa: 828m</p>
+        <p>✈️ Hindenburg: 245m</p>
+        <p>🚢 Titanic: 269m</p>
+    </div>
+
+    <div class="minimap" id="minimapContainer">
+        <h3>🗺️ Minimap - Træk elementerne!</h3>
+        <canvas id="minimapCanvas" width="250" height="186"></canvas>
+        <div style="display: flex; gap: 5px; padding: 5px; justify-content: center;">
+            <button onclick="zoomMinimap(-0.2)" style="padding: 5px 12px; font-size: 1em; cursor: pointer;">➖ Zoom
+                ud</button>
+            <button onclick="zoomMinimap(0.2)" style="padding: 5px 12px; font-size: 1em; cursor: pointer;">➕ Zoom
+                ind</button>
+        </div>
+    </div>
+
+    <div class="controls-help">
+        <h3>🎮 Kontroller</h3>
+        <p><strong>Bevægelse:</strong></p>
+        <p>⌨️ W - Fremad</p>
+        <p>⌨️ S - Tilbage</p>
+        <p>⌨️ A - Pan venstre</p>
+        <p>⌨️ D - Pan højre</p>
+        <p>⌨️ ↑ / R - Op</p>
+        <p>⌨️ ↓ / F - Ned</p>
+        <p>⌨️ → - Rotér med uret</p>
+        <p>⌨️ ← - Rotér mod uret</p>
+        <p>🖱️ Klik - Aktivér mus-kontrol</p>
+    </div>
+
+    <div class="speed-indicator" id="speedIndicator">
+        <p>⚡ Hastighed: <span id="speedValue">100</span> m/s</p>
+        <div class="speed-controls">
+            <button class="speed-btn" onclick="setSpeed(10)">10</button>
+            <button class="speed-btn" onclick="setSpeed(100)">100</button>
+            <button class="speed-btn" onclick="setSpeed(200)">200</button>
+            <button class="speed-btn" onclick="setSpeed(1000)">1000</button>
+        </div>
+        <button style="margin-top: 10px; width: 100%; padding: 8px; font-size: 0.9em;" onclick="setHorizontalView()">↔️
+            Vandret visning</button>
+        <button style="margin-top: 5px; width: 100%; padding: 8px; font-size: 0.9em;" onclick="setGroundView()">👁️
+            Jordniveau (1.8m)</button>
+        <button style="margin-top: 5px; width: 100%; padding: 8px; font-size: 0.9em; background: #ff6b6b; color: white;"
+            onclick="toggleStack()">📚 Stak</button>
+        <div style="margin-top: 10px; display: flex; align-items: center; gap: 6px;">
+            <label style="font-size: 0.75em; color: #555; white-space: nowrap;">🔭 Draw-distance:</label>
+            <input type="number" id="drawDistanceInput" value="1000" min="10" max="100000" step="10"
+                style="flex:1; padding: 4px 6px; font-size: 0.8em; border: 1px solid #ccc; border-radius: 5px;"
+                onchange="setDrawDistance(this.value)" oninput="setDrawDistance(this.value)">
+            <span style="font-size: 0.7em; color: #888;">m</span>
+        </div>
+        <div style="margin-top: 8px;">
+            <label style="font-size: 0.75em; color: #555; display: block; margin-bottom: 3px;">🗺️ Kort til
+                stakken:</label>
+            <input type="file" id="mapFileInput" accept="image/*" onchange="loadMapImage(event)"
+                style="font-size: 0.7em; width: 100%; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 6px; margin-top: 5px;">
+                <label style="font-size: 0.75em; color: #555; white-space: nowrap;">Sidelængde (m):</label>
+                <input type="number" id="mapSizeInput" value="2120" min="1"
+                    style="flex:1; padding: 4px 6px; font-size: 0.8em; border: 1px solid #ccc; border-radius: 5px;"
+                    onchange="refreshMapOverlay()">
+            </div>
+            <button id="mapTilesBtn" onclick="toggleMapTiles()"
+                style="margin-top: 6px; width: 100%; padding: 6px; font-size: 0.8em; background: #4a9e6b;">
+                🗺️ Vis kort langs bane
+            </button>
+        </div>
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">
+        <div>Genererer kube...</div>
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Reference models panel - right side -->
+    <div id="refPanel"
+        style="position: fixed; top: 20px; right: 20px; background: rgba(255,255,255,0.93); border-radius: 12px; padding: 14px 16px; z-index: 200; min-width: 200px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); border: 1px solid #ddd; font-size: 0.85em;">
+        <div style="font-weight: bold; margin-bottom: 10px; font-size: 1em; color: #333;">📐 Referenceobjekter</div>
+        <label style="display:flex; align-items:center; gap:8px; margin-bottom:7px; cursor:pointer;">
+            <input type="checkbox" id="ref-titanic" onchange="toggleRef('titanic')" checked>
+            🚢 Titanic (269m)
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; margin-bottom:7px; cursor:pointer;">
+            <input type="checkbox" id="ref-eiffel" onchange="toggleRef('eiffel')" checked>
+            🗼 Eiffeltårnet (330m)
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; margin-bottom:7px; cursor:pointer;">
+            <input type="checkbox" id="ref-pyramid" onchange="toggleRef('pyramid')" checked>
+            🔺 Cheopspyramiden (139m)
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; margin-bottom:7px; cursor:pointer;">
+            <input type="checkbox" id="ref-burj" onchange="toggleRef('burj')" checked>
+            🏨 Burj Al Arab (321m)
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; margin-bottom:7px; cursor:pointer;">
+            <input type="checkbox" id="ref-everest" onchange="toggleRef('everest')" checked>
+            ⛰️ Mount Everest (8849m)
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; margin-bottom:7px; cursor:pointer;">
+            <input type="checkbox" id="ref-human" onchange="toggleRef('human')" checked>
+            👤 Menneske (1.8m)
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input type="checkbox" id="ref-redbox" onchange="toggleRef('redbox')" checked>
+            🟥 1 m² kube
+        </label>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer;
+        let cubeFaces = {};
+        let landmarks = [];
+        let animationId;
+        let moveSpeed = 100;
+        let rotationSpeed = 1.0;
+        let minimapCanvas, minimapCtx;
+        let draggingLandmark = null;
+        let draggingObject = null; // For dragging human, redbox, or cube
+        let currentVisualizationType = 'cube'; // 'cube', 'gumball', or 'flat'
+        let currentDimensions = { sideLength: 0, cylinderRadius: 0, cylinderHeight: 0, flatWidth: 0, flatHeight: 0 };
+        let minimapZoom = 1.0; // Zoom level for minimap
+        let redBoxObject = null; // Reference to red box
+        let humanObject = null; // Reference to human figure
+        let flatPlane = null; // Reference to flat plane
+        let stackSquares = []; // Array of individual squares for stack animation
+        let isStacked = false; // Current stack state
+        let isAnimating = false; // Animation in progress
+        let mapImageUrl = null; // URL to loaded map image
+        let mapTilesVisible = false; // Whether map tiles along track are visible
+        let sticksMesh = null; // InstancedMesh for the sticks
+
+        const keys = {
+            up: false,
+            down: false,
+            panLeft: false,
+            panRight: false,
+            forward: false,
+            backward: false,
+            rotateLeft: false,
+            rotateRight: false
+        };
+
+        let yaw = 0;
+        let pitch = 0;
+
+        function toggleRef(type) {
+            const visible = document.getElementById('ref-' + type).checked;
+            scene.traverse(function (obj) {
+                if (obj.userData.refType === type) {
+                    obj.visible = visible;
+                }
+            });
+            // Special cases for globally tracked objects
+            if (type === 'human') {
+                if (humanObject) humanObject.visible = visible;
+                scene.traverse(obj => {
+                    if (obj.userData.isReferenceHuman) obj.visible = visible;
+                });
+            }
+            if (type === 'redbox') {
+                if (redBoxObject) redBoxObject.visible = visible;
+            }
+        }
+
+        function setSpeed(speed) {
+            moveSpeed = speed;
+            document.getElementById('speedValue').textContent = speed;
+        }
+
+        function setDrawDistance(value) {
+            const dist = Math.max(10, Number(value) || 200);
+            camera.far = dist;
+            camera.updateProjectionMatrix();
+            scene.fog.near = dist * 0.5;
+            scene.fog.far = dist;
+        }
+
+        function setHorizontalView() {
+            pitch = 0;
+        }
+
+        function setGroundView() {
+            if (currentVisualizationType === 'flat' && currentDimensions.flatWidth > 0) {
+                // Position camera at beginning of LENGTH, middle of WIDTH, looking along LENGTH
+                // NOW: X = WIDTH (flatHeight), Z = LENGTH (flatWidth)
+                const flatWidth = currentDimensions.flatWidth;
+                const flatHeight = currentDimensions.flatHeight;
+
+                camera.position.set(flatHeight / 2, 2, 0);
+                camera.lookAt(flatHeight / 2, 2, flatWidth);
+
+                // Calculate yaw and pitch from lookAt direction
+                const direction = new THREE.Vector3();
+                camera.getWorldDirection(direction);
+                yaw = Math.atan2(-direction.x, -direction.z);
+                pitch = Math.asin(direction.y);
+            }
+        }
+
+        function toggleStack() {
+            if (currentVisualizationType !== 'flat' || isAnimating) return;
+
+            const flatWidth = currentDimensions.flatWidth;
+            const flatHeight = currentDimensions.flatHeight;
+
+            // Create squares if they don't exist
+            if (stackSquares.length === 0) {
+                createStackSquares();
+            }
+
+            // Toggle state and animate
+            isStacked = !isStacked;
+
+            // Add or remove landmarks
+            if (isStacked) {
+                createStackLandmarks();
+            } else {
+                removeStackLandmarks();
+            }
+
+            animateStack(isStacked);
+        }
+
+        function createStackSquares() {
+            const flatWidth = currentDimensions.flatWidth;
+            const flatHeight = currentDimensions.flatHeight;
+
+            // Hide the main plane and grid lines
+            if (flatPlane) flatPlane.visible = false;
+            scene.children.forEach(child => {
+                if (child.userData.isFlat && child !== flatPlane) {
+                    child.visible = false;
+                }
+            });
+
+            // Divide plane into sections based on WIDTH
+            // Each section is flatHeight × flatHeight (square sections)
+            // Number of sections = flatWidth / flatHeight
+            const sectionSize = flatHeight; // Each section is a square
+            const numSections = Math.floor(flatWidth / sectionSize);
+
+            // Create each section as a simple plane (NO GRID LINES for performance!)
+            // EXCEPT the top section which gets grid lines for reference
+            for (let i = 0; i < numSections; i++) {
+                const isTopSection = (i === numSections - 1);
+
+                if (isTopSection) {
+                    // Top section: create with grid lines (like the flat plane)
+                    const sectionGroup = new THREE.Group();
+
+                    // Base plane
+                    const sectionGeometry = new THREE.PlaneGeometry(sectionSize, sectionSize);
+                    const sectionMaterial = new THREE.MeshStandardMaterial({
+                        color: 0x667eea,
+                        side: THREE.DoubleSide
+                    });
+                    const sectionPlane = new THREE.Mesh(sectionGeometry, sectionMaterial);
+                    sectionPlane.rotation.x = -Math.PI / 2;
+                    sectionGroup.add(sectionPlane);
+
+                    // Add grid lines
+                    const lineWidth = 0.1;
+                    const lineMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+                    const lineHeight = 0.02;
+
+                    // Horizontal lines
+                    for (let j = 1; j < sectionSize; j++) {
+                        const lineGeometry = new THREE.PlaneGeometry(sectionSize, lineWidth);
+                        const line = new THREE.Mesh(lineGeometry, lineMaterial);
+                        line.rotation.x = -Math.PI / 2;
+                        line.position.set(0, lineHeight, j - sectionSize / 2);
+                        sectionGroup.add(line);
+                    }
+
+                    // Vertical lines
+                    for (let j = 1; j < sectionSize; j++) {
+                        const lineGeometry = new THREE.PlaneGeometry(lineWidth, sectionSize);
+                        const line = new THREE.Mesh(lineGeometry, lineMaterial);
+                        line.rotation.x = -Math.PI / 2;
+                        line.position.set(j - sectionSize / 2, lineHeight, 0);
+                        sectionGroup.add(line);
+                    }
+
+                    // Position section
+                    const originalX = flatHeight / 2;
+                    const originalZ = i * sectionSize + sectionSize / 2;
+                    sectionGroup.position.set(originalX, 0.01, originalZ);
+
+                    // Store original position
+                    sectionGroup.userData.originalPos = new THREE.Vector3(originalX, 0.01, originalZ);
+                    sectionGroup.userData.isStackSquare = true;
+                    sectionGroup.userData.sectionIndex = i;
+                    sectionGroup.userData.isTopSection = true;
+
+                    scene.add(sectionGroup);
+                    stackSquares.push(sectionGroup);
+                } else {
+                    // Regular section: simple plane without grid lines
+                    const sectionGeometry = new THREE.PlaneGeometry(sectionSize, sectionSize);
+                    const sectionMaterial = new THREE.MeshStandardMaterial({
+                        color: 0x667eea,
+                        side: THREE.DoubleSide
+                    });
+                    const sectionPlane = new THREE.Mesh(sectionGeometry, sectionMaterial);
+                    sectionPlane.rotation.x = -Math.PI / 2;
+
+                    // Position section in original location
+                    const originalX = flatHeight / 2;
+                    const originalZ = i * sectionSize + sectionSize / 2;
+                    sectionPlane.position.set(originalX, 0.01, originalZ);
+
+                    // Store original position
+                    sectionPlane.userData.originalPos = new THREE.Vector3(originalX, 0.01, originalZ);
+                    sectionPlane.userData.isStackSquare = true;
+                    sectionPlane.userData.sectionIndex = i;
+
+                    scene.add(sectionPlane);
+                    stackSquares.push(sectionPlane);
+                }
+            }
+        }
+
+        function animateStack(toStacked) {
+            isAnimating = true;
+            const duration = 3000; // 3 seconds
+            const startTime = Date.now();
+
+            const flatWidth = currentDimensions.flatWidth;
+            const flatHeight = currentDimensions.flatHeight;
+
+            // Stack location (center at Z = flatHeight/2, like playing cards on a table)
+            const stackX = flatHeight / 2;
+            const stackZ = flatHeight / 2; // Stack at the front, not in the middle of the whole plane
+            const cardThickness = 1.0; // Each "card" in the stack is offset by 1m
+
+            function lerp(start, end, t) {
+                return start + (end - start) * t;
+            }
+
+            function easeInOutCubic(t) {
+                return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+            }
+
+            function animateFrame() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easedProgress = easeInOutCubic(progress);
+
+                stackSquares.forEach((section, index) => {
+                    const originalPos = section.userData.originalPos;
+
+                    if (toStacked) {
+                        // Move to stack position (like playing cards stacking)
+                        const stackY = index * cardThickness;
+                        const targetPos = new THREE.Vector3(stackX, stackY, stackZ);
+
+                        section.position.x = lerp(originalPos.x, targetPos.x, easedProgress);
+                        section.position.y = lerp(originalPos.y, targetPos.y, easedProgress);
+                        section.position.z = lerp(originalPos.z, targetPos.z, easedProgress);
+                    } else {
+                        // Move back to original position
+                        const stackY = index * cardThickness;
+                        const stackPos = new THREE.Vector3(stackX, stackY, stackZ);
+
+                        section.position.x = lerp(stackPos.x, originalPos.x, easedProgress);
+                        section.position.y = lerp(stackPos.y, originalPos.y, easedProgress);
+                        section.position.z = lerp(stackPos.z, originalPos.z, easedProgress);
+                    }
+                });
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateFrame);
+                } else {
+                    isAnimating = false;
+
+                    // If returning to plane, clean up sections and show original plane
+                    if (!toStacked) {
+                        stackSquares.forEach(section => scene.remove(section));
+                        stackSquares = [];
+
+                        if (flatPlane) flatPlane.visible = true;
+                        scene.children.forEach(child => {
+                            if (child.userData.isFlat && child !== flatPlane) {
+                                child.visible = true;
+                            }
+                        });
+                    }
+                }
+            }
+
+            animateFrame();
+        }
+
+        function init() {
+            const container = document.getElementById('canvas-container');
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf5f5f5);
+            scene.fog = new THREE.Fog(0xe8e8e8, 500, 1000);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(-20, 50, 100);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            directionalLight.position.set(100, 200, 100);
+            scene.add(directionalLight);
+
+            const gridHelper = new THREE.GridHelper(2000, 100, 0x999999, 0xcccccc);
+            gridHelper.position.y = -1;
+            scene.add(gridHelper);
+
+            setupControls();
+            setupMinimap();
+            window.addEventListener('resize', onWindowResize, false);
+            animate();
+            visualizeFlat();
+        }
+
+        function setupMinimap() {
+            minimapCanvas = document.getElementById('minimapCanvas');
+            minimapCtx = minimapCanvas.getContext('2d');
+
+            minimapCanvas.addEventListener('mousedown', onMinimapMouseDown);
+            minimapCanvas.addEventListener('mousemove', onMinimapMouseMove);
+            minimapCanvas.addEventListener('mouseup', onMinimapMouseUp);
+            minimapCanvas.addEventListener('mouseleave', onMinimapMouseUp);
+        }
+
+        function zoomMinimap(delta) {
+            minimapZoom += delta;
+            minimapZoom = Math.max(0.2, Math.min(5.0, minimapZoom)); // Clamp between 0.2x and 5x
+            drawMinimap();
+        }
+
+        function getMinimapScale() {
+            const width = minimapCanvas.width;
+            const height = minimapCanvas.height;
+
+            // Calculate consistent scale
+            let maxDim = 500; // Default larger view
+            if (currentVisualizationType === 'cube' && currentDimensions.sideLength > 0) {
+                maxDim = Math.max(500, currentDimensions.sideLength * 1.5);
+            } else if (currentVisualizationType === 'gumball' && currentDimensions.cylinderRadius > 0) {
+                maxDim = Math.max(100, currentDimensions.cylinderRadius * 4);
+            } else if (currentVisualizationType === 'flat' && currentDimensions.flatWidth > 0) {
+                maxDim = Math.max(currentDimensions.flatWidth, currentDimensions.flatHeight) * 1.2;
+            }
+
+            return {
+                scale: Math.min(width, height) / (maxDim * 2) * 0.9 * minimapZoom,
+                centerX: width / 2,
+                centerY: height / 2,
+                maxDim: maxDim
+            };
+        }
+
+        function drawMinimap() {
+            if (!minimapCtx) return;
+
+            const ctx = minimapCtx;
+            const width = minimapCanvas.width;
+            const height = minimapCanvas.height;
+
+            // Clear with white background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw border
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(0, 0, width, height);
+
+            // Get consistent scale
+            const { scale, centerX, centerY } = getMinimapScale();
+
+            // Helper to convert 3D to 2D minimap coords
+            const to2D = (x, z) => {
+                return {
+                    x: centerX + x * scale,
+                    y: centerY + z * scale
+                };
+            };
+
+            // Draw crosshair at center
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(centerX - 10, centerY);
+            ctx.lineTo(centerX + 10, centerY);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY - 10);
+            ctx.lineTo(centerX, centerY + 10);
+            ctx.stroke();
+
+            // Draw cube or cylinder
+            if (currentVisualizationType === 'cube' && currentDimensions.sideLength > 0) {
+                const sl = currentDimensions.sideLength;
+
+                // Get cube position (use front face as reference)
+                let cubeX = 0, cubeZ = 0;
+                if (cubeFaces.front) {
+                    cubeX = cubeFaces.front.position.x;
+                    cubeZ = cubeFaces.front.position.z - sl / 2;
+                }
+
+                const topLeft = to2D(cubeX, cubeZ);
+                const bottomRight = to2D(cubeX + sl, cubeZ + sl);
+
+                const isDragging = draggingObject && draggingObject.type === 'cube';
+                ctx.fillStyle = isDragging ? 'rgba(255, 100, 100, 0.3)' : 'rgba(102, 126, 234, 0.2)';
+                ctx.strokeStyle = isDragging ? '#ff0000' : '#667eea';
+                ctx.lineWidth = isDragging ? 4 : 3;
+                ctx.fillRect(topLeft.x, topLeft.y, bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
+                ctx.strokeRect(topLeft.x, topLeft.y, bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
+
+                // Label
+                ctx.fillStyle = '#667eea';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('KUBE', centerX, 15);
+            } else if (currentVisualizationType === 'gumball' && currentDimensions.cylinderRadius > 0) {
+                const center = to2D(0, 0);
+                const radius = currentDimensions.cylinderRadius * scale;
+
+                ctx.fillStyle = 'rgba(136, 204, 255, 0.2)';
+                ctx.strokeStyle = '#4488cc';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                // Label
+                ctx.fillStyle = '#4488cc';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('CYLINDER', centerX, 15);
+            } else if (currentVisualizationType === 'flat' && currentDimensions.flatWidth > 0) {
+                const flatW = currentDimensions.flatWidth;
+                const flatH = currentDimensions.flatHeight;
+
+                // Get flat position
+                let flatX = 0, flatZ = 0;
+                if (flatPlane) {
+                    flatX = flatPlane.position.x - flatW / 2;
+                    flatZ = flatPlane.position.z - flatH / 2;
+                }
+
+                const topLeft = to2D(flatX, flatZ);
+                const bottomRight = to2D(flatX + flatW, flatZ + flatH);
+
+                const isDragging = draggingObject && draggingObject.type === 'flat';
+                ctx.fillStyle = isDragging ? 'rgba(255, 100, 100, 0.3)' : 'rgba(102, 126, 234, 0.2)';
+                ctx.strokeStyle = isDragging ? '#ff0000' : '#667eea';
+                ctx.lineWidth = isDragging ? 4 : 3;
+                ctx.fillRect(topLeft.x, topLeft.y, bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
+                ctx.strokeRect(topLeft.x, topLeft.y, bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
+
+                // Label
+                ctx.fillStyle = '#667eea';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('FLADE', centerX, 15);
+            }
+
+            // Draw red reference box (larger and more visible)
+            if (redBoxObject) {
+                const pos = to2D(redBoxObject.position.x, redBoxObject.position.z);
+                const isDragging = draggingObject && draggingObject.type === 'redbox';
+                const size = isDragging ? 10 : 8;
+                ctx.fillStyle = isDragging ? '#ff6b6b' : '#ff0000';
+                ctx.fillRect(pos.x - size / 2, pos.y - size / 2, size, size);
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = isDragging ? 3 : 2;
+                ctx.strokeRect(pos.x - size / 2, pos.y - size / 2, size, size);
+            }
+
+            // Draw human figure
+            if (humanObject) {
+                const pos = to2D(humanObject.position.x, humanObject.position.z);
+                const isDragging = draggingObject && draggingObject.type === 'human';
+                const radius = isDragging ? 7 : 5;
+                ctx.fillStyle = isDragging ? '#5dade2' : '#3498db';
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = isDragging ? 3 : 2;
+                ctx.stroke();
+
+                // Draw simple stick figure icon
+                ctx.fillStyle = '#fff';
+                ctx.font = isDragging ? 'bold 10px Arial' : 'bold 8px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('👤', pos.x, pos.y);
+            }
+
+            // Draw landmarks (bigger and clearer)
+            const landmarkLabels = ['S', 'E', 'B', 'H', 'T']; // Statue, Eiffel, Burj, Hindenburg, Titanic
+            const landmarkColors = ['#8B7355', '#8B7355', '#C0C0C0', '#D3D3D3', '#2C3E50'];
+
+            landmarks.forEach((landmark, index) => {
+                if (!landmark || !landmark.position) return;
+
+                const pos = to2D(landmark.position.x, landmark.position.z);
+
+                // Draw larger landmark circle
+                ctx.fillStyle = draggingLandmark === index ? '#ff0000' : landmarkColors[index] || '#667eea';
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // Draw letter label inside circle
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                if (index < landmarkLabels.length) {
+                    ctx.fillText(landmarkLabels[index], pos.x, pos.y);
+                }
+            });
+
+            // Draw camera position (larger and green)
+            if (camera && camera.position) {
+                const camPos = to2D(camera.position.x, camera.position.z);
+
+                ctx.fillStyle = '#00ff00';
+                ctx.beginPath();
+                ctx.arc(camPos.x, camPos.y, 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Draw direction indicator
+                const dirLength = 10;
+                const dirAngle = -camera.rotation.y;
+                const dirX = Math.sin(dirAngle) * dirLength;
+                const dirZ = Math.cos(dirAngle) * dirLength;
+
+                ctx.strokeStyle = '#00ff00';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(camPos.x, camPos.y);
+                ctx.lineTo(camPos.x + dirX, camPos.y + dirZ);
+                ctx.stroke();
+            }
+
+            // Draw count
+            ctx.fillStyle = '#333';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(`Landmarks: ${landmarks.length}`, 5, height - 5);
+        }
+
+        function getMinimapCoords(mouseX, mouseY) {
+            const rect = minimapCanvas.getBoundingClientRect();
+            return {
+                x: mouseX - rect.left,
+                y: mouseY - rect.top
+            };
+        }
+
+        function minimap2DTo3D(mapX, mapY) {
+            // Use consistent scale
+            const { scale, centerX, centerY } = getMinimapScale();
+
+            return {
+                x: (mapX - centerX) / scale,
+                z: (mapY - centerY) / scale
+            };
+        }
+
+        function onMinimapMouseDown(e) {
+            const coords = getMinimapCoords(e.clientX, e.clientY);
+            const { scale, centerX, centerY } = getMinimapScale();
+
+            // Check if clicked on human
+            if (humanObject) {
+                const humanX = centerX + humanObject.position.x * scale;
+                const humanZ = centerY + humanObject.position.z * scale;
+                const dx = coords.x - humanX;
+                const dz = coords.y - humanZ;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+                if (dist < 15) {
+                    draggingObject = { type: 'human', obj: humanObject };
+                    e.preventDefault();
+                    return;
+                }
+            }
+
+            // Check if clicked on red box
+            if (redBoxObject) {
+                const redX = centerX + redBoxObject.position.x * scale;
+                const redZ = centerY + redBoxObject.position.z * scale;
+                const dx = coords.x - redX;
+                const dz = coords.y - redZ;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+                if (dist < 15) {
+                    draggingObject = { type: 'redbox', obj: redBoxObject };
+                    e.preventDefault();
+                    return;
+                }
+            }
+
+            // Check if clicked on the cube - check if inside bounds
+            if (currentVisualizationType === 'cube' && currentDimensions.sideLength > 0) {
+                const sl = currentDimensions.sideLength;
+                const pos3D = minimap2DTo3D(coords.x, coords.y);
+                if (pos3D.x >= 0 && pos3D.x <= sl && pos3D.z >= 0 && pos3D.z <= sl) {
+                    draggingObject = { type: 'cube', offsetX: pos3D.x, offsetZ: pos3D.z };
+                    e.preventDefault();
+                    return;
+                }
+            }
+
+            // Check if clicked on the flat plane
+            if (currentVisualizationType === 'flat' && currentDimensions.flatWidth > 0 && flatPlane) {
+                const flatW = currentDimensions.flatWidth;
+                const flatH = currentDimensions.flatHeight;
+                const flatX = flatPlane.position.x - flatW / 2;
+                const flatZ = flatPlane.position.z - flatH / 2;
+                const pos3D = minimap2DTo3D(coords.x, coords.y);
+                if (pos3D.x >= flatX && pos3D.x <= flatX + flatW && pos3D.z >= flatZ && pos3D.z <= flatZ + flatH) {
+                    draggingObject = { type: 'flat', offsetX: pos3D.x - flatPlane.position.x, offsetZ: pos3D.z - flatPlane.position.z };
+                    e.preventDefault();
+                    return;
+                }
+            }
+
+            // Check if clicked on a landmark using PIXEL distance
+            landmarks.forEach((landmark, index) => {
+                const landmarkX = centerX + landmark.position.x * scale;
+                const landmarkZ = centerY + landmark.position.z * scale;
+
+                const dx = coords.x - landmarkX;
+                const dz = coords.y - landmarkZ;
+                const pixelDistance = Math.sqrt(dx * dx + dz * dz);
+
+                if (pixelDistance < 15) {
+                    draggingLandmark = index;
+                    e.preventDefault();
+                }
+            });
+        }
+
+        function onMinimapMouseMove(e) {
+            if (draggingObject !== null) {
+                const coords = getMinimapCoords(e.clientX, e.clientY);
+                const pos3D = minimap2DTo3D(coords.x, coords.y);
+
+                if (draggingObject.type === 'human') {
+                    draggingObject.obj.position.x = pos3D.x;
+                    draggingObject.obj.position.z = pos3D.z;
+                } else if (draggingObject.type === 'redbox') {
+                    draggingObject.obj.position.x = pos3D.x;
+                    draggingObject.obj.position.z = pos3D.z;
+                } else if (draggingObject.type === 'cube') {
+                    // Move all cube faces together
+                    const sl = currentDimensions.sideLength;
+                    const newCenterX = pos3D.x;
+                    const newCenterZ = pos3D.z;
+
+                    if (cubeFaces.front) {
+                        cubeFaces.front.position.x = newCenterX;
+                        cubeFaces.front.position.z = newCenterZ + sl / 2;
+                    }
+                    if (cubeFaces.back) {
+                        cubeFaces.back.position.x = newCenterX;
+                        cubeFaces.back.position.z = newCenterZ - sl / 2;
+                    }
+                    if (cubeFaces.left) {
+                        cubeFaces.left.position.x = newCenterX - sl / 2;
+                        cubeFaces.left.position.z = newCenterZ;
+                    }
+                    if (cubeFaces.right) {
+                        cubeFaces.right.position.x = newCenterX + sl / 2;
+                        cubeFaces.right.position.z = newCenterZ;
+                    }
+                    if (cubeFaces.top) {
+                        cubeFaces.top.position.x = newCenterX;
+                        cubeFaces.top.position.z = newCenterZ;
+                    }
+                    if (cubeFaces.bottom) {
+                        cubeFaces.bottom.position.x = newCenterX;
+                        cubeFaces.bottom.position.z = newCenterZ;
+                    }
+                } else if (draggingObject.type === 'flat') {
+                    // Move flat plane
+                    if (flatPlane) {
+                        flatPlane.position.x = pos3D.x - draggingObject.offsetX;
+                        flatPlane.position.z = pos3D.z - draggingObject.offsetZ;
+                    }
+                }
+
+                drawMinimap();
+            } else if (draggingLandmark !== null) {
+                const coords = getMinimapCoords(e.clientX, e.clientY);
+                const pos3D = minimap2DTo3D(coords.x, coords.y);
+
+                const landmark = landmarks[draggingLandmark];
+                landmark.position.x = pos3D.x;
+                landmark.position.z = pos3D.z;
+
+                drawMinimap();
+            }
+        }
+
+        function onMinimapMouseUp() {
+            draggingLandmark = null;
+            draggingObject = null;
+        }
+
+        function setupControls() {
+            document.addEventListener('keydown', (e) => {
+                switch (e.code) {
+                    case 'KeyW': keys.forward = true; break;
+                    case 'KeyS': keys.backward = true; break;
+                    case 'KeyA': keys.panLeft = true; break;
+                    case 'KeyD': keys.panRight = true; break;
+                    case 'KeyR': keys.up = true; break;
+                    case 'KeyF': keys.down = true; break;
+                    case 'ArrowUp': keys.up = true; e.preventDefault(); break;
+                    case 'ArrowDown': keys.down = true; e.preventDefault(); break;
+                    case 'ArrowLeft': keys.rotateLeft = true; e.preventDefault(); break;
+                    case 'ArrowRight': keys.rotateRight = true; e.preventDefault(); break;
+                }
+            });
+
+            document.addEventListener('keyup', (e) => {
+                switch (e.code) {
+                    case 'KeyW': keys.forward = false; break;
+                    case 'KeyS': keys.backward = false; break;
+                    case 'KeyA': keys.panLeft = false; break;
+                    case 'KeyD': keys.panRight = false; break;
+                    case 'KeyR': keys.up = false; break;
+                    case 'KeyF': keys.down = false; break;
+                    case 'ArrowUp': keys.up = false; break;
+                    case 'ArrowDown': keys.down = false; break;
+                    case 'ArrowLeft': keys.rotateLeft = false; break;
+                    case 'ArrowRight': keys.rotateRight = false; break;
+                }
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (document.pointerLockElement === renderer.domElement) {
+                    yaw -= e.movementX * 0.002;
+                    pitch -= e.movementY * 0.002;
+                    pitch = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, pitch));
+                }
+            });
+
+            renderer.domElement.addEventListener('click', () => {
+                renderer.domElement.requestPointerLock();
+            });
+
+            renderer.domElement.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    moveSpeed *= 1.5;
+                    moveSpeed = Math.min(moveSpeed, 1000);
+                } else {
+                    moveSpeed /= 1.5;
+                    moveSpeed = Math.max(moveSpeed, 0.1);
+                }
+                document.getElementById('speedValue').textContent = moveSpeed.toFixed(1);
+            });
+        }
+
+        function updateCamera(delta) {
+            if (keys.rotateLeft) yaw += rotationSpeed * delta;
+            if (keys.rotateRight) yaw -= rotationSpeed * delta;
+
+            camera.rotation.order = 'YXZ';
+            camera.rotation.y = yaw;
+            camera.rotation.x = pitch;
+
+            const direction = new THREE.Vector3();
+            const right = new THREE.Vector3();
+            camera.getWorldDirection(direction);
+            right.crossVectors(camera.up, direction).normalize();
+
+            const moveDistance = moveSpeed * delta;
+
+            if (keys.forward) camera.position.add(direction.multiplyScalar(moveDistance));
+            if (keys.backward) camera.position.add(direction.multiplyScalar(-moveDistance));
+            if (keys.panLeft) camera.position.add(right.multiplyScalar(moveDistance));
+            if (keys.panRight) camera.position.add(right.multiplyScalar(-moveDistance));
+            if (keys.up) camera.position.y += moveDistance;
+            if (keys.down) camera.position.y -= moveDistance;
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        let lastTime = performance.now();
+
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+
+            const currentTime = performance.now();
+            const delta = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+
+            updateCamera(delta);
+            updateFaceVisibility();
+            drawMinimap();
+            renderer.render(scene, camera);
+        }
+
+        function updateFaceVisibility() {
+            // Always show all 6 faces
+            Object.entries(cubeFaces).forEach(([faceName, face]) => {
+                if (!face) return;
+                face.visible = true;
+            });
+        }
+
+        function setNumber(num) {
+            document.getElementById('numberInput').value = num;
+            // Call the current visualization type instead of always switching to cube
+            if (currentVisualizationType === 'flat') {
+                visualizeFlat();
+            } else if (currentVisualizationType === 'gumball') {
+                visualizeGumballs();
+            } else {
+                visualize();
+            }
+        }
+
+        // Create grid texture
+        function createGridTexture(gridCount) {
+            const canvas = document.createElement('canvas');
+            const size = 2048;
+            canvas.width = size;
+            canvas.height = size;
+            const context = canvas.getContext('2d');
+
+            // Background
+            context.fillStyle = '#667eea';
+            context.fillRect(0, 0, size, size);
+
+            // Grid lines - draw clear dividing lines
+            context.strokeStyle = '#2d3561';
+            context.lineWidth = 3;
+
+            const step = size / gridCount;
+
+            // Vertical lines
+            for (let i = 0; i <= gridCount; i++) {
+                context.beginPath();
+                context.moveTo(i * step, 0);
+                context.lineTo(i * step, size);
+                context.stroke();
+            }
+
+            // Horizontal lines
+            for (let i = 0; i <= gridCount; i++) {
+                context.beginPath();
+                context.moveTo(0, i * step);
+                context.lineTo(size, i * step);
+                context.stroke();
+            }
+
+            // Add dimension text
+            context.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            context.font = 'Bold 80px Arial';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText(`${gridCount} × ${gridCount}`, size / 2, size / 2);
+            context.font = 'Bold 60px Arial';
+            context.fillText(`(${(gridCount * gridCount).toLocaleString('da-DK')} m²)`, size / 2, size / 2 + 90);
+
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createHumanFigure(x, y, z) {
+            const human = new THREE.Group();
+
+            // Colors
+            const skinColor = 0xFFDBAC;
+            const clothesColor = 0x3498db;
+
+            // Head
+            const head = new THREE.Mesh(
+                new THREE.SphereGeometry(0.12, 16, 16),
+                new THREE.MeshStandardMaterial({ color: skinColor })
+            );
+            head.position.y = 1.68;
+            human.add(head);
+
+            // Torso
+            const torso = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.15, 0.18, 0.6, 16),
+                new THREE.MeshStandardMaterial({ color: clothesColor })
+            );
+            torso.position.y = 1.2;
+            human.add(torso);
+
+            // Left arm
+            const leftArm = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.04, 0.04, 0.5, 8),
+                new THREE.MeshStandardMaterial({ color: skinColor })
+            );
+            leftArm.position.set(-0.22, 1.15, 0);
+            leftArm.rotation.z = 0.2;
+            human.add(leftArm);
+
+            // Right arm
+            const rightArm = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.04, 0.04, 0.5, 8),
+                new THREE.MeshStandardMaterial({ color: skinColor })
+            );
+            rightArm.position.set(0.22, 1.15, 0);
+            rightArm.rotation.z = -0.2;
+            human.add(rightArm);
+
+            // Left leg
+            const leftLeg = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.06, 0.06, 0.9, 8),
+                new THREE.MeshStandardMaterial({ color: 0x2C3E50 })
+            );
+            leftLeg.position.set(-0.08, 0.45, 0);
+            human.add(leftLeg);
+
+            // Right leg
+            const rightLeg = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.06, 0.06, 0.9, 8),
+                new THREE.MeshStandardMaterial({ color: 0x2C3E50 })
+            );
+            rightLeg.position.set(0.08, 0.45, 0);
+            human.add(rightLeg);
+
+            human.position.set(x, y, z);
+            human.userData.isHuman = true;
+            return human;
+        }
+
+        function createLandmarks(sideLength) {
+            landmarks.forEach(l => scene.remove(l));
+            landmarks = [];
+
+            const offset = sideLength + 100;
+            const centerZ = sideLength / 2;
+            const centerX = sideLength / 2;
+
+            // Simplified landmarks (just basic shapes)
+            // Statue of Liberty
+            const statue = new THREE.Group();
+            const pedestal = new THREE.Mesh(new THREE.BoxGeometry(30, 47, 30), new THREE.MeshStandardMaterial({ color: 0x8B7355 }));
+            pedestal.position.y = 23.5;
+            statue.add(pedestal);
+            const statueTop = new THREE.Mesh(new THREE.ConeGeometry(10, 46, 8), new THREE.MeshStandardMaterial({ color: 0x7C9C8E }));
+            statueTop.position.y = 70;
+            statue.add(statueTop);
+            statue.position.set(-offset, 0, centerZ);
+            scene.add(statue);
+            landmarks.push(statue);
+            createLabel("🗽 Frihedsgudinden\n93m", -offset, 100, centerZ, 15);
+
+            // Eiffel Tower
+            const eiffel = new THREE.Group();
+            const base = new THREE.Mesh(new THREE.BoxGeometry(50, 120, 50), new THREE.MeshStandardMaterial({ color: 0x8B7355 }));
+            base.position.y = 60;
+            eiffel.add(base);
+            const mid = new THREE.Mesh(new THREE.BoxGeometry(30, 120, 30), new THREE.MeshStandardMaterial({ color: 0x8B7355 }));
+            mid.position.y = 180;
+            eiffel.add(mid);
+            const top = new THREE.Mesh(new THREE.ConeGeometry(10, 90, 4), new THREE.MeshStandardMaterial({ color: 0x8B7355 }));
+            top.position.y = 285;
+            eiffel.add(top);
+            eiffel.position.set(offset + sideLength, 0, centerZ);
+            scene.add(eiffel);
+            landmarks.push(eiffel);
+            createLabel("🗼 Eiffeltårnet\n330m", offset + sideLength, 350, centerZ, 20);
+
+            // Burj Khalifa
+            const burj = new THREE.Group();
+            const burjBase = new THREE.Mesh(new THREE.BoxGeometry(60, 300, 60), new THREE.MeshStandardMaterial({ color: 0xC0C0C0 }));
+            burjBase.position.y = 150;
+            burj.add(burjBase);
+            const burjMid = new THREE.Mesh(new THREE.BoxGeometry(40, 300, 40), new THREE.MeshStandardMaterial({ color: 0xC0C0C0 }));
+            burjMid.position.y = 450;
+            burj.add(burjMid);
+            const burjTop = new THREE.Mesh(new THREE.ConeGeometry(15, 228, 8), new THREE.MeshStandardMaterial({ color: 0xC0C0C0 }));
+            burjTop.position.y = 714;
+            burj.add(burjTop);
+            burj.position.set(centerX, 0, -offset);
+            scene.add(burj);
+            landmarks.push(burj);
+            createLabel("🏙️ Burj Khalifa\n828m", centerX, 860, -offset, 25);
+
+            // Hindenburg
+            const hindenburg = new THREE.Group();
+            const hindBody = new THREE.Mesh(new THREE.CylinderGeometry(20.5, 20.5, 245, 16), new THREE.MeshStandardMaterial({ color: 0xD3D3D3 }));
+            hindBody.rotation.z = Math.PI / 2;
+            hindenburg.add(hindBody);
+            const gondola = new THREE.Mesh(new THREE.BoxGeometry(15, 10, 60), new THREE.MeshStandardMaterial({ color: 0x8B4513 }));
+            gondola.position.y = -25;
+            hindenburg.add(gondola);
+            hindenburg.position.set(centerX, 150, offset + sideLength);
+            scene.add(hindenburg);
+            landmarks.push(hindenburg);
+            createLabel("✈️ Hindenburg\n245m", centerX, 185, offset + sideLength, 20);
+
+            // Titanic
+            const titanic = new THREE.Group();
+            const hull = new THREE.Mesh(new THREE.BoxGeometry(269, 30, 28), new THREE.MeshStandardMaterial({ color: 0x2C3E50 }));
+            titanic.add(hull);
+            const superstructure = new THREE.Mesh(new THREE.BoxGeometry(100, 23, 25), new THREE.MeshStandardMaterial({ color: 0xECF0F1 }));
+            superstructure.position.y = 26.5;
+            titanic.add(superstructure);
+            const funnelGeometry = new THREE.CylinderGeometry(4, 4, 20, 16);
+            const funnelMaterial = new THREE.MeshStandardMaterial({ color: 0xE74C3C });
+            for (let i = 0; i < 4; i++) {
+                const funnel = new THREE.Mesh(funnelGeometry, funnelMaterial);
+                funnel.position.set(-30 + i * 20, 48, 0);
+                titanic.add(funnel);
+            }
+            titanic.position.set(offset * 0.7, 15, -offset * 0.7);
+            scene.add(titanic);
+            landmarks.push(titanic);
+            createLabel("🚢 Titanic\n269m", offset * 0.7, 90, -offset * 0.7, 20);
+        }
+
+        function createStackLandmarks() {
+            const flatHeight = currentDimensions.flatHeight;
+            const stackX = flatHeight / 2;
+            const stackZ = flatHeight / 2;
+            const offset = flatHeight + 30; // Distance from stack
+
+            // Titanic (269m long)
+            const titanic = new THREE.Group();
+            const hull = new THREE.Mesh(new THREE.BoxGeometry(269, 30, 28), new THREE.MeshStandardMaterial({ color: 0x2C3E50 }));
+            titanic.add(hull);
+            const superstructure = new THREE.Mesh(new THREE.BoxGeometry(100, 23, 25), new THREE.MeshStandardMaterial({ color: 0xECF0F1 }));
+            superstructure.position.y = 26.5;
+            titanic.add(superstructure);
+            const funnelGeometry = new THREE.CylinderGeometry(4, 4, 20, 16);
+            const funnelMaterial = new THREE.MeshStandardMaterial({ color: 0xE74C3C });
+            for (let i = 0; i < 4; i++) {
+                const funnel = new THREE.Mesh(funnelGeometry, funnelMaterial);
+                funnel.position.set(-30 + i * 20, 48, 0);
+                titanic.add(funnel);
+            }
+            titanic.position.set(stackX - offset, 15, stackZ);
+            titanic.userData.isStackLandmark = true;
+            titanic.userData.refType = 'titanic';
+            scene.add(titanic);
+            createLabel("🚢 Titanic\n269m", stackX - offset, 90, stackZ, 20);
+
+            // Eiffel Tower (330m)
+            const eiffel = new THREE.Group();
+            const base = new THREE.Mesh(new THREE.BoxGeometry(50, 120, 50), new THREE.MeshStandardMaterial({ color: 0x8B7355 }));
+            base.position.y = 60;
+            eiffel.add(base);
+            const mid = new THREE.Mesh(new THREE.BoxGeometry(30, 120, 30), new THREE.MeshStandardMaterial({ color: 0x8B7355 }));
+            mid.position.y = 180;
+            eiffel.add(mid);
+            const top = new THREE.Mesh(new THREE.ConeGeometry(10, 90, 4), new THREE.MeshStandardMaterial({ color: 0x8B7355 }));
+            top.position.y = 285;
+            eiffel.add(top);
+            eiffel.position.set(stackX + offset, 0, stackZ);
+            eiffel.userData.isStackLandmark = true;
+            eiffel.userData.refType = 'eiffel';
+            scene.add(eiffel);
+            createLabel("🗼 Eiffeltårnet\n330m", stackX + offset, 350, stackZ, 20);
+
+            // Cheops Pyramid (139m high, 230m base)
+            const pyramid = new THREE.Mesh(
+                new THREE.ConeGeometry(115, 139, 4),
+                new THREE.MeshStandardMaterial({ color: 0xD2B48C })
+            );
+            pyramid.position.set(stackX, 69.5, stackZ - offset);
+            pyramid.rotation.y = Math.PI / 4;
+            pyramid.userData.isStackLandmark = true;
+            pyramid.userData.refType = 'pyramid';
+            scene.add(pyramid);
+            createLabel("🔺 Cheopspyramiden\n139m", stackX, 160, stackZ - offset, 20);
+
+            // Burj Al Arab (321m)
+            const burjAlArab = new THREE.Group();
+            const burjBase = new THREE.Mesh(new THREE.BoxGeometry(40, 200, 40), new THREE.MeshStandardMaterial({ color: 0xFFD700 }));
+            burjBase.position.y = 100;
+            burjAlArab.add(burjBase);
+            const burjTop = new THREE.Mesh(new THREE.ConeGeometry(25, 121, 32), new THREE.MeshStandardMaterial({ color: 0xFFD700 }));
+            burjTop.position.y = 260.5;
+            burjAlArab.add(burjTop);
+            burjAlArab.position.set(stackX, 0, stackZ + offset);
+            burjAlArab.userData.isStackLandmark = true;
+            burjAlArab.userData.refType = 'burj';
+            scene.add(burjAlArab);
+            createLabel("🏨 Burj Al Arab\n321m", stackX, 340, stackZ + offset, 20);
+
+            // Mount Everest (8849m)
+            const everest = new THREE.Mesh(
+                new THREE.ConeGeometry(500, 8849, 32),
+                new THREE.MeshStandardMaterial({
+                    color: 0x8B8680,
+                    emissive: 0x444444,
+                    emissiveIntensity: 0.1
+                })
+            );
+            everest.position.set(stackX + offset * 1.5, 4424.5, stackZ + offset * 1.5);
+            everest.userData.isStackLandmark = true;
+            everest.userData.refType = 'everest';
+            scene.add(everest);
+            createLabel("⛰️ Mount Everest\n8849m", stackX + offset * 1.5, 8900, stackZ + offset * 1.5, 50);
+
+            // VERTICAL TITANIC STACK - Visual scale for the stack height!
+            // Titanic is 269m long, place them vertically with 1m spacing
+            const flatWidth = currentDimensions.flatWidth;
+            const numSections = Math.floor(flatWidth / flatHeight);
+            const stackHeight = numSections * 1.0; // Total stack height
+            const titanicLength = 269;
+            const titanicSpacing = 270; // 269m + 1m spacing
+
+            // Calculate how many Titanics we can fit vertically
+            const numVerticalTitanics = Math.floor(stackHeight / titanicSpacing) + 1;
+
+            // Place vertical Titanics along the stack
+            for (let i = 0; i < numVerticalTitanics; i++) {
+                const verticalTitanic = new THREE.Group();
+
+                // Hull (rotated to point upward)
+                const vHull = new THREE.Mesh(
+                    new THREE.BoxGeometry(28, 269, 30),  // Swapped dimensions for vertical
+                    new THREE.MeshStandardMaterial({ color: 0x2C3E50 })
+                );
+                verticalTitanic.add(vHull);
+
+                // Superstructure
+                const vSuper = new THREE.Mesh(
+                    new THREE.BoxGeometry(25, 100, 23),  // Swapped dimensions
+                    new THREE.MeshStandardMaterial({ color: 0xECF0F1 })
+                );
+                vSuper.position.y = 0;
+                vSuper.position.x = 26.5;
+                verticalTitanic.add(vSuper);
+
+                // Funnels (4 chimneys)
+                const vFunnelGeometry = new THREE.CylinderGeometry(4, 4, 20, 16);
+                const vFunnelMaterial = new THREE.MeshStandardMaterial({ color: 0xE74C3C });
+                for (let j = 0; j < 4; j++) {
+                    const vFunnel = new THREE.Mesh(vFunnelGeometry, vFunnelMaterial);
+                    vFunnel.position.set(48, -30 + j * 20, 0);
+                    vFunnel.rotation.z = Math.PI / 2;
+                    verticalTitanic.add(vFunnel);
+                }
+
+                // Position: next to the stack, vertically stacked
+                const yPosition = i * titanicSpacing + titanicLength / 2;
+                verticalTitanic.position.set(stackX - 50, yPosition, stackZ);
+                verticalTitanic.userData.isStackLandmark = true;
+                verticalTitanic.userData.refType = 'titanic';
+                scene.add(verticalTitanic);
+
+                // Add label for every 3rd ship
+                if (i % 3 === 0) {
+                    const heightInMeters = Math.round(yPosition);
+                    createLabel(`🚢 ${heightInMeters}m`, stackX - 50, yPosition + 140, stackZ, 15);
+                }
+            }
+        }
+
+        function removeStackLandmarks() {
+            scene.children.forEach(child => {
+                if (child.userData.isStackLandmark) {
+                    scene.remove(child);
+                }
+            });
+        }
+
+        function loadMapImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                mapImageUrl = e.target.result;
+                // Always refresh the map overlay (flat or stacked)
+                if (currentVisualizationType === 'flat') {
+                    removeMapOverlay();
+                    createMapOverlay();
+                    if (mapTilesVisible) {
+                        createMapTiles();
+                    }
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function refreshMapOverlay() {
+            if (currentVisualizationType === 'flat') {
+                removeMapOverlay();
+                createMapOverlay();
+                if (mapTilesVisible) {
+                    createMapTiles();
+                }
+            }
+        }
+
+        function createMapOverlay() {
+            const flatHeight = currentDimensions.flatHeight;
+            const stackX = flatHeight / 2;
+            const stackZ = flatHeight / 2;
+            const mapSizeInput = document.getElementById('mapSizeInput');
+            const mapSize = mapSizeInput ? (parseFloat(mapSizeInput.value) || 2120) : 2120;
+
+            const mapGeometry = new THREE.PlaneGeometry(mapSize, mapSize);
+
+            if (mapImageUrl) {
+                // Load from the user-selected file (data URL)
+                const loader = new THREE.TextureLoader();
+                loader.load(mapImageUrl, function (texture) {
+                    const mapMaterial = new THREE.MeshStandardMaterial({
+                        map: texture,
+                        side: THREE.DoubleSide,
+                        transparent: false
+                    });
+                    const mapPlane = new THREE.Mesh(mapGeometry, mapMaterial);
+                    mapPlane.rotation.x = -Math.PI / 2;
+                    mapPlane.position.set(stackX, -0.5, stackZ);
+                    mapPlane.userData.isMapOverlay = true;
+                    scene.add(mapPlane);
+
+                    // Red border
+                    const borderMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
+                    const border = new THREE.LineSegments(new THREE.EdgesGeometry(mapGeometry), borderMaterial);
+                    border.rotation.x = -Math.PI / 2;
+                    border.position.set(stackX, -0.4, stackZ);
+                    border.userData.isMapOverlay = true;
+                    scene.add(border);
+
+                    createLabel(`🗺️ Kort: ${mapSize}×${mapSize}m`, stackX, 5, stackZ - mapSize / 2 - 30, 30);
+                });
+            } else {
+                // No image loaded yet - show instruction
+                const mapMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xdddddd,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                const mapPlane = new THREE.Mesh(mapGeometry, mapMaterial);
+                mapPlane.rotation.x = -Math.PI / 2;
+                mapPlane.position.set(stackX, -0.5, stackZ);
+                mapPlane.userData.isMapOverlay = true;
+                scene.add(mapPlane);
+                createLabel(`📂 Vælg kortbillede\ni venstre menu`, stackX, 5, stackZ, 40);
+            }
+        }
+
+        function removeMapOverlay() {
+            const toRemove = [];
+            scene.children.forEach(child => {
+                if (child.userData.isMapOverlay) toRemove.push(child);
+            });
+            toRemove.forEach(child => scene.remove(child));
+        }
+
+        function toggleMapTiles() {
+            if (currentVisualizationType !== 'flat') return;
+            mapTilesVisible = !mapTilesVisible;
+            const btn = document.getElementById('mapTilesBtn');
+            if (mapTilesVisible) {
+                createMapTiles();
+                if (btn) btn.textContent = '🗺️ Skjul kort langs bane';
+            } else {
+                removeMapTiles();
+                if (btn) btn.textContent = '🗺️ Vis kort langs bane';
+            }
+        }
+
+        function createMapTiles() {
+            if (!mapImageUrl) return;
+            removeMapTiles();
+
+            const flatWidth = currentDimensions.flatWidth;
+            const flatHeight = currentDimensions.flatHeight;
+            const mapSize = parseFloat(document.getElementById('mapSizeInput').value) || 2120;
+
+            const tileXRight = flatHeight + mapSize / 2;
+            const tileXLeft = -mapSize / 2;
+            const numTiles = Math.ceil(flatWidth / mapSize);
+
+            const loader = new THREE.TextureLoader();
+            loader.load(mapImageUrl, function (texture) {
+                for (let i = 0; i < numTiles; i++) {
+                    const tileZ = i * mapSize + mapSize / 2;
+                    const tileGeometry = new THREE.PlaneGeometry(mapSize, mapSize);
+                    const tileMaterial = new THREE.MeshStandardMaterial({
+                        map: texture,
+                        side: THREE.DoubleSide
+                    });
+
+                    // Right side
+                    const tileRight = new THREE.Mesh(tileGeometry, tileMaterial);
+                    tileRight.rotation.x = -Math.PI / 2;
+                    tileRight.position.set(tileXRight, -0.4, tileZ);
+                    tileRight.userData.isMapTile = true;
+                    scene.add(tileRight);
+
+                    // Left side
+                    const tileLeft = new THREE.Mesh(tileGeometry, tileMaterial.clone());
+                    tileLeft.rotation.x = -Math.PI / 2;
+                    tileLeft.position.set(tileXLeft, -0.4, tileZ);
+                    tileLeft.userData.isMapTile = true;
+                    scene.add(tileLeft);
+                }
+                createLabel(`🗺️ ${numTiles}× kort (${mapSize}m)`, tileXRight, 5, flatWidth / 2, 30);
+                createLabel(`🗺️ ${numTiles}× kort (${mapSize}m)`, tileXLeft, 5, flatWidth / 2, 30);
+            });
+        }
+
+        function removeMapTiles() {
+            const toRemove = [];
+            scene.traverse(obj => { if (obj.userData.isMapTile) toRemove.push(obj); });
+            toRemove.forEach(obj => scene.remove(obj));
+        }
+
+        function clearScene() {
+            // Clear cube faces
+            Object.values(cubeFaces).forEach(face => {
+                if (face) scene.remove(face);
+            });
+            cubeFaces = {};
+
+            // Clear landmarks
+            landmarks.forEach(landmark => scene.remove(landmark));
+            landmarks = [];
+
+            // Clear flat plane
+            if (flatPlane) {
+                scene.remove(flatPlane);
+                flatPlane = null;
+            }
+
+            // Clear map overlay, tiles and stack state
+            removeMapOverlay();
+            removeMapTiles();
+            mapTilesVisible = false;
+            const btn = document.getElementById('mapTilesBtn');
+            if (btn) btn.textContent = '🗺️ Vis kort langs bane';
+            stackSquares.forEach(s => scene.remove(s));
+            stackSquares = [];
+            isStacked = false;
+
+            // Clear gumball objects and labels
+            const toRemove = [];
+            scene.children.forEach(child => {
+                if (child.userData.isGumball ||
+                    child.userData.isCylinder ||
+                    child.userData.isRedBox ||
+                    child.userData.isHuman ||
+                    child.userData.isFlat ||
+                    child.userData.isStick ||
+                    child.type === 'Sprite') {
+                    toRemove.push(child);
+                }
+            });
+            toRemove.forEach(obj => scene.remove(obj));
+
+            // Clean up sticksMesh
+            if (sticksMesh) {
+                sticksMesh.geometry.dispose();
+                sticksMesh.material.dispose();
+                sticksMesh = null;
+            }
+            const sticksBtnEl = document.getElementById('sticksBtn');
+            if (sticksBtnEl) sticksBtnEl.textContent = 'PINDE 🥢';
+        }
+
+        function visualize() {
+            const input = document.getElementById('numberInput').value;
+            const num = parseInt(input);
+
+            if (isNaN(num) || num <= 0) {
+                alert('Indtast venligst et gyldigt positivt tal!');
+                return;
+            }
+
+            clearScene();
+
+            // Set visualization type
+            currentVisualizationType = 'cube';
+
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+
+            // Calculate dimensions
+            const sideLength = Math.ceil(Math.pow(num, 1 / 3));
+            const gridCount = sideLength;
+            currentDimensions.sideLength = sideLength;
+
+            // Create RED reference box
+            redBoxObject = new THREE.Mesh(
+                new THREE.BoxGeometry(1, 1, 1),
+                new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.3 })
+            );
+            redBoxObject.position.set(-sideLength - 20, 0.5, 0);
+            redBoxObject.userData.isRedBox = true;
+            scene.add(redBoxObject);
+            createLabel("1 m³", -sideLength - 20, 5, 0, 8);
+
+            // Create human figure (1.8m tall)
+            humanObject = createHumanFigure(-sideLength - 10, 0, 0);
+            scene.add(humanObject);
+            createLabel("👤 1.8m menneske", -sideLength - 10, 3.5, 0, 10);
+
+            // Create grid texture
+            const gridTexture = createGridTexture(gridCount);
+
+            // Material for cube faces
+            const faceMaterial = new THREE.MeshStandardMaterial({
+                map: gridTexture,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.9
+            });
+
+            // Front face (Z+)
+            cubeFaces.front = new THREE.Mesh(new THREE.PlaneGeometry(sideLength, sideLength), faceMaterial);
+            cubeFaces.front.position.set(sideLength / 2, sideLength / 2, sideLength);
+            cubeFaces.front.userData.sideLength = sideLength;
+            scene.add(cubeFaces.front);
+
+            // Back face (Z-)
+            cubeFaces.back = new THREE.Mesh(new THREE.PlaneGeometry(sideLength, sideLength), faceMaterial);
+            cubeFaces.back.position.set(sideLength / 2, sideLength / 2, 0);
+            cubeFaces.back.rotation.y = Math.PI;
+            cubeFaces.back.userData.sideLength = sideLength;
+            scene.add(cubeFaces.back);
+
+            // Left face (X-)
+            cubeFaces.left = new THREE.Mesh(new THREE.PlaneGeometry(sideLength, sideLength), faceMaterial);
+            cubeFaces.left.position.set(0, sideLength / 2, sideLength / 2);
+            cubeFaces.left.rotation.y = Math.PI / 2;
+            cubeFaces.left.userData.sideLength = sideLength;
+            scene.add(cubeFaces.left);
+
+            // Right face (X+)
+            cubeFaces.right = new THREE.Mesh(new THREE.PlaneGeometry(sideLength, sideLength), faceMaterial);
+            cubeFaces.right.position.set(sideLength, sideLength / 2, sideLength / 2);
+            cubeFaces.right.rotation.y = -Math.PI / 2;
+            cubeFaces.right.userData.sideLength = sideLength;
+            scene.add(cubeFaces.right);
+
+            // Top face (Y+)
+            cubeFaces.top = new THREE.Mesh(new THREE.PlaneGeometry(sideLength, sideLength), faceMaterial);
+            cubeFaces.top.position.set(sideLength / 2, sideLength, sideLength / 2);
+            cubeFaces.top.rotation.x = -Math.PI / 2;
+            cubeFaces.top.userData.sideLength = sideLength;
+            scene.add(cubeFaces.top);
+
+            // Bottom face (Y-)
+            cubeFaces.bottom = new THREE.Mesh(new THREE.PlaneGeometry(sideLength, sideLength), faceMaterial);
+            cubeFaces.bottom.position.set(sideLength / 2, 0, sideLength / 2);
+            cubeFaces.bottom.rotation.x = Math.PI / 2;
+            cubeFaces.bottom.userData.sideLength = sideLength;
+            scene.add(cubeFaces.bottom);
+
+            // Add label
+            createLabel(formatNumber(num) + " m³\n" + sideLength + "×" + sideLength + "×" + sideLength + "m",
+                sideLength / 2, sideLength + 20, sideLength / 2, 40);
+
+            // Add landmarks
+            createLandmarks(sideLength);
+
+            // Position camera
+            const cubeDiagonal = sideLength * Math.sqrt(3);
+            camera.position.set(sideLength / 2 - cubeDiagonal * 0.7, cubeDiagonal * 0.3, sideLength / 2 + cubeDiagonal * 0.7);
+            yaw = -Math.PI / 4;
+            pitch = -0.2;
+
+            loading.style.display = 'none';
+            updateInfoPanel(num, sideLength);
+        }
+
+        function createLabel(text, x, y, z, scale = 20) {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 512;
+            canvas.height = 256;
+
+            context.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.strokeStyle = '#667eea';
+            context.lineWidth = 4;
+            context.strokeRect(0, 0, canvas.width, canvas.height);
+
+            context.font = 'Bold 40px Arial';
+            context.fillStyle = '#2c3e50';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+
+            const lines = text.split('\n');
+            lines.forEach((line, i) => {
+                context.fillText(line, canvas.width / 2, canvas.height / 2 + (i - lines.length / 2 + 0.5) * 50);
+            });
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture }));
+            sprite.position.set(x, y, z);
+            sprite.scale.set(scale, scale / 2, 1);
+            scene.add(sprite);
+        }
+
+        function formatNumber(num) {
+            return num.toLocaleString('da-DK');
+        }
+
+        function updateInfoPanel(num, sideLength) {
+            const panel = document.getElementById('infoPanel');
+            panel.innerHTML = `
+                <h3>📊 Information</h3>
+                <p><strong>📏 Hver kasse = 1×1×1 meter</strong></p>
+                <p><span class="highlight">${formatNumber(num)}</span> m³ total</p>
+                <p>Kube: ${sideLength} × ${sideLength} × ${sideLength} meter</p>
+                <p>Hver side: ${sideLength}m × ${sideLength}m</p>
+                <p>Grid: ${sideLength} × ${sideLength} felter</p>
+                <p>🔴 Rød = "1 m³"</p>
+                <p>🟦 Alle 6 sider renderes</p>
+                <p><em>⚡ Super let rendering!</em></p>
+            `;
+        }
+
+        function visualizeGumballs() {
+            const input = document.getElementById('numberInput').value;
+            const num = parseInt(input);
+
+            if (isNaN(num) || num <= 0) {
+                alert('Indtast venligst et gyldigt positivt tal!');
+                return;
+            }
+
+            clearScene();
+
+            // Set visualization type
+            currentVisualizationType = 'gumball';
+
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+
+            // Constants
+            const gumballDiameter = 0.02; // 2 cm in meters
+            const gumballRadius = gumballDiameter / 2;
+            const cylinderRadius = 5; // 10 meter diameter = 5 meter radius
+            const packingEfficiency = 0.64; // Random sphere packing
+
+            // Calculate cylinder height needed
+            const gumballVolume = (4 / 3) * Math.PI * Math.pow(gumballRadius, 3);
+            const cylinderCrossSection = Math.PI * Math.pow(cylinderRadius, 2);
+            const gumballsPerMeter = (cylinderCrossSection * packingEfficiency) / gumballVolume;
+            const cylinderHeight = num / gumballsPerMeter;
+
+            currentDimensions.cylinderRadius = cylinderRadius;
+            currentDimensions.cylinderHeight = cylinderHeight;
+
+            // Create transparent cylinder
+            const cylinderGeometry = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight, 32, 1, true);
+            const cylinderMaterial = new THREE.MeshStandardMaterial({
+                color: 0x88ccff,
+                transparent: true,
+                opacity: 0.2,
+                side: THREE.DoubleSide,
+                wireframe: false
+            });
+            const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+            cylinder.position.y = cylinderHeight / 2;
+            cylinder.userData.isCylinder = true;
+            scene.add(cylinder);
+
+            // Add wireframe outline
+            const wireframeGeometry = new THREE.CylinderGeometry(cylinderRadius, cylinderRadius, cylinderHeight, 32, 1, true);
+            const wireframeMaterial = new THREE.MeshBasicMaterial({
+                color: 0x4488cc,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.5
+            });
+            const wireframe = new THREE.Mesh(wireframeGeometry, wireframeMaterial);
+            wireframe.position.y = cylinderHeight / 2;
+            wireframe.userData.isCylinder = true;
+            scene.add(wireframe);
+
+            // Create sample gumballs (not all - too many!)
+            const maxSampleGumballs = Math.min(5000, num); // Max 5000 visible gumballs
+            const gumballGeometry = new THREE.SphereGeometry(gumballRadius, 8, 8);
+
+            const colors = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff, 0xff8800, 0x8800ff];
+
+            for (let i = 0; i < maxSampleGumballs; i++) {
+                // Random position within cylinder
+                const angle = Math.random() * Math.PI * 2;
+                const r = Math.sqrt(Math.random()) * (cylinderRadius - gumballRadius);
+                const x = Math.cos(angle) * r;
+                const z = Math.sin(angle) * r;
+                const y = Math.random() * cylinderHeight;
+
+                const gumballMaterial = new THREE.MeshStandardMaterial({
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    roughness: 0.3,
+                    metalness: 0.1
+                });
+                const gumball = new THREE.Mesh(gumballGeometry, gumballMaterial);
+                gumball.position.set(x, y, z);
+                gumball.userData.isGumball = true;
+                scene.add(gumball);
+            }
+
+            // Create reference gumball
+            redBoxObject = new THREE.Mesh(
+                new THREE.SphereGeometry(gumballRadius, 16, 16),
+                new THREE.MeshStandardMaterial({ color: 0xff0000, roughness: 0.3, metalness: 0.1 })
+            );
+            redBoxObject.position.set(-cylinderRadius - 2, gumballRadius, 0);
+            redBoxObject.userData.isRedBox = true;
+            scene.add(redBoxObject);
+            createLabel("1 gumball\n2 cm", -cylinderRadius - 2, 1, 0, 5);
+
+            // Create human figure (1.8m tall)
+            humanObject = createHumanFigure(-cylinderRadius - 5, 0, 0);
+            scene.add(humanObject);
+            createLabel("👤 1.8m menneske", -cylinderRadius - 5, 3.5, 0, 10);
+
+            // Add label for cylinder
+            createLabel(
+                `${formatNumber(num)} gumballs\nCylinder: Ø10m × ${cylinderHeight.toFixed(2)}m højde`,
+                0, cylinderHeight + 10, 0, 30
+            );
+
+            // Add landmarks
+            createLandmarks(cylinderRadius * 2);
+
+            // Position camera
+            const viewDistance = Math.max(cylinderHeight, cylinderRadius * 2) * 1.5;
+            camera.position.set(-viewDistance * 0.7, cylinderHeight * 0.5, viewDistance * 0.7);
+            yaw = -Math.PI / 4;
+            pitch = 0;
+
+            loading.style.display = 'none';
+            updateGumballInfoPanel(num, cylinderHeight, maxSampleGumballs);
+        }
+
+        function updateGumballInfoPanel(num, cylinderHeight, samplesShown) {
+            const panel = document.getElementById('infoPanel');
+            panel.innerHTML = `
+                <h3>📊 Gumball Information</h3>
+                <p><strong>🍬 Hver gumball = 2 cm diameter</strong></p>
+                <p><span class="highlight">${formatNumber(num)}</span> gumballs total</p>
+                <p>Cylinder: Ø 10 meter</p>
+                <p>Højde: ${cylinderHeight.toFixed(2)} meter</p>
+                <p>Volumen: ${(Math.PI * 25 * cylinderHeight).toFixed(2)} m³</p>
+                <p>🎨 Viser ${formatNumber(samplesShown)} sample gumballs</p>
+                <p><em>⚡ Optimeret rendering!</em></p>
+            `;
+        }
+
+        function visualizeFlat() {
+            const input = document.getElementById('numberInput').value;
+            const num = parseInt(input);
+            const heightInput = document.getElementById('flatHeightInput').value;
+            const flatHeight = parseInt(heightInput);
+
+            if (isNaN(num) || num <= 0) {
+                alert('Indtast venligst et gyldigt positivt tal!');
+                return;
+            }
+
+            if (isNaN(flatHeight) || flatHeight <= 0) {
+                alert('Indtast venligst en gyldig højde!');
+                return;
+            }
+
+            clearScene();
+
+            // Set visualization type
+            currentVisualizationType = 'flat';
+
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+
+            // Calculate width based on number and height
+            const flatWidth = Math.ceil(num / flatHeight);
+            currentDimensions.flatWidth = flatWidth;
+            currentDimensions.flatHeight = flatHeight;
+
+            // Create solid blue base plane (no texture!)
+            // IMPORTANT: Swap dimensions so LENGTH goes along Z axis (depth)
+            // flatHeight = WIDTH (user input, e.g., 50m) → X axis
+            // flatWidth = LENGTH (calculated, e.g., 2500m) → Z axis
+            const planeMaterial = new THREE.MeshStandardMaterial({
+                color: 0x667eea,
+                side: THREE.DoubleSide
+            });
+
+            flatPlane = new THREE.Mesh(
+                new THREE.PlaneGeometry(flatHeight, flatWidth), // SWAPPED! width=flatHeight, height=flatWidth
+                planeMaterial
+            );
+            flatPlane.rotation.x = -Math.PI / 2; // Rotate to be horizontal
+            flatPlane.position.set(flatHeight / 2, 0, flatWidth / 2); // SWAPPED positions
+            flatPlane.userData.isFlat = true;
+            scene.add(flatPlane);
+
+            // Create black grid lines as actual geometry (0.1m wide each)
+            const lineWidth = 0.1;
+            const lineMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+            const lineHeight = 0.01; // Slightly above base plane
+
+            // Horizontal lines (along X direction) - create flatWidth-1 lines
+            for (let z = 1; z < flatWidth; z++) {
+                const lineGeometry = new THREE.PlaneGeometry(flatHeight, lineWidth);
+                const line = new THREE.Mesh(lineGeometry, lineMaterial);
+                line.rotation.x = -Math.PI / 2;
+                line.position.set(flatHeight / 2, lineHeight, z);
+                line.userData.isFlat = true;
+                scene.add(line);
+            }
+
+            // Vertical lines (along Z direction) - create flatHeight-1 lines
+            for (let x = 1; x < flatHeight; x++) {
+                const lineGeometry = new THREE.PlaneGeometry(lineWidth, flatWidth);
+                const line = new THREE.Mesh(lineGeometry, lineMaterial);
+                line.rotation.x = -Math.PI / 2;
+                line.position.set(x, lineHeight, flatWidth / 2);
+                line.userData.isFlat = true;
+                scene.add(line);
+            }
+
+            // Create RED reference box
+            // NOW: X = WIDTH (flatHeight), Z = LENGTH (flatWidth)
+            redBoxObject = new THREE.Mesh(
+                new THREE.BoxGeometry(1, 1, 1),
+                new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 0.3 })
+            );
+            redBoxObject.position.set(flatHeight / 2, 0.5, -20);
+            redBoxObject.userData.isRedBox = true;
+            scene.add(redBoxObject);
+            createLabel("1 m²", flatHeight / 2, 2, -20, 8);
+
+            // Create human figure (1.8m tall) - primary one on the side
+            humanObject = createHumanFigure(flatHeight / 2, 0, -10);
+            scene.add(humanObject);
+            createLabel("👤 1.8m menneske", flatHeight / 2, 3.5, -10, 10);
+
+            // Create multiple reference humans ALONG THE LENGTH (Z axis)
+            // NOW: X = WIDTH (flatHeight), Z = LENGTH (flatWidth)
+            // Keep natural 1.8m height (no scaling!)
+            if (flatWidth >= 100) {
+                // For larger surfaces: one per 100 meters along the length
+                for (let z = 100; z <= flatWidth; z += 100) {
+                    const refHuman = createHumanFigure(flatHeight / 2, 0, z);
+                    refHuman.userData.isReferenceHuman = true;
+                    scene.add(refHuman);
+                    createLabel(`${z}m`, flatHeight / 2, 3.5, z, 5);
+                }
+            } else {
+                // For smaller surfaces: place one at the center for scale reference
+                const refHuman = createHumanFigure(flatHeight / 2, 0, flatWidth / 2);
+                refHuman.userData.isReferenceHuman = true;
+                scene.add(refHuman);
+                createLabel(`Centrum`, flatHeight / 2, 3.5, flatWidth / 2, 5);
+            }
+
+            // Create red unit cubes (1m × 1m × 1m) ALONG THE LENGTH every 200 meters
+            // Position them like lampposts along the right side of the track
+            const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+            const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+            for (let z = 200; z <= flatWidth; z += 200) {
+                const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+                cube.position.set(flatHeight + 2, 0.5, z); // Position along length, right side
+                cube.userData.isFlat = true;
+                scene.add(cube);
+                createLabel(`1m³`, flatHeight + 2, 2, z, 5);
+            }
+
+            // Create road signs every 10,000 fields (10,000 m²) ALONG THE LENGTH
+            // NOW: X = WIDTH (flatHeight), Z = LENGTH (flatWidth)
+            // 10,000 m² with width flatHeight spans (10,000 / flatHeight) meters in length
+            const signInterval = 10000 / flatHeight; // meters between signs along the length
+            for (let z = signInterval; z <= flatWidth; z += signInterval) {
+                // Create sign post (pole)
+                const poleGeometry = new THREE.CylinderGeometry(0.1, 0.1, 3, 8);
+                const poleMaterial = new THREE.MeshStandardMaterial({ color: 0x666666 });
+                const pole = new THREE.Mesh(poleGeometry, poleMaterial);
+                pole.position.set(flatHeight / 2, 1.5, z); // MIDDLE of track
+                pole.userData.isFlat = true;
+                scene.add(pole);
+
+                // Create sign board
+                const signGeometry = new THREE.BoxGeometry(2, 1, 0.1);
+                const signMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00 }); // Yellow sign
+                const sign = new THREE.Mesh(signGeometry, signMaterial);
+                sign.position.set(flatHeight / 2, 3.5, z); // MIDDLE of track
+                sign.userData.isFlat = true;
+                scene.add(sign);
+
+                // Calculate how many m² have been covered at this point
+                const areaAtSign = flatHeight * z; // width × length traveled
+                createLabel(`🚧 ${formatNumber(areaAtSign)} m²`, flatHeight / 2, 4.5, z, 10);
+            }
+
+            // Add label for flat
+            createLabel(
+                `${formatNumber(num)} m²\n${flatHeight}m bred × ${flatWidth}m lang`,
+                flatHeight / 2, 10, flatWidth / 2, 40
+            );
+
+            // Add landmarks
+            createLandmarks(Math.max(flatWidth, flatHeight));
+
+            // Position camera at beginning of LENGTH, middle of WIDTH, looking along the LENGTH
+            // NOW: X = WIDTH (flatHeight), Z = LENGTH (flatWidth)
+            // Camera at one narrow end (Z=0), looking toward opposite narrow end (Z=flatWidth)
+            camera.position.set(flatHeight / 2, 2, 0);
+            camera.lookAt(flatHeight / 2, 2, flatWidth);
+            // Calculate yaw and pitch from lookAt direction
+            const direction = new THREE.Vector3();
+            camera.getWorldDirection(direction);
+            yaw = Math.atan2(-direction.x, -direction.z);
+            pitch = Math.asin(direction.y);
+
+            loading.style.display = 'none';
+            updateFlatInfoPanel(num, flatWidth, flatHeight);
+
+            // If a map image is already loaded, show it on the plane
+            if (mapImageUrl) {
+                createMapOverlay();
+            }
+        }
+
+        function createFlatGridTexture(width, height) {
+            // Always use 1m grid spacing - each square = 1 meter
+            const gridSpacing = 1;
+
+            // Much higher resolution - minimum 12 pixels per square for crisp lines
+            const minPixelsPerSquare = 12;
+            let canvasWidth = width * minPixelsPerSquare;
+            let canvasHeight = height * minPixelsPerSquare;
+
+            // Cap at maximum canvas size
+            const maxSize = 8192; // Increased max size
+            if (canvasWidth > maxSize || canvasHeight > maxSize) {
+                const scale = maxSize / Math.max(canvasWidth, canvasHeight);
+                canvasWidth = Math.floor(canvasWidth * scale);
+                canvasHeight = Math.floor(canvasHeight * scale);
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            const context = canvas.getContext('2d');
+
+            // Background
+            context.fillStyle = '#667eea';
+            context.fillRect(0, 0, canvasWidth, canvasHeight);
+
+            const stepX = canvasWidth / width;
+            const stepZ = canvasHeight / height;
+
+            // Crisp, visible lines
+            context.strokeStyle = '#2d3561';
+            context.lineWidth = Math.max(2, Math.min(stepX, stepZ) * 0.25);
+
+            // Vertical lines (along X/width direction)
+            for (let x = 0; x <= width; x += gridSpacing) {
+                context.beginPath();
+                context.moveTo(Math.floor(x * stepX) + 0.5, 0);
+                context.lineTo(Math.floor(x * stepX) + 0.5, canvasHeight);
+                context.stroke();
+            }
+
+            // Horizontal lines (along Z/height direction)
+            for (let z = 0; z <= height; z += gridSpacing) {
+                context.beginPath();
+                context.moveTo(0, Math.floor(z * stepZ) + 0.5);
+                context.lineTo(canvasWidth, Math.floor(z * stepZ) + 0.5);
+                context.stroke();
+            }
+
+            // Add dimension text
+            context.fillStyle = 'rgba(255, 255, 255, 0.95)';
+            const fontSize = Math.max(40, Math.min(120, canvasHeight / 6));
+            context.font = `Bold ${fontSize}px Arial`;
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText(`${width} × ${height}`, canvasWidth / 2, canvasHeight / 2);
+            context.font = `Bold ${fontSize * 0.75}px Arial`;
+            context.fillText(`(${(width * height).toLocaleString('da-DK')} m²)`, canvasWidth / 2, canvasHeight / 2 + fontSize);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            // Disable filtering for crisp lines
+            texture.magFilter = THREE.NearestFilter;
+            texture.minFilter = THREE.LinearMipmapLinearFilter;
+            texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+            return texture;
+        }
+
+        function toggleSticks() {
+            if (currentVisualizationType !== 'flat') {
+                alert('Pinde kan kun tilføjes i Flade-visning! Tryk på FLADE 📏 først.');
+                return;
+            }
+
+            const btn = document.getElementById('sticksBtn');
+
+            if (sticksMesh) {
+                // Remove existing sticks
+                scene.remove(sticksMesh);
+                sticksMesh.geometry.dispose();
+                sticksMesh.material.dispose();
+                sticksMesh = null;
+                if (btn) btn.textContent = 'PINDE 🥢';
+                return;
+            }
+
+            // Create sticks Using InstancedMesh for performance
+            const flatWidth = currentDimensions.flatWidth; // Z axis length
+            const flatHeight = currentDimensions.flatHeight; // X axis length
+            const numSticks = flatWidth * flatHeight;
+
+            if (numSticks > 2000000) {
+                if (!confirm(`Du er ved at oprette ${numSticks.toLocaleString('da-DK')} pinde. Det kan tage et kort øjeblik. Vil du fortsætte?`)) {
+                    return;
+                }
+            }
+
+            const loading = document.getElementById('loading');
+            if (loading) loading.style.display = 'block';
+
+            // Use setTimeout to allow UI to update loading screen before heavy computation
+            setTimeout(() => {
+                const stickGeometry = new THREE.CylinderGeometry(0.05, 0.05, 2, 8);
+                const stickMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 }); // Black sticks
+
+                sticksMesh = new THREE.InstancedMesh(stickGeometry, stickMaterial, numSticks);
+                sticksMesh.userData.isStick = true;
+
+                const matrix = new THREE.Matrix4();
+                let i = 0;
+
+                for (let z = 0; z < flatWidth; z++) {
+                    for (let x = 0; x < flatHeight; x++) {
+                        // Position in middle of each 1x1 field. Height is 2 -> Center is at Y=1.
+                        matrix.setPosition(x + 0.5, 1.0, z + 0.5);
+                        sticksMesh.setMatrixAt(i++, matrix);
+                    }
+                }
+
+                sticksMesh.instanceMatrix.needsUpdate = true;
+                scene.add(sticksMesh);
+
+                if (btn) btn.textContent = 'FJERN PINDE 🥢';
+                if (loading) loading.style.display = 'none';
+            }, 50);
+        }
+
+        function updateFlatInfoPanel(num, flatWidth, flatHeight) {
+            const panel = document.getElementById('infoPanel');
+            panel.innerHTML = `
+                <h3>📊 Flade Information</h3>
+                <p><strong>📏 Hver felt = 1×1 meter</strong></p>
+                <p><span class="highlight">${formatNumber(num)}</span> m² total</p>
+                <p>Flade: ${flatWidth}m bred × ${flatHeight}m høj</p>
+                <p>Antal felter: ${formatNumber(flatWidth * flatHeight)}</p>
+                <p>🔴 Rød = "1 m²"</p>
+                <p><em>⚡ Simpel 2D rendering!</em></p>
+            `;
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+
+</html>

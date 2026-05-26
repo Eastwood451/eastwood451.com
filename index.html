@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Eastwood451 Jetmotor</title>
+    <title>Eastwood451 Projekter</title>
     <style>
       :root {
         --bg: #07090d;
@@ -71,6 +71,7 @@
         position: relative;
         display: block;
         overflow: hidden;
+        margin-top: 18px;
         min-height: 430px;
         border: 1px solid var(--line);
         border-radius: 8px;
@@ -78,6 +79,10 @@
         background: #111821;
         text-decoration: none;
         box-shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+      }
+
+      .engine-link:first-of-type {
+        margin-top: 0;
       }
 
       .engine-link:focus-visible {
@@ -92,6 +97,11 @@
         min-height: 430px;
         object-fit: cover;
         transition: transform 420ms ease, filter 420ms ease;
+      }
+
+      .engine-link.compact,
+      .engine-link.compact img {
+        min-height: 320px;
       }
 
       .engine-link:hover img,
@@ -149,14 +159,21 @@
   <body>
     <main>
       <section class="intro" aria-labelledby="page-title">
-        <h1 id="page-title">Eastwood451 Jetmotor</h1>
-        <p>Start den interaktive 3D-cutaway og udforsk luftflow, kompressor, forbraending, turbine og dyse.</p>
+        <h1 id="page-title">Eastwood451 Projekter</h1>
+        <p>Vaelg et projekt og aabn det direkte i browseren.</p>
       </section>
 
       <a class="engine-link" href="jetmotor.html" aria-label="Aabn den interaktive 3D-jetmotor">
         <img src="jet_engine.jpg" alt="Jetmotor" />
         <span class="overlay">
           <span class="launch">Aabn 3D-jetmotoren <span aria-hidden="true">&rarr;</span></span>
+        </span>
+      </a>
+
+      <a class="engine-link compact" href="large-number-visualizer/" aria-label="Aabn Large Number Visualizer">
+        <img src="large-number-visualizer/133 meter.png" alt="Kortbillede til Large Number Visualizer" />
+        <span class="overlay">
+          <span class="launch">Aabn Large Number Visualizer <span aria-hidden="true">&rarr;</span></span>
         </span>
       </a>
     </main>
