@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geologisk Tidssimulator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;600;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { overflow: hidden; background: #e8ecf1; font-family: 'Outfit', sans-serif; user-select: none; -webkit-user-select: none; }
+  canvas { display: block; }
+
+  #hud {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 12px 24px 18px; pointer-events: none; z-index: 10;
+  }
+  .controls-panel {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.85); backdrop-filter: blur(20px);
+    border: 1px solid rgba(0,0,0,0.1); border-radius: 16px;
+    padding: 10px 16px; pointer-events: all;
+  }
+  .slider-edge-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 700;
+    color: rgba(0,0,0,0.35); white-space: nowrap;
+  }
+  .move-btn {
+    width: 56px; height: 56px;
+    border: 1px solid rgba(0,0,0,0.12); border-radius: 12px;
+    background: rgba(0,0,0,0.04); color: #334;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s ease;
+  }
+  .move-btn:hover { background: rgba(0,0,0,0.08); border-color: rgba(0,0,0,0.2); }
+  .move-btn.active { background: rgba(20,100,180,0.15); border-color: rgba(20,100,180,0.4); box-shadow: 0 0 16px rgba(20,100,180,0.12); }
+  .divider { width: 1px; height: 36px; background: rgba(0,0,0,0.1); margin: 0 4px; }
+  .speed-btn {
+    height: 40px; padding: 0 14px;
+    border: 1px solid rgba(0,0,0,0.1); border-radius: 10px;
+    background: rgba(0,0,0,0.03); color: rgba(0,0,0,0.45);
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    cursor: pointer; transition: all 0.15s ease; white-space: nowrap;
+  }
+  .speed-btn:hover { background: rgba(0,0,0,0.06); color: rgba(0,0,0,0.7); }
+  .speed-btn.active { background: rgba(20,100,180,0.12); border-color: rgba(20,100,180,0.35); color: rgba(20,100,180,0.95); font-weight: 700; }
+  .arrow-icon { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+  #info-hud {
+    position: fixed; top: 20px; left: 20px; z-index: 10;
+    color: rgba(0,0,0,0.5);
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.8;
+    background: rgba(255,255,255,0.8); backdrop-filter: blur(12px);
+    border: 1px solid rgba(0,0,0,0.08); border-radius: 12px;
+    padding: 14px 18px;
+  }
+  #info-hud .value { color: #1565c0; font-weight: 700; }
+
+  #geo-panel {
+    position: fixed; top: 20px; right: 20px; z-index: 10;
+    width: 340px; max-height: calc(100vh - 120px); overflow-y: auto;
+    background: rgba(255,255,255,0.85); backdrop-filter: blur(16px);
+    border: 1px solid rgba(0,0,0,0.08); border-radius: 14px;
+    padding: 18px 20px; font-size: 14px;
+    color: rgba(0,0,0,0.6); line-height: 1.6;
+  }
+  #geo-panel::-webkit-scrollbar { width: 4px; }
+  #geo-panel::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 2px; }
+
+  .geo-era-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: rgba(0,0,0,0.35); margin-bottom: 4px; }
+  .geo-period-name { font-size: 22px; font-weight: 700; margin-bottom: 2px; transition: color 0.4s ease; }
+  .geo-years { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; margin-bottom: 14px; }
+  .geo-divider { height: 1px; background: rgba(0,0,0,0.08); margin: 12px 0; }
+  .geo-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(0,0,0,0.3); margin-bottom: 6px; margin-top: 14px; }
+  .geo-fact { padding: 6px 0; color: rgba(0,0,0,0.55); font-size: 13.5px; line-height: 1.5; }
+  .geo-highlight { display: inline-block; padding: 3px 8px; margin: 3px 4px 3px 0; background: rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.1); border-radius: 6px; font-size: 12px; color: rgba(0,0,0,0.55); }
+  .geo-event { padding: 8px 10px; margin: 6px 0; background: rgba(0,0,0,0.03); border-left: 2px solid; border-radius: 0 6px 6px 0; font-size: 13px; cursor: pointer; transition: background 0.15s ease; }
+  .geo-event:hover { background: rgba(0,0,0,0.06); }
+
+  #jump-section { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(0,0,0,0.08); }
+  #jump-section label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(0,0,0,0.3); margin-bottom: 6px; }
+  .jump-row { display: flex; gap: 8px; }
+  #jump-input {
+    flex: 1; padding: 8px 12px;
+    border: 1px solid rgba(0,0,0,0.12); border-radius: 8px;
+    background: rgba(0,0,0,0.04); color: #1565c0;
+    font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700;
+    outline: none; -webkit-user-select: text; user-select: text;
+  }
+  #jump-input:focus { border-color: rgba(20,100,180,0.4); }
+  #jump-btn {
+    padding: 8px 14px; border: 1px solid rgba(20,100,180,0.3); border-radius: 8px;
+    background: rgba(20,100,180,0.1); color: #1565c0;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700;
+    cursor: pointer; transition: all 0.15s ease; white-space: nowrap;
+  }
+  #jump-btn:hover { background: rgba(20,100,180,0.18); }
+  #eta-line { margin-top: 8px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: rgba(0,0,0,0.4); line-height: 1.6; }
+  #eta-line .value { color: #1565c0; font-weight: 700; }
+
+  .event-nav-btn {
+    padding: 3px 10px; border: 1px solid rgba(20,100,180,0.25); border-radius: 6px;
+    background: rgba(20,100,180,0.08); color: #1565c0;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700;
+    cursor: pointer; transition: all 0.15s ease; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+  }
+  .event-nav-btn:hover { background: rgba(20,100,180,0.16); border-color: rgba(20,100,180,0.4); }
+
+  .horizon-btn {
+    height: 40px; padding: 0 14px;
+    border: 1px solid rgba(20,100,180,0.3); border-radius: 10px;
+    background: rgba(20,100,180,0.08); color: #1565c0;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700;
+    cursor: pointer; transition: all 0.15s ease; white-space: nowrap;
+  }
+  .horizon-btn:hover { background: rgba(20,100,180,0.15); }
+
+  .slider-wrap {
+    display: flex; align-items: center; gap: 10px;
+  }
+  #speed-slider {
+    -webkit-appearance: none; appearance: none;
+    width: 360px; height: 6px; border-radius: 3px;
+    background: rgba(0,0,0,0.1); outline: none;
+    cursor: pointer;
+  }
+  #speed-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #1565c0; border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    cursor: pointer;
+  }
+  #speed-slider::-moz-range-thumb {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #1565c0; border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    cursor: pointer;
+  }
+  .slider-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 700;
+    color: #1565c0; white-space: nowrap; min-width: 72px;
+  }
+
+  #speedo-panel {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    z-index: 10; display: flex; gap: 8px;
+    background: rgba(255,255,255,0.8); backdrop-filter: blur(12px);
+    border: 1px solid rgba(0,0,0,0.08); border-radius: 12px;
+    padding: 10px 14px;
+  }
+</style>
+</head>
+<body>
+
+<div id="info-hud">
+  <div>År siden: <span class="value" id="pos-display">0</span></div>
+  <div>Hastighed: <span class="value" id="speed-display">50</span> år/s</div>
+</div>
+
+<div id="speedo-panel">
+  <canvas id="speedo-100" width="110" height="130"></canvas>
+  <canvas id="speedo-1000" width="110" height="130"></canvas>
+  <canvas id="speedo-100000" width="110" height="130"></canvas>
+  <canvas id="speedo-1000000" width="110" height="130"></canvas>
+</div>
+
+<div id="geo-panel">
+  <div class="geo-era-label" id="geo-era"></div>
+  <div class="geo-period-name" id="geo-period"></div>
+  <div class="geo-years" id="geo-years"></div>
+  <div id="geo-content"></div>
+  <div id="jump-section">
+    <label>Hop til år siden:</label>
+    <div class="jump-row">
+      <input type="text" id="jump-input" placeholder="f.eks. 65000000" />
+      <button id="jump-btn">HOP</button>
+    </div>
+    <div id="eta-line"></div>
+  </div>
+</div>
+
+<div id="hud">
+  <div class="controls-panel">
+    <button class="move-btn" id="btn-up" title="Kamera op">
+      <svg class="arrow-icon" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+    </button>
+    <button class="move-btn" id="btn-down" title="Kamera ned">
+      <svg class="arrow-icon" viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+    </button>
+    <div class="divider"></div>
+    <button class="speed-btn" data-speed="-1000">-1000</button>
+    <button class="speed-btn" data-speed="-500">-500</button>
+    <button class="speed-btn" data-speed="-50">-50</button>
+    <button class="speed-btn active" data-speed="0">STOP</button>
+    <button class="speed-btn" data-speed="50">+50</button>
+    <button class="speed-btn" data-speed="500">+500</button>
+    <button class="speed-btn" data-speed="1000">+1000</button>
+  </div>
+  <div class="controls-panel" style="margin-top:8px;">
+    <span class="slider-edge-label">← Nutid 100K</span>
+    <div class="slider-wrap">
+      <input type="range" id="speed-slider" min="-10100" max="10100" value="0" step="10" />
+    </div>
+    <span class="slider-edge-label">Fortid 100K →</span>
+    <span class="slider-label" id="slider-label">0 år/s</span>
+    <div class="divider"></div>
+    <button class="horizon-btn" id="horizon-btn" title="Skift horisontens retning">Horisont: Fortid &#8594;</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function() {
+
+  // =============================================
+  // GEOLOGICAL TIMELINE DATA
+  // =============================================
+  const PERIODS = [
+    { name:'Nutid', era:'Kvartær', from:0, to:100, color:'#4fc3f7',
+      desc:'Den moderne verden. Homo sapiens dominerer planeten.',
+      life:['Moderne mennesker','Tamme dyr','Industrisamfund'],
+      events:[{y:0,t:'I dag'},{y:30,t:'Internettets fødsel'},{y:80,t:'Anden Verdenskrig'}],
+      civs:['Moderne nationalstater','Globaliseret civilisation']
+    },
+    { name:'Moderne historie', era:'Kvartær · Holocæn', from:100, to:2000, color:'#4fc3f7',
+      desc:'Imperialisme, renæssance, middelalder. Skriftlige kilder dominerer.',
+      life:['Moderne mennesker','Husdyr','Kulturplanter'],
+      events:[{y:250,t:'Den amerikanske revolution'},{y:500,t:'Renæssancen i Europa'},{y:1000,t:'Vikingetiden'},{y:1400,t:'Romerrigets storhedstid'}],
+      civs:['Europæiske imperier','Osmanniske Rige','Ming-dynastiet','Mogulriget']
+    },
+    { name:'Antikken & Bronzealder', era:'Kvartær · Holocæn', from:2000, to:5000, color:'#4dd0e1',
+      desc:'De første store civilisationer opstår langs floderne.',
+      life:['Moderne mennesker','Første tamme heste','Kvæg og får'],
+      events:[{y:2200,t:'Qin-dynastiet forener Kina'},{y:2400,t:'Sokrates, Platon, Aristoteles'},{y:2500,t:'Det Persiske Rige'},{y:3200,t:'Skriften opfindes i Sumer'},{y:4500,t:'De første byer (Uruk, Eridu)'}],
+      civs:['Egypten','Mesopotamien','Indusdal-kulturen','Minoisk Kreta']
+    },
+    { name:'Neolitikum', era:'Kvartær · Holocæn', from:5000, to:12000, color:'#26c6da',
+      desc:'Agerbrugets revolution. Mennesket går fra jæger-samler til bonde.',
+      life:['Moderne mennesker','Første tamme hunde','Urokser','Vildsvin'],
+      events:[{y:5500,t:'Kobber begynder at blive smeltet'},{y:7000,t:'Çatalhöyük – en af verdens første byer'},{y:9000,t:'Agerbrug opfindes i Fertile Crescent'},{y:11000,t:'Göbekli Tepe bygges – ældste kendte tempel'},{y:11700,t:'Sidste istid slutter – Holocæn begynder'}],
+      civs:['Tidlige bondesamfund','Jæger-samler-kulturer']
+    },
+    { name:'Sidste istid', era:'Kvartær · Pleistocæn', from:12000, to:115000, color:'#00bcd4',
+      desc:'Enorme ismasser dækker Nordeuropa og Nordamerika. Havniveauet er 120m lavere.',
+      life:['Mammutter','Uldnæsehorn','Kæmpedovendyr','Sabelkatte','Neanderthalere','Homo sapiens'],
+      events:[{y:14000,t:'Mennesker krydser til Amerika via Beringia'},{y:17000,t:'Lascaux-hulemalerier i Frankrig'},{y:40000,t:'Homo sapiens ankommer til Europa'},{y:45000,t:'Neanderthalerne uddør'},{y:70000,t:'Toba-superudbrud – menneskehedens flaskehals'},{y:100000,t:'Anatomisk moderne mennesker forlader Afrika'}],
+      civs:['Jæger-samler-kulturer','Neanderthal-samfund']
+    },
+    { name:'Mellem-Pleistocæn', era:'Kvartær · Pleistocæn', from:115000, to:800000, color:'#0097a7',
+      desc:'Gentagne istider og mellemistider. Homo erectus og tidlige Homo sapiens.',
+      life:['Homo heidelbergensis','Homo erectus','Mammutter','Kæmpekronhjort','Sabelkatte'],
+      events:[{y:200000,t:'Første anatomisk moderne Homo sapiens i Afrika'},{y:300000,t:'Homo sapiens-linjen adskilles'},{y:400000,t:'Kontrolleret brug af ild bliver almindelig'},{y:500000,t:'Homo heidelbergensis i Europa'},{y:700000,t:'Homo erectus spreder sig globalt'}],
+      civs:[]
+    },
+    { name:'Tidlig Pleistocæn', era:'Kvartær · Pleistocæn', from:800000, to:2600000, color:'#00838f',
+      desc:'De første store istider begynder. Homo-slægten udvikles i Afrika.',
+      life:['Homo habilis','Homo erectus','Australopithecus','Kæmpe-hyæner','Sabelkatte','Mammutter'],
+      events:[{y:1000000,t:'Homo erectus bruger håndøkser (Acheul-kultur)'},{y:1800000,t:'Homo erectus vandrer ud af Afrika'},{y:2000000,t:'Homo habilis – første stenværktøj'},{y:2600000,t:'Stenalder begynder – Oldowan-værktøj'}],
+      civs:[]
+    },
+    { name:'Pliocæn', era:'Neogen', from:2600000, to:5300000, color:'#00796b',
+      desc:'Panamakanalen lukker. Savannen spreder sig i Afrika.',
+      life:['Australopithecus (Lucy)','Kæmpeskilpadder','Megalodon (tidligt)','Sabelkatte','Første heste i moderne form'],
+      events:[{y:3200000,t:'"Lucy" (Australopithecus afarensis) lever i Østafrika'},{y:3600000,t:'Laetoli-fodspor – de ældste kendte menneskelige fodspor'},{y:5000000,t:'Menneske-linjen adskilles fra chimpanser'}],
+      civs:[]
+    },
+    { name:'Miocæn', era:'Neogen', from:5300000, to:23000000, color:'#2e7d32',
+      desc:'Græslande spreder sig. Menneskeaber diversificerer. Megalodon hersker i havet.',
+      life:['Megalodon','Tidlige menneskeaber','Kæmpedovendyr','Tre-tåede heste','Første store hvaler'],
+      events:[{y:6000000,t:'Middelhavet tørrer ud (Messinsk saltkrise)'},{y:10000000,t:'Græsland dominerer – savannedannelse'},{y:15000000,t:'Store menneskeaber spreder sig'},{y:20000000,t:'Alperne og Himalaya rejser sig'}],
+      civs:[]
+    },
+    { name:'Oligocæn', era:'Palæogen', from:23000000, to:34000000, color:'#388e3c',
+      desc:'Kølnere klima. De første aber. Antarktis fryser til.',
+      life:['Første aber','Tidlige elefanter','Kæmpe-næsehorn (Paraceratherium)','Kæmpe-rovfugle'],
+      events:[{y:25000000,t:'Første menneskeaber opstår'},{y:30000000,t:'Antarktis iskappen dannes'},{y:33000000,t:'Grande Coupure – massiv faunaudskiftning i Europa'}],
+      civs:[]
+    },
+    { name:'Eocæn', era:'Palæogen', from:34000000, to:56000000, color:'#558b2f',
+      desc:'Tropisk klima globalt. Pattedyrene ekspanderer efter dinosaurernes forsvinden.',
+      life:['Basilosaurus (urhval)','Tidlige heste (Eohippus)','Kæmpe-myrer','Tidlige flagermus','Kæmpe-slanger'],
+      events:[{y:35000000,t:'Antarktis adskilles fra Sydamerika'},{y:40000000,t:'Første hvaler i havet'},{y:50000000,t:'Indien kolliderer med Asien – Himalaya begynder'},{y:55000000,t:'PETM – ekstrem global opvarmning'}],
+      civs:[]
+    },
+    { name:'Paleocæn', era:'Palæogen', from:56000000, to:66000000, color:'#689f38',
+      desc:'Verden efter asteroiden. Pattedyr og fugle overtager.',
+      life:['Tidlige primater','Plesiadapiformes','Kæmpe-krokodiller','Tidlige gnavere','Kæmpe-fugle (Gastornis)'],
+      events:[{y:60000000,t:'Primater begynder at diversificere'},{y:63000000,t:'Pattedyr vokser i størrelse'},{y:65500000,t:'Økosystemer kommer sig efter impakten'}],
+      civs:[]
+    },
+    { name:'Sen Kridt', era:'Mesozoikum · Kridttiden', from:66000000, to:100000000, color:'#f57f17',
+      desc:'Dinosaurernes sidste æra. Ender med Chicxulub-asteroiden.',
+      life:['Tyrannosaurus Rex','Triceratops','Velociraptor','Ankylosaurus','Pteranodon','Mosasaurus'],
+      events:[{y:66000000,t:'ASTEROIDEN RAMMER – Chicxulub. 75% af alt liv uddør.'},{y:68000000,t:'T. Rex er toprovdyr i Nordamerika'},{y:70000000,t:'Dekkan Traps – massive vulkanudbrud i Indien'},{y:80000000,t:'Mosasaurer dominerer verdenshavene'},{y:90000000,t:'Store dele af Europa under vand'}],
+      civs:[]
+    },
+    { name:'Tidlig Kridt', era:'Mesozoikum · Kridttiden', from:100000000, to:145000000, color:'#ef6c00',
+      desc:'Blomsterplanter opstår og revolutionerer økosystemerne.',
+      life:['Spinosaurus','Giganotosaurus','Iguanodon','Deinonychus','Første blomsterplanter','Tidlige bier'],
+      events:[{y:100000000,t:'Spinosaurus – den største rovdinosaur'},{y:110000000,t:'Første blomsterplanter spreder sig'},{y:125000000,t:'Tidlige fugle diversificerer'},{y:130000000,t:'Sydamerika og Afrika adskilles'}],
+      civs:[]
+    },
+    { name:'Jura', era:'Mesozoikum', from:145000000, to:201000000, color:'#e65100',
+      desc:'De gigantiske sauropoder. Archaeopteryx. Pangæa bryder op.',
+      life:['Brachiosaurus','Diplodocus','Stegosaurus','Allosaurus','Archaeopteryx','Ichthyosaurus'],
+      events:[{y:150000000,t:'Archaeopteryx – overgang mellem dinosaurer og fugle'},{y:155000000,t:'Brachiosaurus og Diplodocus – de enorme sauropoder'},{y:170000000,t:'Pangæa bryder op i Laurasia og Gondwana'},{y:190000000,t:'Tidlige pattedyr lever i dinosaurernes skygge'}],
+      civs:[]
+    },
+    { name:'Trias', era:'Mesozoikum', from:201000000, to:252000000, color:'#bf360c',
+      desc:'Dinosaurerne opstår. Pangæa eksisterer som ét superkontinent.',
+      life:['Første dinosaurer','Coelophysis','Plateosaurus','Første pattedyr','Pterosaurer','Ichthyosaurer'],
+      events:[{y:201000000,t:'Trias-Jura masseuddøen – baner vej for dinosaurerne'},{y:210000000,t:'Tidlige pterosaurer'},{y:230000000,t:'De allerførste dinosaurer opstår'},{y:240000000,t:'Første pattedyr-lignende dyr'},{y:250000000,t:'Pangæa er fuldt samlet'}],
+      civs:[]
+    },
+    { name:'Perm', era:'Palæozoikum', from:252000000, to:299000000, color:'#b71c1c',
+      desc:'Synapsider dominerer. Ender med den værste masseuddøen nogensinde.',
+      life:['Dimetrodon','Gorgonopsider','Kæmpe-insekter','Tidlige krybdyr','Glossopteris-skove'],
+      events:[{y:252000000,t:'"The Great Dying" – 96% af marint liv uddør'},{y:260000000,t:'Dimetrodon – ikonisk "pattedyr-krybdyr" med rygsejl'},{y:280000000,t:'Pangæa dannes langsomt'}],
+      civs:[]
+    },
+    { name:'Karbon', era:'Palæozoikum', from:299000000, to:359000000, color:'#880e4f',
+      desc:'Enorme sumpe danner kul. Insekter bliver gigantiske. 35% ilt.',
+      life:['Meganeura (guldsmed, 70cm)','Arthropleura (tusindben, 2.5m)','Tidlige krybdyr','Kæmpetræer'],
+      events:[{y:300000000,t:'Kulsvampene danner enorme lag af kul'},{y:310000000,t:'Første krybdyr – æg med skal'},{y:320000000,t:'Meganeura – kæmpeguldsmede 70cm'},{y:340000000,t:'Enorme bregne- og padderoksskove'}],
+      civs:[]
+    },
+    { name:'Devon', era:'Palæozoikum', from:359000000, to:419000000, color:'#6a1b9a',
+      desc:'"Fiskenes tidsalder". Livet kravler op på land.',
+      life:['Dunkleosteus (10m panserfisk)','Tiktaalik','Tidlige hajer','Første insekter','Første skove'],
+      events:[{y:360000000,t:'Sen Devon masseuddøen – 75% arter forsvinder'},{y:375000000,t:'Tiktaalik – forbindelse mellem fisk og landdyr'},{y:385000000,t:'Første insekter på land'},{y:400000000,t:'Dunkleosteus – 10m panserfisk'},{y:410000000,t:'Første skove med træer'}],
+      civs:[]
+    },
+    { name:'Silur', era:'Palæozoikum', from:419000000, to:444000000, color:'#7b1fa2',
+      desc:'Livet bevæger sig op på land. Første landplanter.',
+      life:['Havskorporer (op til 2.5m)','Første landplanter','Kæmpehavskorpioner','Tidlige benfisk'],
+      events:[{y:420000000,t:'Første landplanter med vaskulært væv'},{y:430000000,t:'Kæmpehavskorpioner dominerer havene'},{y:440000000,t:'Livet koloniserer land'}],
+      civs:[]
+    },
+    { name:'Ordovicium', era:'Palæozoikum', from:444000000, to:485000000, color:'#4a148c',
+      desc:'Eksplosiv diversificering af marint liv.',
+      life:['Trilobitter','Nautiloideer','Kæmpe-blæksprutter','Graptolitter','Tidlige koraller'],
+      events:[{y:444000000,t:'Ordovicium-Silur masseuddøen – 85% arter forsvinder'},{y:460000000,t:'Ordovicisk biodiversitets-eksplosion'},{y:470000000,t:'Første primitive landplanter'}],
+      civs:[]
+    },
+    { name:'Kambrium', era:'Palæozoikum', from:485000000, to:538000000, color:'#311b92',
+      desc:'"Den Kambriske Eksplosion" – alle moderne dyregrupper opstår.',
+      life:['Anomalocaris','Trilobitter','Hallucigenia','Opabinia','Pikaia'],
+      events:[{y:505000000,t:'Burgess Shale – vindue til kambrisk liv'},{y:520000000,t:'Første fisk-lignende dyr'},{y:530000000,t:'Den Kambriske Eksplosion – dyrelivets "Big Bang"'},{y:538000000,t:'Kambrium begynder'}],
+      civs:[]
+    },
+    { name:'Ediacarium', era:'Proterozoikum', from:538000000, to:635000000, color:'#1a237e',
+      desc:'De første flercelledede dyr. Bizarre, bløde organismer.',
+      life:['Dickinsonia','Charnia','Spriggina','Kimberella','Ediacara-fauna'],
+      events:[{y:560000000,t:'Ediacara-faunaen – tidligste flercelledede dyr'},{y:580000000,t:'Første komplekse flercelledede organismer'},{y:620000000,t:'"Snowball Earth" slutter'}],
+      civs:[]
+    },
+    { name:'Cryogenium', era:'Proterozoikum', from:635000000, to:850000000, color:'#0d47a1',
+      desc:'"Snowball Earth" – Jorden dækket af is fra pol til pol.',
+      life:['Encellede eukaryoter','Primitive svampe','Alger under isen'],
+      events:[{y:650000000,t:'Marinoan-istiden – global frysning'},{y:720000000,t:'Sturtian-istiden – ~60 mio. år lang'}],
+      civs:[]
+    },
+    { name:'Tidligt Proterozoikum', era:'Proterozoikum', from:850000000, to:2500000000, color:'#01579b',
+      desc:'Ilt ophobes i atmosfæren. Eukaryote celler opstår.',
+      life:['Første eukaryoter','Cyanobakterier','Stromatolitter','Tidlige alger'],
+      events:[{y:1000000000,t:'Superkontinentet Rodinia samles'},{y:1500000000,t:'Første eukaryote celler med kerne'},{y:2000000000,t:'Første komplekse celler'},{y:2100000000,t:'Første flercelledede organismer (Grypania)'},{y:2400000000,t:'"The Great Oxidation Event"'}],
+      civs:[]
+    },
+    { name:'Arkeikum', era:'Arkeikum', from:2500000000, to:4000000000, color:'#004d40',
+      desc:'Livet begynder. De første celler. Cyanobakterier producerer ilt.',
+      life:['Arkæer','Bakterier','Cyanobakterier','Stromatolitter'],
+      events:[{y:2700000000,t:'Cyanobakterier begynder fotosyntese'},{y:3500000000,t:'Ældste kendte fossiler – stromatolitter i Australien'},{y:3800000000,t:'Første tegn på liv – kemiske signaturer i Grønland (Isua)'},{y:3900000000,t:'"Late Heavy Bombardment" slutter'}],
+      civs:[]
+    },
+    { name:'Hadeikum', era:'Hadeikum', from:4000000000, to:4600000000, color:'#263238',
+      desc:'Jordens dannelse. Smeltet lava. Månen dannes.',
+      life:['Intet liv (måske første organiske molekyler)'],
+      events:[{y:4000000000,t:'Jordens skorpe størkner'},{y:4400000000,t:'Første oceaner dannes'},{y:4500000000,t:'Månen dannes – Theia rammer Jorden'},{y:4600000000,t:'Jorden dannes af støv og gas'}],
+      civs:[]
+    },
+  ];
+
+  function getPeriodForYear(y) {
+    const a = Math.abs(y);
+    for (const p of PERIODS) { if (a >= p.from && a < p.to) return p; }
+    return a >= 4600000000 ? PERIODS[PERIODS.length-1] : PERIODS[0];
+  }
+
+  function formatYears(n) {
+    n = Math.round(Math.abs(n));
+    if (n >= 1e9) return (n/1e9).toFixed(2) + ' mia.';
+    if (n >= 1e6) return (n/1e6).toFixed(n >= 1e8 ? 0 : n >= 1e7 ? 1 : 2) + ' mio.';
+    if (n >= 1e3) return n.toLocaleString('da-DK');
+    return n.toString();
+  }
+
+  // All events sorted for next/prev navigation
+  const allEvents = [];
+  for (const p of PERIODS) { if (p.events) for (const e of p.events) allEvents.push({y:e.y, t:e.t, color:p.color}); }
+  allEvents.sort((a,b) => a.y - b.y);
+
+  function findNextEvent(curY) {
+    const a = Math.abs(curY);
+    for (const e of allEvents) { if (e.y > a + 0.5) return e; }
+    return null;
+  }
+  function findPrevEvent(curY) {
+    const a = Math.abs(curY);
+    for (let i = allEvents.length-1; i >= 0; i--) { if (allEvents[i].y < a - 0.5) return allEvents[i]; }
+    return null;
+  }
+
+  // =============================================
+  // THREE.JS SCENE — with origin rebasing
+  // =============================================
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xdce3eb);
+  scene.fog = new THREE.FogExp2(0xdce3eb, 0.003);
+
+  const camera = new THREE.PerspectiveCamera(65, window.innerWidth/window.innerHeight, 0.1, 2000);
+  // Camera stays at origin, world moves around it
+  camera.position.set(0, 2, 0);
+  // Camera look direction is controlled by horizonIsPast toggle
+  camera.rotation.x = -0.35;
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  document.body.appendChild(renderer.domElement);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+  dirLight.position.set(50, 80, 30);
+  dirLight.castShadow = true;
+  dirLight.shadow.mapSize.set(2048, 2048);
+  dirLight.shadow.camera.far = 300;
+  dirLight.shadow.camera.left = -60; dirLight.shadow.camera.right = 60;
+  dirLight.shadow.camera.top = 60; dirLight.shadow.camera.bottom = -60;
+  scene.add(dirLight);
+  scene.add(new THREE.HemisphereLight(0xeef2f7, 0xb8c6d4, 0.5));
+
+  const TRACK_WIDTH = 10, HALF_WIDTH = 5;
+
+  // World container – we move this instead of the camera
+  const worldGroup = new THREE.Group();
+  scene.add(worldGroup);
+
+  // Ground (always centered on camera via worldGroup offset)
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(500, 500),
+    new THREE.MeshStandardMaterial({ color: 0xc8d0da, roughness: 1, metalness: 0 })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.y = -0.02;
+  ground.receiveShadow = true;
+  // Ground is added to scene directly and repositioned each frame
+  scene.add(ground);
+
+  // --- TRACK CHUNKS (relative to worldGroup) ---
+  function createTrackChunk(localStart, localEnd) {
+    const g = new THREE.Group();
+    const len = localEnd - localStart;
+    const bm = new THREE.Mesh(
+      new THREE.PlaneGeometry(TRACK_WIDTH, len),
+      new THREE.MeshStandardMaterial({ color: 0xeaeff4, roughness: 0.85, metalness: 0.05 })
+    );
+    bm.rotation.x = -Math.PI / 2;
+    bm.position.set(0, -0.01, (localStart + localEnd) / 2);
+    bm.receiveShadow = true;
+    g.add(bm);
+
+    const lmx = new THREE.LineBasicMaterial({ color: 0xa0b0c0, transparent: true, opacity: 0.5 });
+    for (let z = localStart; z <= localEnd; z += 1) {
+      g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-HALF_WIDTH, 0.005, z), new THREE.Vector3(HALF_WIDTH, 0.005, z)
+      ]), lmx));
+    }
+    const lmz = new THREE.LineBasicMaterial({ color: 0xa0b0c0, transparent: true, opacity: 0.5 });
+    for (let x = -HALF_WIDTH; x <= HALF_WIDTH; x += 1) {
+      g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(x, 0.005, localStart), new THREE.Vector3(x, 0.005, localEnd)
+      ]), lmz));
+    }
+    const em = new THREE.LineBasicMaterial({ color: 0x2979b0, transparent: true, opacity: 0.6 });
+    for (let s of [-1, 1]) {
+      g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(s * HALF_WIDTH, 0.02, localStart), new THREE.Vector3(s * HALF_WIDTH, 0.02, localEnd)
+      ]), em));
+    }
+    const mm = new THREE.LineBasicMaterial({ color: 0x1565c0, transparent: true, opacity: 0.5 });
+    for (let z = localStart; z <= localEnd; z += 50) {
+      if (z === 0 && localStart === 0) continue;
+      g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-HALF_WIDTH, 0.02, z), new THREE.Vector3(HALF_WIDTH, 0.02, z)
+      ]), mm));
+    }
+    return g;
+  }
+
+  const CHUNK_SIZE = 200;
+  // Chunks are keyed by their LOCAL offset (0, 200, 400, -200, etc.)
+  const chunks = new Map();
+
+  function updateChunks() {
+    // We always want chunks around local z=0 (camera is at origin)
+    const needed = new Set();
+    for (let o = -CHUNK_SIZE * 2; o <= CHUNK_SIZE * 3; o += CHUNK_SIZE) {
+      needed.add(o);
+    }
+    for (const [k, c] of chunks) {
+      if (!needed.has(k)) { worldGroup.remove(c); chunks.delete(k); }
+    }
+    for (const k of needed) {
+      if (!chunks.has(k)) {
+        const c = createTrackChunk(k, k + CHUNK_SIZE);
+        worldGroup.add(c);
+        chunks.set(k, c);
+      }
+    }
+  }
+
+  // --- LAMPPOSTS (created dynamically with chunks) ---
+  // Every 10 rows (10 tiles wide × 10 rows = 100 tiles) = normal lamppost
+  // Every 100 rows (10 × 100 = 1000 tiles) = tall lamppost (double height)
+  const LAMP_INTERVAL = 10; // every 10 rows
+  const TALL_EVERY = 10;    // every 10th lamppost is tall
+
+  const normalPostGeo = new THREE.CylinderGeometry(0.06, 0.1, 4, 6);
+  const tallPostGeo = new THREE.CylinderGeometry(0.08, 0.12, 8, 6);
+  const postMat = new THREE.MeshStandardMaterial({ color: 0x7090a8, roughness: 0.5, metalness: 0.2 });
+
+  const normalGlowGeo = new THREE.SphereGeometry(0.14, 8, 8);
+  const tallGlowGeo = new THREE.SphereGeometry(0.2, 8, 8);
+  const glowMat = new THREE.MeshBasicMaterial({ color: 0x2979b0 });
+
+  // Lamppost arm (horizontal bar at top)
+  const normalArmGeo = new THREE.CylinderGeometry(0.03, 0.03, 1.2, 4);
+  const tallArmGeo = new THREE.CylinderGeometry(0.04, 0.04, 1.5, 4);
+
+  function createLamppost(z, isTall) {
+    const group = new THREE.Group();
+    const height = isTall ? 8 : 4;
+    const pGeo = isTall ? tallPostGeo : normalPostGeo;
+    const gGeo = isTall ? tallGlowGeo : normalGlowGeo;
+    const aGeo = isTall ? tallArmGeo : normalArmGeo;
+    const armLen = isTall ? 1.5 : 1.2;
+
+    for (const s of [-1, 1]) {
+      const x = s * (HALF_WIDTH + 0.8);
+
+      // Pole
+      const pole = new THREE.Mesh(pGeo, postMat);
+      pole.position.set(x, height / 2, z);
+      pole.castShadow = true;
+      group.add(pole);
+
+      // Arm (horizontal, pointing inward over track)
+      const arm = new THREE.Mesh(aGeo, postMat);
+      arm.rotation.z = Math.PI / 2;
+      arm.position.set(x - s * (armLen / 2), height + 0.02, z);
+      group.add(arm);
+
+      // Glow at end of arm
+      const glow = new THREE.Mesh(gGeo, glowMat.clone());
+      glow.position.set(x - s * armLen, height + 0.02, z);
+      group.add(glow);
+    }
+    return group;
+  }
+
+  // Lampposts are generated per-chunk and stored alongside chunks
+  const lampChunks = new Map();
+
+  function createLampsForChunk(localStart, chunkOrigin) {
+    const group = new THREE.Group();
+    // Absolute range this chunk covers
+    const absStart = chunkOrigin + localStart;
+    const absEnd = absStart + CHUNK_SIZE;
+    // Find the first lamppost row >= absStart
+    const firstRow = Math.ceil(absStart / LAMP_INTERVAL) * LAMP_INTERVAL;
+    for (let absZ = firstRow; absZ < absEnd; absZ += LAMP_INTERVAL) {
+      const lampIndex = absZ / LAMP_INTERVAL;
+      const isTall = (lampIndex % TALL_EVERY === 0) && absZ !== 0;
+      const localZ = absZ - chunkOrigin; // place at local coordinate
+      group.add(createLamppost(localZ, isTall));
+    }
+    return group;
+  }
+
+  // --- HISTORICAL SIGNS ---
+  // Each sign is placed at year/10 on the Z axis (since 1 meter = 10 years)
+  // Signs alternate left/right side to avoid overlap
+  const SIGN_EVENTS = [
+    { year: 30, text: 'Internettet opfindes (1993)' },
+    { year: 50, text: 'Månen: "Et lille skridt..." (1969)' },
+    { year: 80, text: '2. Verdenskrig slutter (1945)' },
+    { year: 110, text: '1. Verdenskrig begynder (1914)' },
+    { year: 250, text: 'Den amerikanske revolution (1776)' },
+    { year: 350, text: 'Galileo og teleskopet (1609)' },
+    { year: 530, text: 'Columbus sejler over Atlanterhavet (1492)' },
+    { year: 560, text: 'Gutenberg opfinder bogtrykket (1440)' },
+    { year: 680, text: 'Djengis Khan grundlægger Mongolriget (1206)' },
+    { year: 1000, text: 'Vikingetiden (ca. 1000)' },
+    { year: 1400, text: 'Romerrigets storhedstid (ca. 100 e.Kr.)' },
+    { year: 1970, text: 'Kleopatras død (30 f.Kr.)' },
+    { year: 2070, text: 'Julius Cæsars død (44 f.Kr.)' },
+    { year: 2200, text: 'Qin-dynastiet forener Kina (221 f.Kr.)' },
+    { year: 2350, text: 'Alexander den Store (336 f.Kr.)' },
+    { year: 2500, text: 'Det Persiske Rige (500 f.Kr.)' },
+    { year: 2550, text: 'Buddha lever (ca. 500 f.Kr.)' },
+    { year: 3000, text: 'Jernalderen begynder (ca. 1000 f.Kr.)' },
+    { year: 3200, text: 'Skriften opfindes i Sumer (ca. 3200 f.Kr.)' },
+    { year: 3500, text: 'Bronzealderen begynder (ca. 3500 f.Kr.)' },
+    { year: 4550, text: 'Cheopspyramiden står færdig (ca. 2560 f.Kr.)' },
+    { year: 5000, text: 'Stonehenge bygges (ca. 3000 f.Kr.)' },
+    { year: 7000, text: 'Çatalhöyük – tidlig by (ca. 7000 f.Kr.)' },
+    { year: 9000, text: 'Agerbrug opfindes (ca. 9000 f.Kr.)' },
+    { year: 11000, text: 'Göbekli Tepe – ældste tempel (ca. 9000 f.Kr.)' },
+    { year: 11700, text: 'Sidste istid slutter' },
+    { year: 17000, text: 'Lascaux-hulemalerier' },
+    { year: 40000, text: 'Homo sapiens i Europa' },
+    { year: 70000, text: 'Toba-superudbrud' },
+    { year: 200000, text: 'Første Homo sapiens' },
+    { year: 2000000, text: 'Første stenværktøj' },
+    { year: 3200000, text: '"Lucy" lever i Afrika' },
+    { year: 5000000, text: 'Menneskelinjen adskilles fra aber' },
+    { year: 6000000, text: 'Middelhavet tørrer ud' },
+    { year: 10000000, text: 'Savannen spreder sig' },
+    { year: 20000000, text: 'Himalaya rejser sig' },
+    { year: 30000000, text: 'Antarktis fryser til' },
+    { year: 40000000, text: 'Første hvaler' },
+    { year: 55000000, text: 'PETM – ekstrem opvarmning' },
+    { year: 66000000, text: '☄ ASTEROIDEN – Dinosaurerne uddør' },
+    { year: 68000000, text: 'T. Rex – toprovdyr' },
+    { year: 100000000, text: 'Spinosaurus' },
+    { year: 150000000, text: 'Archaeopteryx – første fugl' },
+    { year: 155000000, text: 'Brachiosaurus & Diplodocus' },
+    { year: 201000000, text: 'Trias-Jura masseuddøen' },
+    { year: 230000000, text: 'Første dinosaurer opstår' },
+    { year: 252000000, text: '☠ "The Great Dying" – 96% uddør' },
+    { year: 300000000, text: 'Kulsumpene – fremtidens kul' },
+    { year: 375000000, text: 'Tiktaalik – fisk kravler på land' },
+    { year: 400000000, text: 'Dunkleosteus – 10m panserfisk' },
+    { year: 444000000, text: 'Ordovicium masseuddøen' },
+    { year: 530000000, text: 'Den Kambriske Eksplosion' },
+    { year: 620000000, text: '"Snowball Earth" slutter' },
+    { year: 2400000000, text: '"The Great Oxidation Event"' },
+    { year: 3500000000, text: 'Ældste fossiler – stromatolitter' },
+    { year: 3800000000, text: 'Første tegn på liv (Isua, Grønland)' },
+    { year: 4500000000, text: 'Månen dannes – Theia rammer Jorden' },
+    { year: 4600000000, text: 'Jorden dannes' },
+  ];
+
+  // Pre-sort and build a lookup: z position (meters) for each sign
+  const signData = SIGN_EVENTS.map((e, i) => ({
+    z: e.year / 10,  // convert years to track meters
+    text: e.text,
+    year: e.year,
+    side: (i % 2 === 0) ? -1 : 1 // alternate sides
+  }));
+
+  // Create a text texture using canvas
+  function createSignTexture(text, yearNum) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 512;
+    canvas.height = 128;
+
+    // Background
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.beginPath();
+    ctx.roundRect(4, 4, 504, 120, 10);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(4, 4, 504, 120, 10);
+    ctx.stroke();
+
+    // Year
+    ctx.fillStyle = '#1565c0';
+    ctx.font = 'bold 28px sans-serif';
+    ctx.fillText(formatYears(yearNum) + ' år', 20, 42);
+
+    // Text
+    ctx.fillStyle = '#222';
+    ctx.font = '22px sans-serif';
+    // Word wrap
+    const words = text.split(' ');
+    let line = '';
+    let y = 75;
+    for (const w of words) {
+      const test = line + w + ' ';
+      if (ctx.measureText(test).width > 470 && line) {
+        ctx.fillText(line, 20, y);
+        line = w + ' ';
+        y += 28;
+      } else {
+        line = test;
+      }
+    }
+    ctx.fillText(line, 20, y);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.minFilter = THREE.LinearFilter;
+    return tex;
+  }
+
+  // Create a 3D sign at a given Z
+  const signPoleGeo = new THREE.CylinderGeometry(0.02, 0.02, 1, 4);
+  const signPoleMat = new THREE.MeshStandardMaterial({ color: 0x556677, roughness: 0.6, metalness: 0.1 });
+
+  function createSign(sd) {
+    const group = new THREE.Group();
+    const poleHeight = 3.5;
+    const signWidth = 3.2;
+    const signHeight = 0.8;
+    const x = sd.side * (HALF_WIDTH * 0.6);
+
+    // Pole
+    const pole = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.025, 0.025, poleHeight, 4),
+      signPoleMat
+    );
+    pole.position.set(x, poleHeight / 2, sd.z);
+    group.add(pole);
+
+    // Sign board — two planes back-to-back so text reads correctly from both sides
+    const tex = createSignTexture(sd.text, sd.year);
+    const boardGeo = new THREE.PlaneGeometry(signWidth, signHeight);
+    const boardMat = new THREE.MeshBasicMaterial({ map: tex, transparent: true });
+    const yPos = poleHeight + signHeight / 2 + 0.05;
+
+    // Front face (facing -Z, towards camera when horizonIsPast)
+    const boardFront = new THREE.Mesh(boardGeo, boardMat);
+    boardFront.position.set(x, yPos, sd.z - 0.01);
+    boardFront.rotation.y = Math.PI;
+    group.add(boardFront);
+
+    // Back face (facing +Z, towards camera when looking the other way)
+    const boardBack = new THREE.Mesh(boardGeo, boardMat);
+    boardBack.position.set(x, yPos, sd.z + 0.01);
+    boardBack.rotation.y = 0;
+    group.add(boardBack);
+
+    return group;
+  }
+
+  // Sign chunks
+  const signChunks = new Map();
+
+  function createSignsForChunk(localStart, chunkOrigin) {
+    const group = new THREE.Group();
+    // localStart is the local offset (e.g. -400, -200, 0, 200, 400)
+    // The absolute track range this chunk covers:
+    const absStart = chunkOrigin + localStart;
+    const absEnd = absStart + CHUNK_SIZE;
+    for (const sd of signData) {
+      if (sd.z >= absStart && sd.z < absEnd) {
+        // Place sign at LOCAL position (sd.z - chunkOrigin)
+        const localZ = sd.z - chunkOrigin;
+        group.add(createSign({ ...sd, z: localZ }));
+      }
+    }
+    return group;
+  }
+  const starCount = 1500, sp = new Float32Array(starCount * 3);
+  for (let i = 0; i < starCount; i++) { sp[i*3]=(Math.random()-0.5)*600; sp[i*3+1]=Math.random()*150+10; sp[i*3+2]=(Math.random()-0.5)*600; }
+  const starGeo = new THREE.BufferGeometry();
+  starGeo.setAttribute('position', new THREE.BufferAttribute(sp, 3));
+  const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0x8899aa, size: 0.4, sizeAttenuation: true }));
+  scene.add(stars);
+
+  // =============================================
+  // STATE
+  // positionZ = meters on the track. Each meter = 1 row = 10 tiles = 10 years.
+  // So years = positionZ * 10.
+  // Speed is in years/s, so track movement = speed / 10 meters/s.
+  // sliderValue drives both speed AND direction.
+  // Positive = fly forward on track, negative = fly backward.
+  // =============================================
+  let currentSpeed = 0;     // absolute years per second
+  let trackDirection = 0;   // +1, -1, or 0
+  let positionZ = 0;        // meters on track
+  let horizonIsPast = true;
+  let lastTime = performance.now();
+  let lastPeriodName = '';
+
+  function getYears() { return positionZ * 10; }
+
+  // Convert slider value to actual speed (with 100K jump at extremes)
+  function sliderToSpeed(val) {
+    const abs = Math.abs(val);
+    if (abs > 10000) return 100000; // snap to 100K at max
+    return abs;
+  }
+
+  // DOM
+  const btnUp = document.getElementById('btn-up'), btnDown = document.getElementById('btn-down');
+  const posDisplay = document.getElementById('pos-display'), speedDisplay = document.getElementById('speed-display');
+  const speedBtns = document.querySelectorAll('.speed-btn');
+  const jumpInput = document.getElementById('jump-input'), jumpBtn = document.getElementById('jump-btn');
+  const etaLine = document.getElementById('eta-line');
+  const geoEra = document.getElementById('geo-era'), geoPeriod = document.getElementById('geo-period');
+  const geoYears = document.getElementById('geo-years'), geoContent = document.getElementById('geo-content');
+  const speedSlider = document.getElementById('speed-slider');
+  const sliderLabel = document.getElementById('slider-label');
+
+  function applySlider(val) {
+    const speed = sliderToSpeed(val);
+    const dir = val > 0 ? 1 : val < 0 ? -1 : 0;
+    currentSpeed = speed;
+    trackDirection = dir;
+    const displaySpeed = speed === 100000 ? '100.000' : speed.toLocaleString('da-DK');
+    if (dir === 0) {
+      speedDisplay.textContent = '0';
+      sliderLabel.textContent = 'Stoppet';
+    } else if (dir > 0) {
+      speedDisplay.textContent = displaySpeed;
+      sliderLabel.textContent = displaySpeed + ' år/s → Fortid';
+    } else {
+      speedDisplay.textContent = displaySpeed;
+      sliderLabel.textContent = displaySpeed + ' år/s ← Nutid';
+    }
+    // Highlight matching preset
+    speedBtns.forEach(b => {
+      const bv = parseInt(b.dataset.speed);
+      b.classList.toggle('active', bv === val || (bv === 0 && val === 0));
+    });
+    updateETA();
+  }
+
+  speedSlider.addEventListener('input', () => {
+    applySlider(parseInt(speedSlider.value));
+  });
+
+  // Preset buttons set slider and apply
+  speedBtns.forEach(btn => { btn.addEventListener('click', () => {
+    const val = parseInt(btn.dataset.speed);
+    speedSlider.value = val;
+    applySlider(val);
+  }); });
+
+  // Camera vertical movement
+  let verticalDirection = 0;
+  let cameraY = 2;
+
+  function updateVerticalButtons() {
+    btnUp.classList.toggle('active', verticalDirection === 1);
+    btnDown.classList.toggle('active', verticalDirection === -1);
+  }
+
+  btnUp.addEventListener('click', () => { verticalDirection = verticalDirection===1?0:1; updateVerticalButtons(); });
+  btnDown.addEventListener('click', () => { verticalDirection = verticalDirection===-1?0:-1; updateVerticalButtons(); });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.target === jumpInput) return;
+    if (e.key==='ArrowUp'||e.key==='w') { verticalDirection=verticalDirection===1?0:1; updateVerticalButtons(); }
+    if (e.key==='ArrowDown'||e.key==='s') { verticalDirection=verticalDirection===-1?0:-1; updateVerticalButtons(); }
+    if (e.key==='n'||e.key==='N') { const ev=findNextEvent(getYears()); if(ev)jumpToYear(ev.y); }
+    if (e.key==='f'||e.key==='F') { const ev=findPrevEvent(getYears()); if(ev)jumpToYear(ev.y); }
+  });
+
+  // Horizon direction toggle
+  const horizonBtn = document.getElementById('horizon-btn');
+  function updateHorizonLabel() {
+    horizonBtn.innerHTML = horizonIsPast
+      ? 'Horisont: Fortid &#8594;'
+      : 'Horisont: Nutid &#8592;';
+  }
+  horizonBtn.addEventListener('click', () => {
+    horizonIsPast = !horizonIsPast;
+    updateHorizonLabel();
+    camera.rotation.set(
+      horizonIsPast ? -0.35 : 0.35,
+      horizonIsPast ? 0 : Math.PI,
+      0
+    );
+  });
+
+  function parseNumber(s) { return parseInt(s.replace(/[\s.]/g, '')); }
+
+  function jumpToYear(y) {
+    positionZ = y / 10;
+    speedSlider.value = 0;
+    applySlider(0);
+    lastPeriodName = '';
+    updateGeoPanel(getYears());
+    updateETA();
+  }
+
+  jumpBtn.addEventListener('click', () => {
+    const val = parseNumber(jumpInput.value);
+    if (!isNaN(val) && val > 0) jumpToYear(val);
+  });
+  jumpInput.addEventListener('keydown', (e) => { if (e.key==='Enter') jumpBtn.click(); });
+
+  function formatDuration(ts) {
+    if (!isFinite(ts)||ts<0) return '—';
+    const y=Math.floor(ts/(365.25*24*3600)); let r=ts-y*365.25*24*3600;
+    const d=Math.floor(r/86400);r-=d*86400;const h=Math.floor(r/3600);r-=h*3600;
+    const m=Math.floor(r/60),s=Math.floor(r-m*60),p=[];
+    if(y>0)p.push(y.toLocaleString('da-DK')+' år');if(d>0)p.push(d+' dage');
+    if(h>0)p.push(h+' t');if(m>0)p.push(m+' min');
+    if(p.length===0||(y===0&&d===0))p.push(s+' sek');
+    return p.join(', ');
+  }
+
+  function updateETA() {
+    const val = parseNumber(jumpInput.value||'0');
+    if (isNaN(val)||val<=0) { etaLine.innerHTML=''; return; }
+    const currentYears = getYears();
+    const remaining = Math.max(0, val - currentYears);
+    const secs = remaining / currentSpeed;
+    etaLine.innerHTML = `Resterende: <span class="value">${formatYears(remaining)}</span> år<br>Tid: <span class="value">${formatDuration(secs)}</span>`;
+  }
+  jumpInput.addEventListener('input', updateETA);
+
+  // --- GEO PANEL ---
+  function updateGeoPanel(y) {
+    const absY = Math.abs(y);
+    const period = getPeriodForYear(y);
+    if (period.name === lastPeriodName) return;
+    lastPeriodName = period.name;
+
+    geoEra.textContent = period.era;
+    geoPeriod.textContent = period.name;
+    geoPeriod.style.color = period.color;
+    geoYears.style.color = period.color;
+    geoYears.textContent = formatYears(period.from) + ' – ' + formatYears(period.to) + ' år siden';
+
+    let html = `<div class="geo-fact" style="margin-bottom:10px">${period.desc}</div><div class="geo-divider"></div>`;
+    html += '<div class="geo-section-title">Livsformer</div><div style="display:flex;flex-wrap:wrap;gap:0">';
+    for (const l of period.life) html += `<span class="geo-highlight">${l}</span>`;
+    html += '</div>';
+
+    if (period.events && period.events.length > 0) {
+      html += '<div class="geo-section-title" style="display:flex;align-items:center;justify-content:space-between;">Begivenheder <span style="display:flex;gap:6px;">';
+      html += '<button class="event-nav-btn" id="prev-event-btn">&#8592; Forrige</button>';
+      html += '<button class="event-nav-btn" id="next-event-btn">Næste &#8594;</button>';
+      html += '</span></div>';
+      for (const e of period.events) {
+        const isCur = Math.abs(e.y - absY) < 2;
+        html += `<div class="geo-event" style="border-color:${period.color};${isCur?'background:rgba(255,255,255,0.06);':''}" data-jump-year="${e.y}"><span style="color:${period.color};font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px">${formatYears(e.y)} år siden</span><br>${e.t}</div>`;
+      }
+    }
+
+    if (period.civs && period.civs.length > 0) {
+      html += '<div class="geo-section-title">Civilisationer</div><div style="display:flex;flex-wrap:wrap;gap:0">';
+      for (const c of period.civs) html += `<span class="geo-highlight">${c}</span>`;
+      html += '</div>';
+    }
+
+    geoContent.innerHTML = html;
+
+    // Bind nav buttons
+    const nb = document.getElementById('next-event-btn');
+    const pb = document.getElementById('prev-event-btn');
+    if (nb) nb.addEventListener('click', () => { const e=findNextEvent(getYears()); if(e)jumpToYear(e.y); });
+    if (pb) pb.addEventListener('click', () => { const e=findPrevEvent(getYears()); if(e)jumpToYear(e.y); });
+
+    // Click-to-jump on events
+    geoContent.querySelectorAll('[data-jump-year]').forEach(el => {
+      el.addEventListener('click', () => { const yr=parseInt(el.dataset.jumpYear); if(!isNaN(yr))jumpToYear(yr); });
+    });
+  }
+
+  updateGeoPanel(getYears());
+  applySlider(0);
+
+  // =============================================
+  // ANIMATION — origin rebasing
+  // =============================================
+  // =============================================
+  // SPEEDOMETERS — analog dials showing year position
+  // =============================================
+  const speedos = [
+    { canvas: document.getElementById('speedo-100'), range: 100, label: '100 år' },
+    { canvas: document.getElementById('speedo-1000'), range: 1000, label: '1.000 år' },
+    { canvas: document.getElementById('speedo-100000'), range: 100000, label: '100.000 år' },
+    { canvas: document.getElementById('speedo-1000000'), range: 1000000, label: '1 mio. år' },
+  ];
+
+  function drawSpeedo(s, years) {
+    const ctx = s.canvas.getContext('2d');
+    const w = s.canvas.width, h = s.canvas.height;
+    const cx = w / 2, cy = h / 2 + 4;
+    const r = 40;
+    ctx.clearRect(0, 0, w, h);
+
+    // Fraction around the dial (0-1)
+    const fraction = (years % s.range) / s.range;
+    const rotations = Math.floor(years / s.range);
+
+    // 12 o'clock = top = start. Clockwise.
+    // Angle: 0 fraction = top (-PI/2), 1 fraction = full circle back to top
+    const startAngle = -Math.PI / 2;
+
+    // Tick marks (12 ticks around full circle)
+    for (let i = 0; i < 12; i++) {
+      const a = startAngle + (i / 12) * Math.PI * 2;
+      const isMajor = (i % 3 === 0);
+      const innerR = isMajor ? r - 10 : r - 6;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * innerR, cy + Math.sin(a) * innerR);
+      ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+      ctx.strokeStyle = isMajor ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.12)';
+      ctx.lineWidth = isMajor ? 1.5 : 1;
+      ctx.stroke();
+    }
+
+    // Full circle track
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    // Progress arc (clockwise from top)
+    const needleAngle = startAngle + fraction * Math.PI * 2;
+    if (fraction > 0.001) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, startAngle, needleAngle, false);
+      ctx.strokeStyle = '#1565c0';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+
+    // Needle
+    const nx = cx + Math.cos(needleAngle) * (r - 8);
+    const ny = cy + Math.sin(needleAngle) * (r - 8);
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(nx, ny);
+    ctx.strokeStyle = '#c62828';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Center dot
+    ctx.beginPath();
+    ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#c62828';
+    ctx.fill();
+
+    // Label (range) above center
+    ctx.font = 'bold 10px "JetBrains Mono", monospace';
+    ctx.fillStyle = '#1565c0';
+    ctx.textAlign = 'center';
+    ctx.fillText(s.label, cx, cy - 12);
+
+    // Rotation count below center
+    if (rotations > 0) {
+      ctx.font = 'bold 9px "JetBrains Mono", monospace';
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.fillText('×' + rotations.toLocaleString('da-DK'), cx, cy + 14);
+    }
+  }
+
+  function updateSpeedos(years) {
+    for (const s of speedos) drawSpeedo(s, years);
+  }
+
+  let frameCount = 0;
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const now = performance.now();
+    const dt = Math.min((now - lastTime) / 1000, 0.05);
+    lastTime = now;
+
+    if (trackDirection !== 0) {
+      // Speed is in years/s. 10 years = 1 meter on track.
+      // Positive slider = trackDirection +1 = positionZ increases = deeper into past.
+      // Horizon setting only affects camera view direction, not movement.
+      const trackSpeed = currentSpeed / 10;
+      positionZ += trackDirection * trackSpeed * dt;
+    }
+    if (positionZ < 0) positionZ = 0;
+
+    // Vertical camera movement
+    if (verticalDirection !== 0) {
+      cameraY += verticalDirection * 5 * dt; // 5 m/s vertical speed
+      if (cameraY < 0.5) cameraY = 0.5;     // min height
+      camera.position.y = cameraY;
+    }
+
+    // ORIGIN REBASING:
+    // Camera stays at (0, 2, 0). We offset the worldGroup so that
+    // local chunk z=0 lines up with wherever the camera "should" be.
+    // We compute a fractional offset within the current chunk neighborhood.
+    const chunkOrigin = Math.floor(positionZ / CHUNK_SIZE) * CHUNK_SIZE;
+    const localOffset = positionZ - chunkOrigin;
+
+    // Move worldGroup so that the camera (at z=0) sees the right position
+    worldGroup.position.z = -localOffset;
+
+    // Rebuild chunks centered on localOffset=0
+    // Chunks are always placed at local coords 0, ±200, ±400, etc.
+    // But we need to rebuild when chunkOrigin changes.
+    // We track this:
+    if (worldGroup.userData.lastChunkOrigin !== chunkOrigin) {
+      // Clear and rebuild all chunk types
+      for (const [k, c] of chunks) { worldGroup.remove(c); }
+      chunks.clear();
+      for (const [k, c] of lampChunks) { worldGroup.remove(c); }
+      lampChunks.clear();
+      for (const [k, c] of signChunks) { worldGroup.remove(c); }
+      signChunks.clear();
+
+      const needed = [];
+      for (let o = -CHUNK_SIZE * 2; o <= CHUNK_SIZE * 3; o += CHUNK_SIZE) {
+        needed.push(o);
+      }
+      for (const k of needed) {
+        const c = createTrackChunk(k, k + CHUNK_SIZE);
+        worldGroup.add(c);
+        chunks.set(k, c);
+
+        // Lampposts for this chunk
+        const lc = createLampsForChunk(k, chunkOrigin);
+        worldGroup.add(lc);
+        lampChunks.set(k, lc);
+
+        // Signs for this chunk
+        const sc = createSignsForChunk(k, chunkOrigin);
+        worldGroup.add(sc);
+        signChunks.set(k, sc);
+      }
+
+      worldGroup.userData.lastChunkOrigin = chunkOrigin;
+    }
+
+    // Ground follows camera
+    ground.position.z = 0;
+
+    // Stars stay around camera
+    stars.position.z = 0;
+
+    // Light follows
+    dirLight.position.z = 30;
+    dirLight.target.position.z = 0;
+    dirLight.target.updateMatrixWorld();
+
+    // HUD — show years
+    const years = getYears();
+    posDisplay.textContent = formatYears(years);
+
+    // Speedometers
+    if (frameCount % 3 === 0) updateSpeedos(years);
+
+    // Update ETA periodically
+    if (frameCount % 30 === 0 && jumpInput.value) updateETA();
+
+    frameCount++;
+    if (frameCount % 10 === 0) updateGeoPanel(years);
+
+    renderer.render(scene, camera);
+  }
+
+  worldGroup.userData.lastChunkOrigin = -Infinity; // force initial build
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+})();
+</script>
+</body>
+</html>

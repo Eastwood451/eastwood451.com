@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 560" role="img" aria-labelledby="title desc">
+  <title id="title">Geologisk Tidssimulator</title>
+  <desc id="desc">Et stiliseret preview med en tidsbane, geologiske perioder og et fartpanel.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#dce7f2"/>
+      <stop offset="0.55" stop-color="#eef3f8"/>
+      <stop offset="1" stop-color="#c7d4e1"/>
+    </linearGradient>
+    <linearGradient id="track" x1="0" x2="1">
+      <stop offset="0" stop-color="#1f3b4d"/>
+      <stop offset="0.5" stop-color="#2a6f97"/>
+      <stop offset="1" stop-color="#10324a"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.92"/>
+      <stop offset="1" stop-color="#f0f5fa" stop-opacity="0.78"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-30%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#163042" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+  <rect width="1400" height="560" fill="url(#sky)"/>
+  <g opacity="0.28" stroke="#6f8396" stroke-width="1">
+    <path d="M0 440H1400"/>
+    <path d="M0 380H1400"/>
+    <path d="M0 320H1400"/>
+    <path d="M0 260H1400"/>
+    <path d="M0 200H1400"/>
+    <path d="M180 0V560"/>
+    <path d="M360 0V560"/>
+    <path d="M540 0V560"/>
+    <path d="M720 0V560"/>
+    <path d="M900 0V560"/>
+    <path d="M1080 0V560"/>
+    <path d="M1260 0V560"/>
+  </g>
+  <path d="M-80 500 C220 380 390 360 610 408 C815 452 1018 440 1480 300 L1480 610 L-80 610 Z" fill="#8da168" opacity="0.55"/>
+  <path d="M88 504 C338 430 572 391 818 361 C1034 335 1208 285 1390 206" fill="none" stroke="#102434" stroke-width="86" stroke-linecap="round" opacity="0.92"/>
+  <path d="M88 504 C338 430 572 391 818 361 C1034 335 1208 285 1390 206" fill="none" stroke="url(#track)" stroke-width="64" stroke-linecap="round"/>
+  <path d="M88 504 C338 430 572 391 818 361 C1034 335 1208 285 1390 206" fill="none" stroke="#f3f7fb" stroke-width="5" stroke-dasharray="22 28" stroke-linecap="round" opacity="0.8"/>
+  <g filter="url(#shadow)">
+    <rect x="42" y="36" width="354" height="172" rx="18" fill="url(#panel)" stroke="#ffffff" stroke-opacity="0.85"/>
+    <text x="72" y="84" font-family="JetBrains Mono, Consolas, monospace" font-size="22" font-weight="700" fill="#1565c0">NUVAERENDE POSITION</text>
+    <text x="72" y="128" font-family="Outfit, Arial, sans-serif" font-size="42" font-weight="800" fill="#1f2d3a">Geologisk Tid</text>
+    <text x="72" y="166" font-family="JetBrains Mono, Consolas, monospace" font-size="24" font-weight="700" fill="#516577">0 - 4.540.000.000 aar</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="1010" y="48" width="334" height="258" rx="18" fill="url(#panel)" stroke="#ffffff" stroke-opacity="0.85"/>
+    <text x="1042" y="96" font-family="Outfit, Arial, sans-serif" font-size="34" font-weight="800" fill="#1f2d3a">Tidssimulator</text>
+    <text x="1042" y="132" font-family="JetBrains Mono, Consolas, monospace" font-size="18" fill="#1565c0">100 aar/s</text>
+    <text x="1042" y="168" font-family="JetBrains Mono, Consolas, monospace" font-size="18" fill="#1565c0">1.000 aar/s</text>
+    <text x="1042" y="204" font-family="JetBrains Mono, Consolas, monospace" font-size="18" fill="#1565c0">100.000 aar/s</text>
+    <rect x="1042" y="226" width="252" height="38" rx="10" fill="#1565c0" opacity="0.14"/>
+    <text x="1062" y="252" font-family="JetBrains Mono, Consolas, monospace" font-size="18" font-weight="700" fill="#1565c0">1 mio. aar/s</text>
+  </g>
+  <g font-family="JetBrains Mono, Consolas, monospace" font-size="18" font-weight="700">
+    <rect x="244" y="398" width="150" height="42" rx="10" fill="#ffffff" opacity="0.86"/>
+    <text x="271" y="425" fill="#1f2d3a">Nutid</text>
+    <rect x="562" y="346" width="178" height="42" rx="10" fill="#ffffff" opacity="0.86"/>
+    <text x="587" y="373" fill="#1f2d3a">Jurassic</text>
+    <rect x="820" y="300" width="186" height="42" rx="10" fill="#ffffff" opacity="0.86"/>
+    <text x="846" y="327" fill="#1f2d3a">Cambrian</text>
+  </g>
+  <text x="64" y="514" font-family="Outfit, Arial, sans-serif" font-size="54" font-weight="900" fill="#ffffff" opacity="0.92">Geologisk Tidssimulator</text>
+</svg>
