@@ -7,7 +7,7 @@
     <style>
       :root {
         --bg: #07090d;
-        --surface: rgba(10, 15, 22, 0.74);
+        --surface: rgba(10, 15, 22, 0.78);
         --line: rgba(255, 255, 255, 0.18);
         --text: #f5f8fc;
         --muted: #a8b6c6;
@@ -49,7 +49,7 @@
 
       .intro {
         max-width: 760px;
-        margin-bottom: 22px;
+        margin-bottom: 24px;
       }
 
       h1 {
@@ -67,75 +67,80 @@
         line-height: 1.55;
       }
 
-      .engine-link {
-        position: relative;
-        display: block;
+      .app-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, 200px);
+        gap: 18px;
+        align-items: start;
+      }
+
+      .app-button {
+        display: grid;
+        grid-template-rows: 144px 56px;
         overflow: hidden;
-        margin-top: 18px;
-        min-height: 430px;
+        width: 200px;
+        height: 200px;
         border: 1px solid var(--line);
         border-radius: 8px;
         color: inherit;
         background: #111821;
         text-decoration: none;
-        box-shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.35);
+        transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
       }
 
-      .engine-link:first-of-type {
-        margin-top: 0;
-      }
-
-      .engine-link:focus-visible {
+      .app-button:focus-visible {
         outline: 3px solid var(--blue);
         outline-offset: 4px;
       }
 
-      .engine-link img {
+      .app-button:hover,
+      .app-button:focus-visible {
+        transform: translateY(-3px);
+        border-color: rgba(30, 183, 255, 0.48);
+        box-shadow: 0 22px 54px rgba(0, 0, 0, 0.46);
+      }
+
+      .app-button img {
         display: block;
         width: 100%;
-        height: 100%;
-        min-height: 430px;
+        height: 144px;
         object-fit: cover;
-        transition: transform 420ms ease, filter 420ms ease;
+        transition: transform 220ms ease, filter 220ms ease;
       }
 
-      .engine-link.compact,
-      .engine-link.compact img {
-        min-height: 320px;
+      .app-button:hover img,
+      .app-button:focus-visible img {
+        transform: scale(1.04);
+        filter: saturate(1.12) contrast(1.08);
       }
 
-      .engine-link:hover img,
-      .engine-link:focus-visible img {
-        transform: scale(1.035);
-        filter: saturate(1.1) contrast(1.08);
-      }
-
-      .overlay {
-        position: absolute;
-        inset: 0;
-        display: grid;
-        align-content: end;
-        padding: 28px;
-        background: linear-gradient(180deg, rgba(7, 9, 13, 0.02), rgba(7, 9, 13, 0.86));
-      }
-
-      .launch {
-        display: inline-flex;
+      .app-label {
+        display: flex;
         align-items: center;
-        gap: 12px;
-        width: fit-content;
-        max-width: 100%;
-        padding: 12px 16px;
-        border: 1px solid rgba(255, 255, 255, 0.22);
-        border-radius: 8px;
+        justify-content: space-between;
+        gap: 8px;
+        min-width: 0;
+        height: 56px;
+        padding: 0 12px;
+        border-top: 1px solid var(--line);
         background: var(--surface);
-        backdrop-filter: blur(14px);
+        color: var(--text);
+        font-size: 0.88rem;
         font-weight: 800;
+        line-height: 1.15;
       }
 
-      .launch span {
+      .app-label span:first-child {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .arrow {
+        flex: 0 0 auto;
         color: var(--blue);
-        font-size: 1.4rem;
+        font-size: 1.2rem;
         line-height: 1;
       }
 
@@ -145,13 +150,14 @@
           padding: 28px 0;
         }
 
-        .engine-link,
-        .engine-link img {
-          min-height: 360px;
+        .app-grid {
+          grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+          gap: 14px;
         }
 
-        .overlay {
-          padding: 18px;
+        .app-button {
+          width: 100%;
+          height: 200px;
         }
       }
     </style>
@@ -163,40 +169,32 @@
         <p>Vaelg et projekt og aabn det direkte i browseren.</p>
       </section>
 
-      <a class="engine-link" href="jetmotor.html" aria-label="Aabn den interaktive 3D-jetmotor">
-        <img src="jet_engine.jpg" alt="Jetmotor" />
-        <span class="overlay">
-          <span class="launch">Aabn 3D-jetmotoren <span aria-hidden="true">&rarr;</span></span>
-        </span>
-      </a>
+      <nav class="app-grid" aria-label="Projektoversigt">
+        <a class="app-button" href="jetmotor.html" aria-label="Aabn den interaktive 3D-jetmotor">
+          <img src="jet_engine.jpg" alt="Jetmotor" />
+          <span class="app-label"><span>3D-jetmotor</span><span class="arrow" aria-hidden="true">&rarr;</span></span>
+        </a>
 
-      <a class="engine-link compact" href="calculus/" aria-label="Aabn Calculus Træner">
-        <img src="calculus_preview.png" alt="Calculus Træner" />
-        <span class="overlay">
-          <span class="launch">Aabn Calculus Træner <span aria-hidden="true">&rarr;</span></span>
-        </span>
-      </a>
+        <a class="app-button" href="calculus/" aria-label="Aabn Calculus Traener">
+          <img src="calculus_preview.png" alt="Calculus Traener" />
+          <span class="app-label"><span>Calculus Traener</span><span class="arrow" aria-hidden="true">&rarr;</span></span>
+        </a>
 
-      <a class="engine-link compact" href="large-number-visualizer/" aria-label="Aabn Large Number Visualizer">
-        <img src="large-number-visualizer/133 meter.png" alt="Kortbillede til Large Number Visualizer" />
-        <span class="overlay">
-          <span class="launch">Aabn Large Number Visualizer <span aria-hidden="true">&rarr;</span></span>
-        </span>
-      </a>
+        <a class="app-button" href="large-number-visualizer/" aria-label="Aabn Large Number Visualizer">
+          <img src="large-number-visualizer/133 meter.png" alt="Kortbillede til Large Number Visualizer" />
+          <span class="app-label"><span>Large Number</span><span class="arrow" aria-hidden="true">&rarr;</span></span>
+        </a>
 
-      <a class="engine-link compact" href="biology/" aria-label="Aabn Biology">
-        <img src="biology/Tree of life taksonomi dansk engelsk 78ef38e9-9120-4906-b26c-a301bdaa66fd.png" alt="Biologisk klassifikation" />
-        <span class="overlay">
-          <span class="launch">Aabn Biology <span aria-hidden="true">&rarr;</span></span>
-        </span>
-      </a>
+        <a class="app-button" href="biology/" aria-label="Aabn Biology">
+          <img src="biology/Tree of life taksonomi dansk engelsk 78ef38e9-9120-4906-b26c-a301bdaa66fd.png" alt="Biologisk klassifikation" />
+          <span class="app-label"><span>Biology</span><span class="arrow" aria-hidden="true">&rarr;</span></span>
+        </a>
 
-      <a class="engine-link compact" href="time-travel/" aria-label="Aabn Geologisk Tidssimulator">
-        <img src="time-travel-preview.svg" alt="Geologisk Tidssimulator" />
-        <span class="overlay">
-          <span class="launch">Aabn Tidsrejse <span aria-hidden="true">&rarr;</span></span>
-        </span>
-      </a>
+        <a class="app-button" href="time-travel/" aria-label="Aabn Geologisk Tidssimulator">
+          <img src="time-travel-preview.svg" alt="Geologisk Tidssimulator" />
+          <span class="app-label"><span>Tidsrejse</span><span class="arrow" aria-hidden="true">&rarr;</span></span>
+        </a>
+      </nav>
     </main>
   </body>
 </html>
