@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolution Timeline Explorer</title>
+    <meta name="description" content="Explore the step-by-step evolution of various animals.">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="background-effects">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <main class="container">
+        <header>
+            <h1>Evolutionary Timeline</h1>
+            <p>Select an animal to trace its ancestral lineage</p>
+            
+            <div class="custom-select-wrapper">
+                <select id="animal-select" class="custom-select">
+                    <option value="" disabled selected>Select an animal...</option>
+                    <option value="human">Human (Homo sapiens)</option>
+                    <option value="horse">Horse (Equus)</option>
+                    <option value="eagle">Bald Eagle (Haliaeetus leucocephalus)</option>
+                </select>
+                <div class="select-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+            </div>
+        </header>
+
+        <section id="timeline-container" class="timeline-container hidden">
+            <!-- Timeline items injected via JS -->
+        </section>
+    </main>
+
+    <script src="app.js?v=2"></script>
+</body>
+</html>

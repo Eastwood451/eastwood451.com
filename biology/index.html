@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Livets Træ – Biologisk Klassifikation af Dyr</title>
+  
+  <!-- Skrifttyper fra Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="theme-lion">
+
+  <!-- Baggrundsglød til moderne visuel stil -->
+  <div class="bg-glow-container">
+    <div class="bg-glow glow-1"></div>
+    <div class="bg-glow glow-2"></div>
+  </div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-logo">
+        <span class="logo-emoji">🌿</span>
+        <h1>Livets Træ</h1>
+      </div>
+      <p class="header-tagline">Udforsk og lær om den biologiske klassifikation og systematik af 17 fascinerende dyr</p>
+      
+      <!-- Navigation / Skift Visning -->
+      <div class="header-actions">
+        <div class="view-toggle">
+          <button id="view-tree-btn" class="btn btn-primary">🌳 Livets Træ</button>
+          <button id="view-quiz-btn" class="btn btn-secondary">🎮 Quiz Modul</button>
+        </div>
+        <button id="clade-info-btn" class="btn btn-secondary" style="margin-left: 1rem;">
+          <span class="btn-icon">🧬</span> Hvad er en Klad?
+        </button>
+      </div>
+    </header>
+
+    <!-- Hovedlayout -->
+    <main class="app-main">
+      
+      <!-- Sektion 1: Dyrevælger -->
+      <section class="section-animals" id="animals-section">
+        <div class="section-header">
+          <h2>1. Vælg et dyr for at undersøge dets taksonomi</h2>
+          <p class="section-desc">Se hvordan dyrene grupperes sammen baseret på fælles evolutionære træk.</p>
+        </div>
+        
+        <div class="animal-grid" id="animal-grid">
+          <!-- Dynamiske kort genereres af JS -->
+        </div>
+      </section>
+
+      <!-- Sektion 2: Interaktiv Visualisering -->
+      <section class="section-visualizer" id="visualizer-section">
+        
+        <div class="visualizer-showcase">
+          <div class="showcase-info">
+            <span class="showcase-label">Valgt dyr til undersøgelse:</span>
+            <div class="showcase-animal">
+              <img id="active-animal-icon" class="showcase-avatar" src="images/lion.jpg" alt="Løve">
+              <h2 id="active-animal-name" class="showcase-name">Løve</h2>
+            </div>
+          </div>
+          <div class="showcase-tip">
+            💡 <em>Klik på de forskellige niveauer i den lodrette sti for at se alternative undergrupper.</em>
+          </div>
+        </div>
+
+        <div class="visualizer-grid">
+          <!-- Venstre kolonne: Lodret taksonomisk sti -->
+          <div class="column-lineage">
+            <!-- Animal Hero Card -->
+            <div class="animal-hero-card">
+              <img id="active-animal-hero-img" src="images/lion.jpg" alt="Løve" class="animal-hero-img">
+              <div class="animal-hero-overlay">
+                <span id="active-animal-hero-scientific" class="animal-hero-scientific">Panthera leo</span>
+              </div>
+            </div>
+
+            <h3 class="column-title">Taksonomisk Linje</h3>
+            <p class="column-desc">Fra det mest generelle (Domæne) til det mest specifikke (Art).</p>
+            
+            <div class="stepper" id="stepper-container">
+              <!-- Dynamisk sti genereres af JS -->
+            </div>
+          </div>
+
+          <!-- Højre kolonne: Detaljer om det valgte niveau -->
+          <div class="column-details">
+            
+            <!-- Del A: Hvad betyder niveauet generelt -->
+            <div class="detail-card rank-explanation-card">
+              <div class="rank-badge" id="detail-rank-title">Række (Phylum)</div>
+              <p class="rank-meaning-text" id="detail-rank-meaning">Inddeler riget efter dyrenes overordnede kropsplan.</p>
+              <div class="rank-etymology" id="detail-rank-etymology">Etymologi: ...</div>
+            </div>
+
+            <!-- Del B: Specifikke oplysninger om det valgte taxon -->
+            <div class="detail-card taxon-card">
+              <div class="taxon-card-header">
+                <span class="taxon-label">Valgt gruppe på dette niveau:</span>
+                <h3 id="detail-taxon-danish" class="taxon-danish">Leddyr</h3>
+                <span id="detail-taxon-latin" class="taxon-latin">Arthropoda</span>
+              </div>
+              <p id="detail-taxon-desc" class="taxon-desc">Dyr med et hårdt ydre skelet af kitin, leddelte ben og en segmenteret krop.</p>
+            </div>
+
+            <!-- Del C: Alternative undergrupper under dette niveau -->
+            <div class="alternatives-container">
+              <h3 id="subdivision-title" class="alternatives-title">Klasser under Leddyr (Arthropoda)</h3>
+              <p class="alternatives-desc">Her kan du se, hvordan denne gruppe deler sig op i mindre undergrupper i vores database. Klik på et kort for at skifte fokus.</p>
+              
+              <div class="subdivision-grid" id="subdivision-grid">
+                <!-- Dynamiske undergruppekort genereres af JS -->
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Sektion 3: Quiz Modul -->
+      <section class="section-quiz" id="quiz-section" style="display: none;">
+        <div class="quiz-container">
+          <div class="section-header" style="text-align: center; margin-bottom: 2rem;">
+            <h2>🎮 Taksonomi Quiz: Gæt Niveauet</h2>
+            <p class="section-desc">Test din viden om de taksonomiske niveauer. Hvor skal gruppen placeres?</p>
+          </div>
+
+          <div class="quiz-body">
+            <div class="quiz-status">
+              <span id="quiz-score">Score: 0 / 0</span>
+              <span id="quiz-progress">Spørgsmål 1</span>
+            </div>
+            
+            <div class="quiz-question-container">
+              <p class="quiz-prompt">Hvilket taksonomisk niveau tilhører følgende gruppe?</p>
+              <h3 id="quiz-term" class="quiz-term">Pattedyr</h3>
+              <p id="quiz-latin" class="quiz-latin">(Mammalia)</p>
+            </div>
+
+            <div class="quiz-options" id="quiz-options">
+              <!-- Dynamiske knapper genereres af JS -->
+            </div>
+
+            <div class="quiz-feedback" id="quiz-feedback">
+              <!-- Vises kun efter svar -->
+              <h4 id="quiz-feedback-title">Korrekt!</h4>
+              <p id="quiz-feedback-text">Pattedyr er en klasse under rækken Rygstrengsdyr.</p>
+              <button id="quiz-next-btn" class="btn btn-primary" style="display: none;">Næste spørgsmål</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>© 2026 Livets Træ. Udviklet som et læringsværktøj i dyrenes systematik og biologisk klassifikation.</p>
+      <p class="footer-note">Systemet følger den moderne fylogenetiske systematik, hvor det tilstræbes, at alle taksonomiske niveauer udgør sande klader (monofyletiske grupper).</p>
+    </footer>
+  </div>
+
+  <!-- Modal til Klad/Clade-forklaring -->
+  <div class="modal" id="clade-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🧬 Hvad er en Klad (Clade)?</h2>
+        <button class="close-btn" id="close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>I klassisk biologi (som Carl von Linné grundlagde i 1700-tallet) brugte man faste niveauer som <strong>Klasse</strong>, <strong>Orden</strong> og <strong>Familie</strong> baseret på, hvor meget dyr ligner hinanden af ydre udseende.</p>
+        
+        <p>I dag bruger forskere derimod <strong>kladistik</strong> (fylogenetisk systematik). Her inddeler man organismer efter deres faktiske slægtskab og fælles evolutionære historie.</p>
+
+        <div class="clade-comparison-box">
+          <div class="comparison-column">
+            <h4>Klassiske Ranks (Klasse, Orden)</h4>
+            <ul>
+              <li>Baseret på fysisk lighed</li>
+              <li>Faste niveauer (kasser)</li>
+              <li>Kan udelade efterkommere (f.eks. udelukker den klassiske klasse <em>Krybdyr</em> fuglene, selvom fugle nedstammer direkte fra dinosaurer)</li>
+            </ul>
+          </div>
+          <div class="comparison-column">
+            <h4>Klader (Monofyletiske grupper)</h4>
+            <ul>
+              <li>Baseret på fælles stamfader</li>
+              <li>Ingen faste niveauer (grene på en busk)</li>
+              <li>Inkluderer <strong>altid</strong> den fælles stamfader og <strong>alle</strong> efterkommere (f.eks. er fugle en del af kladerne <em>Dinosauria</em> og <em>Reptilia</em>)</li>
+            </ul>
+          </div>
+        </div>
+
+        <blockquote class="clade-quote">
+          <strong>Eksempel:</strong> Klovdyr og Hvaler tilhørte førhen to helt forskellige ordner (Artiodactyla og Cetacea). Men genetiske analyser har afsløret, at hvaler udviklede sig fra klovdyr, og at flodheste er hvalernes nærmeste nulevende slægtninge! I dag samles de derfor i den fælles klad <strong>Cetartiodactyla</strong>.
+        </blockquote>
+
+        <p>En klad er således en uafskåret gren på livets træ: Skærer man ét sted på grenen, får man stamfaderen og alle grene der vokser ud derfra.</p>
+      </div>
+    </div>
+  </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- JS Scripts -->
+  <script src="app.js?v=4"></script>
+</body>
+</html>

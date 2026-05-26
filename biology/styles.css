@@ -1,0 +1,1647 @@
+/* Livets Træ – Biologisk Klassifikation Styling */
+
+/* ==========================================================================
+   Design System & Global Variables
+   ========================================================================== */
+:root {
+  /* Skrifttyper */
+  --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  /* Neutrale farver (Mørkt tema base) */
+  --bg-dark: #0f172a;
+  --bg-card: rgba(30, 41, 59, 0.7);
+  --bg-card-hover: rgba(51, 65, 85, 0.8);
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --text-primary: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-subtle: #64748b;
+  
+  /* Overgange */
+  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Skygger */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+  --shadow-glow: 0 0 25px -5px var(--accent-glow);
+  
+  /* Standard tema (Løve) */
+  --accent: #f59e0b; /* Guld */
+  --accent-light: #fef3c7;
+  --accent-glow: rgba(245, 158, 11, 0.15);
+  --gradient-primary: linear-gradient(135deg, #f59e0b, #d97706);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #3a2e1d 0%, #0f172a 100%);
+}
+
+/* ==========================================================================
+   Dynamiske Dyretemaer (Defineret på body)
+   ========================================================================== */
+body.theme-lion {
+  --accent: #eab308;
+  --accent-light: #fef9c3;
+  --accent-glow: rgba(234, 179, 8, 0.2);
+  --gradient-primary: linear-gradient(135deg, #eab308, #ca8a04);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #2e2815 0%, #090d16 100%);
+}
+
+body.theme-tiger {
+  --accent: #f97316; /* orange-500 */
+  --accent-light: #ffedd5; /* orange-100 */
+  --accent-glow: rgba(249, 115, 22, 0.2);
+  --gradient-primary: linear-gradient(135deg, #f97316, #c2410c);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #30180a 0%, #090d16 100%);
+}
+
+body.theme-dog {
+  --accent: #8b5cf6; /* Hund-lilla */
+  --accent-light: #ede9fe;
+  --accent-glow: rgba(139, 92, 246, 0.2);
+  --gradient-primary: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #1e1138 0%, #090d16 100%);
+}
+
+body.theme-wolf {
+  --accent: #9ca3af; /* gray-400 */
+  --accent-light: #f3f4f6; /* gray-100 */
+  --accent-glow: rgba(156, 163, 175, 0.2);
+  --gradient-primary: linear-gradient(135deg, #9ca3af, #4b5563);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #1f2937 0%, #090d16 100%);
+}
+
+body.theme-fox {
+  --accent: #ea580c; /* orange-600 */
+  --accent-light: #ffedd5; /* orange-100 */
+  --accent-glow: rgba(234, 88, 12, 0.2);
+  --gradient-primary: linear-gradient(135deg, #ea580c, #9a3412);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #2a1103 0%, #090d16 100%);
+}
+
+body.theme-rose {
+  --accent: #be123c; /* rose-700 */
+  --accent-light: #ffe4e6; /* rose-100 */
+  --accent-glow: rgba(190, 18, 60, 0.2);
+  --gradient-primary: linear-gradient(135deg, #e11d48, #881337);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #31131a 0%, #090d16 100%);
+}
+
+body.theme-coffee {
+  --accent: #78350f; /* amber-900 / coffee brown */
+  --accent-light: #fef3c7; /* amber-100 */
+  --accent-glow: rgba(120, 53, 15, 0.2);
+  --gradient-primary: linear-gradient(135deg, #92400e, #451a03);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #2a1b14 0%, #090d16 100%);
+}
+
+body.theme-bacteria {
+  --accent: #14b8a6; /* teal-500 */
+  --accent-light: #ccfbf1; /* teal-100 */
+  --accent-glow: rgba(20, 184, 166, 0.2);
+  --gradient-primary: linear-gradient(135deg, #0d9488, #0f766e);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #042f2e 0%, #090d16 100%);
+}
+
+body.theme-archaea {
+  --accent: #f59e0b; /* amber-500 */
+  --accent-light: #fef3c7; /* amber-100 */
+  --accent-glow: rgba(245, 158, 11, 0.2);
+  --gradient-primary: linear-gradient(135deg, #d97706, #b45309);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #451a03 0%, #090d16 100%);
+}
+
+body.theme-eagle {
+  --accent: #38bdf8; /* Himmelsblå */
+  --accent-light: #e0f2fe;
+  --accent-glow: rgba(56, 189, 248, 0.2);
+  --gradient-primary: linear-gradient(135deg, #38bdf8, #0284c7);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #112a3d 0%, #090d16 100%);
+}
+
+body.theme-dragonfly {
+  --accent: #dc2626; /* red-600 */
+  --accent-light: #fee2e2; /* red-100 */
+  --accent-glow: rgba(220, 38, 38, 0.2);
+  --gradient-primary: linear-gradient(135deg, #ef4444, #991b1b);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #301010 0%, #090d16 100%);
+}
+
+body.theme-shrimp {
+  --accent: #fb923c; /* Reje-orange/koral */
+  --accent-light: #ffedd5;
+  --accent-glow: rgba(251, 146, 60, 0.2);
+  --gradient-primary: linear-gradient(135deg, #fb923c, #ea580c);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #3d281a 0%, #090d16 100%);
+}
+
+body.theme-octopus {
+  --accent: #a855f7; /* Lilla */
+  --accent-light: #f3e8ff;
+  --accent-glow: rgba(168, 85, 247, 0.2);
+  --gradient-primary: linear-gradient(135deg, #a855f7, #7e22ce);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #2f1d42 0%, #090d16 100%);
+}
+
+body.theme-whale {
+  --accent: #14b8a6; /* Hav-teal */
+  --accent-light: #ccfbf1;
+  --accent-glow: rgba(20, 184, 166, 0.2);
+  --gradient-primary: linear-gradient(135deg, #14b8a6, #0d9488);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #102e2b 0%, #090d16 100%);
+}
+
+body.theme-snail {
+  --accent: #a16207; /* dark golden/brown */
+  --accent-light: #fef08a; /* yellow-200 */
+  --accent-glow: rgba(161, 98, 7, 0.2);
+  --gradient-primary: linear-gradient(135deg, #ca8a04, #713f12);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #291a05 0%, #090d16 100%);
+}
+
+body.theme-earthworm {
+  --accent: #84cc16; /* Jord-grøn */
+  --accent-light: #ecfccb;
+  --accent-glow: rgba(132, 204, 22, 0.2);
+  --gradient-primary: linear-gradient(135deg, #84cc16, #65a30d);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #1f2d11 0%, #090d16 100%);
+}
+
+body.theme-ant {
+  --accent: #ef4444; /* Skovmyre-rød */
+  --accent-light: #fee2e2;
+  --accent-glow: rgba(239, 68, 68, 0.2);
+  --gradient-primary: linear-gradient(135deg, #ef4444, #b91c1c);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #361414 0%, #090d16 100%);
+}
+
+body.theme-bumblebee {
+  --accent: #fbbf24; /* Humlebi-gul */
+  --accent-light: #fef3c7;
+  --accent-glow: rgba(251, 191, 36, 0.25);
+  --gradient-primary: linear-gradient(135deg, #fbbf24, #d97706);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #382c12 0%, #090d16 100%);
+}
+
+body.theme-spider {
+  --accent: #e2e8f0; /* Grå/Sølv-hvid */
+  --accent-light: #ffffff;
+  --accent-glow: rgba(226, 232, 240, 0.15);
+  --gradient-primary: linear-gradient(135deg, #94a3b8, #475569);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #1e293b 0%, #090d16 100%);
+}
+
+body.theme-shark {
+  --accent: #0ea5e9; /* Oceanblå */
+  --accent-light: #e0f2fe;
+  --accent-glow: rgba(14, 165, 233, 0.2);
+  --gradient-primary: linear-gradient(135deg, #0ea5e9, #0369a1);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #082f49 0%, #090d16 100%);
+}
+
+body.theme-cod {
+  --accent: #a3b18a; /* Tanggrøn / Sandfarve */
+  --accent-light: #f1f3ec;
+  --accent-glow: rgba(163, 177, 138, 0.2);
+  --gradient-primary: linear-gradient(135deg, #a3b18a, #588157);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #1b2618 0%, #090d16 100%);
+}
+
+body.theme-lizard {
+  --accent: #10b981; /* Tropisk grøn */
+  --accent-light: #d1fae5;
+  --accent-glow: rgba(16, 185, 129, 0.2);
+  --gradient-primary: linear-gradient(135deg, #10b981, #047857);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #064e3b 0%, #090d16 100%);
+}
+
+body.theme-snake {
+  --accent: #caa846; /* Hugorm bronze/guld */
+  --accent-light: #fcf6e5;
+  --accent-glow: rgba(202, 168, 70, 0.2);
+  --gradient-primary: linear-gradient(135deg, #caa846, #856404);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #3e3213 0%, #090d16 100%);
+}
+
+body.theme-komodo {
+  --accent: #f97316; /* Vulkansk orange */
+  --accent-light: #ffedd5;
+  --accent-glow: rgba(249, 115, 22, 0.2);
+  --gradient-primary: linear-gradient(135deg, #f97316, #c2410c);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #431a0f 0%, #090d16 100%);
+}
+
+body.theme-scorpion {
+  --accent: #06b6d4; /* Neon cyan */
+  --accent-light: #cffafe;
+  --accent-glow: rgba(6, 182, 212, 0.25);
+  --gradient-primary: linear-gradient(135deg, #06b6d4, #0891b2);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #082f49 0%, #090d16 100%);
+}
+
+body.theme-harvestman {
+  --accent: #d97706; /* Bronze / Amber */
+  --accent-light: #fef3c7;
+  --accent-glow: rgba(217, 119, 6, 0.2);
+  --gradient-primary: linear-gradient(135deg, #d97706, #b45309);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #2b1f14 0%, #090d16 100%);
+}
+
+body.theme-tick {
+  --accent: #ec4899; /* Parasitisk pink/rød */
+  --accent-light: #fce7f3;
+  --accent-glow: rgba(236, 72, 153, 0.2);
+  --gradient-primary: linear-gradient(135deg, #ec4899, #be185d);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #351024 0%, #090d16 100%);
+}
+
+body.theme-platypus {
+  --accent: #0d9488; /* Teal-grøn – næbdyrets blågrønne bundfarve */
+  --accent-light: #ccfbf1;
+  --accent-glow: rgba(13, 148, 136, 0.25);
+  --gradient-primary: linear-gradient(135deg, #0d9488, #6d4c41);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #0e2e2c 0%, #090d16 100%);
+}
+
+body.theme-default {
+  --accent: #94a3b8; /* Skifergrå */
+  --accent-light: #f1f5f9;
+  --accent-glow: rgba(148, 163, 184, 0.2);
+  --gradient-primary: linear-gradient(135deg, #94a3b8, #475569);
+  --gradient-bg: radial-gradient(circle at 50% 0%, #1e293b 0%, #090d16 100%);
+}
+
+
+
+/* ==========================================================================
+   Base Styles & Reset
+   ========================================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-dark);
+  background-image: var(--gradient-bg);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  line-height: 1.5;
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background-image var(--transition-slow), background-color var(--transition-slow);
+}
+
+/* ==========================================================================
+   Background Glow Effects (Aesthetic Polish)
+   ========================================================================== */
+.bg-glow-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.bg-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.3;
+  transition: background-color var(--transition-slow), transform var(--transition-slow);
+}
+
+.glow-1 {
+  top: -10%;
+  left: 20%;
+  width: 45vw;
+  height: 45vw;
+  background-color: var(--accent);
+}
+
+.glow-2 {
+  top: 30%;
+  right: -5%;
+  width: 35vw;
+  height: 35vw;
+  background-color: rgba(30, 41, 59, 0.5);
+}
+
+/* ==========================================================================
+   Layout Wrapper
+   ========================================================================== */
+.app-container {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+/* ==========================================================================
+   Header & Brand Styling
+   ========================================================================== */
+.app-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-emoji {
+  font-size: 2.5rem;
+  animation: float 4s ease-in-out infinite;
+}
+
+.app-header h1 {
+  font-family: var(--font-heading);
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #ffffff 30%, #e2e8f0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.header-tagline {
+  color: var(--text-muted);
+  font-size: 1.125rem;
+  max-width: 600px;
+  font-weight: 400;
+}
+
+.header-actions {
+  margin-top: 0.5rem;
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.95rem;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+
+.btn-secondary {
+  background-color: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  border-color: var(--border-glass);
+}
+
+.btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary strong {
+  color: var(--accent);
+  transition: color var(--transition-slow);
+}
+
+/* ==========================================================================
+   Sektioner Generelt
+   ========================================================================== */
+.section-header {
+  margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.section-desc {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   Sektion 1: Dyrevælger Gitter (Animal Selector Grid)
+   ========================================================================== */
+.animal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.animal-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Specifikke kort themes skygger og accentlinje ved hover */
+.animal-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: transparent;
+  transition: background-color var(--transition-normal);
+}
+
+.animal-card:hover {
+  background-color: var(--bg-card-hover);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.3);
+}
+
+.animal-card.active {
+  border-color: var(--accent);
+  background-color: rgba(30, 41, 59, 0.9);
+  box-shadow: 0 0 20px -5px var(--accent-glow);
+}
+
+.animal-card.active::before {
+  background-color: var(--accent);
+}
+
+.animal-card-icon {
+  background: rgba(255, 255, 255, 0.05);
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  transition: transform var(--transition-normal);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.animal-card-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.animal-card:hover .animal-card-icon {
+  transform: scale(1.1) rotate(3deg);
+}
+
+.animal-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.animal-card-name {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.animal-card-scientific {
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Sektion 2: Visualizer Layout
+   ========================================================================== */
+.section-visualizer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.visualizer-showcase {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: 20px;
+  padding: 1.5rem 2rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.showcase-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.showcase-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.showcase-animal {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.showcase-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
+  transition: border-color var(--transition-slow), box-shadow var(--transition-slow);
+  flex-shrink: 0;
+}
+
+.showcase-name {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  background: linear-gradient(135deg, #ffffff 40%, var(--accent-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: background var(--transition-slow);
+}
+
+.showcase-tip {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  background-color: rgba(255, 255, 255, 0.03);
+  padding: 0.6rem 1.2rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Tospaltet hovedområde */
+.visualizer-grid {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+/* ==========================================================================
+   Venstre Kolonne: Stepper (Taksonomisk sti)
+   ========================================================================== */
+.column-lineage {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: 20px;
+  padding: 0;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 10;
+  /* overflow: hidden fjernet — tillader dropdown-menuer at vises uden for kortets kant */
+}
+
+/* Animal Hero Photo Card at top of lineage column */
+.animal-hero-card {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 20px 20px 0 0; /* gendan afrundede hjørner øverst */
+}
+
+.animal-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.animal-hero-card:hover .animal-hero-img {
+  transform: scale(1.04);
+}
+
+.animal-hero-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(9, 13, 22, 0.9) 0%, transparent 100%);
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: flex-end;
+}
+
+.animal-hero-scientific {
+  font-style: italic;
+  font-size: 0.875rem;
+  color: var(--accent);
+  font-weight: 500;
+  transition: color var(--transition-slow);
+}
+
+/* Adjust column-lineage inner padding now that hero card is at top */
+.column-lineage .column-title,
+.column-lineage .column-desc,
+.column-lineage .stepper {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+.column-lineage .stepper {
+  padding-bottom: 1.75rem;
+}
+
+.column-lineage .column-title {
+  margin-top: 1.5rem;
+}
+
+.column-title {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.column-desc {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 1.75rem;
+}
+
+.stepper {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Den gennemgående streg i taksonomi-stien */
+.stepper::before {
+  content: "";
+  position: absolute;
+  left: 20px;
+  top: 15px;
+  bottom: 25px;
+  width: 2px;
+  background: linear-gradient(to bottom, 
+    rgba(255, 255, 255, 0.05),
+    var(--accent) 15%,
+    var(--accent) 85%,
+    rgba(255, 255, 255, 0.05)
+  );
+  z-index: 0;
+  transition: background var(--transition-slow);
+}
+
+.stepper-item {
+  display: flex;
+  gap: 1.25rem;
+  padding-bottom: 1.5rem;
+  position: relative;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.stepper-item.dropdown-open {
+  z-index: 200;
+}
+
+.stepper-item:last-child {
+  padding-bottom: 0;
+}
+
+.stepper-bullet {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background-color: #1e293b;
+  border: 2px solid var(--border-glass);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all var(--transition-normal);
+  flex-shrink: 0;
+}
+
+.stepper-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: transform var(--transition-normal);
+}
+
+.stepper-rank {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-subtle);
+  font-weight: 600;
+}
+
+.stepper-name-danish {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+.stepper-name-latin {
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--text-subtle);
+}
+
+/* Hover-tilstand */
+.stepper-item:hover .stepper-bullet {
+  border-color: rgba(255, 255, 255, 0.4);
+  color: var(--text-primary);
+  transform: scale(1.05);
+}
+
+.stepper-item:hover .stepper-content {
+  transform: translateX(4px);
+}
+
+/* Aktiv-tilstand */
+.stepper-item.active .stepper-bullet {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: #000000;
+  box-shadow: 0 0 15px var(--accent-glow);
+  transform: scale(1.1);
+}
+
+.stepper-item.active .stepper-name-danish {
+  color: var(--text-primary);
+  font-size: 1.2rem;
+}
+
+.stepper-item.active .stepper-name-latin {
+  color: var(--accent);
+}
+
+.stepper-item.active .stepper-rank {
+  color: var(--accent);
+}
+
+/* ==========================================================================
+   Højre Kolonne: Detaljekort & Alternativer (Details View)
+   ========================================================================== */
+.column-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.detail-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: 20px;
+  padding: 1.75rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-md);
+}
+
+/* A. Rang-forklaring */
+.rank-explanation-card {
+  border-left: 4px solid var(--accent);
+  transition: border-left var(--transition-slow);
+}
+
+.rank-badge {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.3rem 0.8rem;
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-glass);
+  border-radius: 9999px;
+  color: var(--accent);
+  margin-bottom: 0.75rem;
+  transition: color var(--transition-slow);
+}
+
+.rank-meaning-text {
+  font-size: 1.05rem;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+
+.rank-etymology {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  background-color: rgba(0, 0, 0, 0.15);
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
+}
+
+/* B. Specifik taxon information */
+.taxon-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.taxon-card::after {
+  content: "🧬";
+  position: absolute;
+  right: -10px;
+  bottom: -20px;
+  font-size: 7rem;
+  opacity: 0.03;
+  pointer-events: none;
+}
+
+.taxon-card-header {
+  margin-bottom: 0.75rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.taxon-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.taxon-danish {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.1;
+  margin: 0.15rem 0;
+}
+
+.taxon-latin {
+  font-style: italic;
+  font-size: 1.1rem;
+  color: var(--accent);
+  transition: color var(--transition-slow);
+}
+
+.taxon-desc {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Alternativer / Undergrupper Udforsker (Alternatives Explorer)
+   ========================================================================== */
+.alternatives-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.alternatives-title {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.alternatives-desc {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.subdivision-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.subdivision-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.subdivision-card:hover {
+  background-color: var(--bg-card-hover);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Fremhævning af den gren, som det valgte dyr går igennem */
+.subdivision-card.active-path {
+  border-color: rgba(255, 255, 255, 0.15);
+  background-color: rgba(30, 41, 59, 0.85);
+  border-left: 4px solid var(--accent);
+}
+
+.sub-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.sub-card-rank-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-subtle);
+  font-weight: 600;
+}
+
+.sub-card-danish {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.sub-card-latin {
+  font-style: italic;
+  font-size: 0.9rem;
+  color: var(--accent);
+  transition: color var(--transition-slow);
+}
+
+.active-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  background-color: var(--accent-glow);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.sub-card-desc {
+  font-size: 0.925rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* Dyr badges inde i kortene */
+.sub-card-animals {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sub-card-animals strong {
+  font-size: 0.8rem;
+  color: var(--text-subtle);
+}
+
+.badge-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.animal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-glass);
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.animal-badge:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+/* Fremhæv badge for det dyr vi undersøger lige nu */
+.animal-badge.current {
+  background-color: var(--accent-glow);
+  color: var(--accent);
+  border-color: var(--accent);
+  font-weight: 500;
+}
+
+.animal-badge.current:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Info kasser til toppen af tomme niveauer (f.eks. Art) */
+.info-text-box {
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px dashed var(--border-glass);
+  border-radius: 16px;
+  padding: 1.5rem;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.info-text-box p strong {
+  color: var(--accent);
+}
+
+/* ==========================================================================
+   Modal Styling (Clade Explanation)
+   ========================================================================== */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-normal);
+}
+
+.modal.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-content {
+  background-color: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  max-width: 650px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  transform: scale(0.95);
+  transition: transform var(--transition-normal);
+}
+
+.modal.show .modal-content {
+  transform: scale(1);
+}
+
+.modal-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.close-btn:hover {
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  font-size: 0.975rem;
+  color: #cbd5e1;
+  line-height: 1.6;
+}
+
+.modal-body strong {
+  color: var(--text-primary);
+}
+
+/* Sammenligningsgitter i modal */
+.clade-comparison-box {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 0.5rem 0;
+}
+
+.comparison-column {
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  padding: 1.25rem;
+}
+
+.comparison-column h4 {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  color: var(--accent);
+  margin-bottom: 0.75rem;
+}
+
+.comparison-column ul {
+  list-style-type: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.comparison-column ul li {
+  position: relative;
+  padding-left: 1.25rem;
+}
+
+.comparison-column ul li::before {
+  content: "•";
+  position: absolute;
+  left: 0.25rem;
+  color: var(--accent);
+}
+
+.clade-quote {
+  border-left: 4px solid var(--accent);
+  background-color: rgba(255, 255, 255, 0.02);
+  padding: 1rem 1.25rem;
+  border-radius: 0 12px 12px 0;
+  font-style: italic;
+  font-size: 0.925rem;
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+.app-footer {
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 1.5rem;
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.app-footer p {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.app-footer .footer-note {
+  color: var(--text-subtle);
+  font-size: 0.775rem;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* ==========================================================================
+   Keyframe Animations
+   ========================================================================== */
+@keyframes float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(5deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+/* ==========================================================================
+   Responsive Design Media Queries
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .visualizer-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .stepper {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: space-between;
+  }
+  
+  .stepper::before {
+    display: none; /* Skjul streg i vandret layout */
+  }
+  
+  .stepper-item {
+    flex: 1;
+    min-width: 140px;
+    padding-bottom: 0;
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-glass);
+    border-radius: 12px;
+    padding: 0.75rem;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .stepper-item.active {
+    border-color: var(--accent);
+    background-color: rgba(255, 255, 255, 0.04);
+  }
+  
+  .stepper-content {
+    transform: none !important;
+  }
+  
+  .stepper-item:hover .stepper-content {
+    transform: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-container {
+    padding: 1.5rem 1rem;
+    gap: 1.5rem;
+  }
+
+  .app-header h1 {
+    font-size: 2.25rem;
+  }
+  
+  .header-tagline {
+    font-size: 1rem;
+  }
+
+  .visualizer-showcase {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .showcase-name {
+    font-size: 1.6rem;
+  }
+
+  .stepper {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    display: grid;
+  }
+
+  .clade-comparison-box {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .animal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stepper {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ==========================================================================
+   Stepper Dropdown Menu (Interactive Taxon Selector)
+   ========================================================================== */
+.stepper-arrow {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 0.75rem;
+  transition: transform var(--transition-fast);
+  color: var(--text-subtle);
+  vertical-align: middle;
+}
+
+.stepper-item:hover .stepper-arrow,
+.stepper-item.active .stepper-arrow {
+  color: var(--accent);
+}
+
+.stepper-item.dropdown-open .stepper-arrow {
+  transform: rotate(180deg);
+}
+
+.stepper-dropdown {
+  position: absolute;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  padding: 0.5rem;
+  z-index: 100;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px var(--accent-glow);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  pointer-events: none;
+}
+
+.stepper-dropdown.show {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+/* Desktop: Vis til højre for det lodrette trin */
+@media (min-width: 1025px) {
+  .stepper-dropdown {
+    left: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%) scale(0.95);
+  }
+  .stepper-dropdown.show {
+    transform: translateY(-50%) scale(1);
+  }
+  
+  .stepper-dropdown::before {
+    content: "";
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent rgba(15, 23, 42, 0.95) transparent transparent;
+  }
+}
+
+/* Tablet/Mobil: Vis under det vandrette trin */
+@media (max-width: 1024px) {
+  .stepper-dropdown {
+    top: calc(100% + 8px);
+    left: 0;
+    transform: scale(0.95);
+  }
+  .stepper-dropdown.show {
+    transform: scale(1);
+  }
+  
+  .stepper-dropdown::before {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 20px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent rgba(15, 23, 42, 0.95) transparent;
+  }
+}
+
+.stepper-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.stepper-dropdown-item:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.stepper-dropdown-item.active {
+  background-color: var(--accent-glow);
+  color: var(--accent);
+  font-weight: 600;
+  border-left: 2px solid var(--accent);
+  border-radius: 4px 8px 8px 4px;
+}
+
+.stepper-dropdown-item-latin {
+  font-style: italic;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+   Quiz Modul Styling
+   ========================================================================== */
+.quiz-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.quiz-modal-content {
+  text-align: center;
+}
+
+.quiz-body {
+  padding: 2rem 3rem;
+}
+
+.quiz-status {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: var(--text-subtle);
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.quiz-question-container {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+}
+
+.quiz-prompt {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.quiz-term {
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 0.25rem;
+  text-shadow: 0 0 15px var(--accent-glow);
+}
+
+.quiz-latin {
+  font-style: italic;
+  font-size: 1.1rem;
+  color: var(--text-subtle);
+}
+
+.quiz-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.quiz-option-btn {
+  background-color: rgba(30, 41, 59, 0.6);
+  border: 1px solid var(--border-glass);
+  color: var(--text-primary);
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.quiz-option-btn:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.quiz-option-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Korrekt og Forkert stilarter */
+.quiz-option-btn.correct {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+  border-color: #10b981 !important;
+  color: #10b981 !important;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+  opacity: 1 !important;
+}
+
+.quiz-option-btn.wrong {
+  background-color: rgba(239, 68, 68, 0.2) !important;
+  border-color: #ef4444 !important;
+  color: #ef4444 !important;
+  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+.quiz-feedback {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 12px;
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.quiz-feedback.show {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.quiz-feedback.success {
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.quiz-feedback.error {
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.quiz-feedback h4 {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+}
+
+.quiz-feedback.success h4 { color: #10b981; }
+.quiz-feedback.error h4 { color: #ef4444; }
+
+.quiz-feedback p {
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
