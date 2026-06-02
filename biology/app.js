@@ -2904,27 +2904,38 @@ function checkAnswer(selectedRank, btnElement) {
 }
 
 // View Toggle Handlinger
-if (viewTreeBtn && viewQuizBtn) {
-  viewTreeBtn.addEventListener("click", () => {
-    viewTreeBtn.classList.add("btn-primary");
-    viewTreeBtn.classList.remove("btn-secondary");
-    viewQuizBtn.classList.add("btn-secondary");
-    viewQuizBtn.classList.remove("btn-primary");
-    animalsSection.style.display = "block";
-    visualizerSection.style.display = "block";
-    quizSection.style.display = "none";
+function setActiveView(activeView) {
+  const isTree = activeView === "tree";
+  const isCompare = activeView === "compare";
+  const isQuiz = activeView === "quiz";
+
+  [
+    [viewTreeBtn, isTree],
+    [viewCompareBtn, isCompare],
+    [viewQuizBtn, isQuiz]
+  ].forEach(([button, isActive]) => {
+    if (!button) return;
+    button.classList.toggle("btn-primary", isActive);
+    button.classList.toggle("btn-secondary", !isActive);
   });
 
-  viewQuizBtn.addEventListener("click", () => {
-    viewQuizBtn.classList.add("btn-primary");
-    viewQuizBtn.classList.remove("btn-secondary");
-    viewTreeBtn.classList.add("btn-secondary");
-    viewTreeBtn.classList.remove("btn-primary");
-    animalsSection.style.display = "none";
-    visualizerSection.style.display = "none";
-    quizSection.style.display = "block";
+  animalsSection.style.display = isTree ? "block" : "none";
+  visualizerSection.style.display = isTree ? "block" : "none";
+  if (compareSection) compareSection.style.display = isCompare ? "block" : "none";
+  quizSection.style.display = isQuiz ? "block" : "none";
+
+  if (isCompare) {
+    renderCompareView();
+  }
+  if (isQuiz) {
     initQuiz(); // Start en ny quiz hver gang vi skifter
-  });
+  }
+}
+
+if (viewTreeBtn && viewCompareBtn && viewQuizBtn) {
+  viewTreeBtn.addEventListener("click", () => setActiveView("tree"));
+  viewCompareBtn.addEventListener("click", () => setActiveView("compare"));
+  viewQuizBtn.addEventListener("click", () => setActiveView("quiz"));
 }
 
 window.addEventListener("click", (e) => {
@@ -2945,5 +2956,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   initAnimalGrid();
+  initCompareView();
   selectAnimal("løve"); // Vælg løve som standard
 });
