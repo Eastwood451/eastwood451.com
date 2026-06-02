@@ -491,6 +491,32 @@ const taxonomyTree = {
                       ]
                     },
                     {
+                      name: "Camelidae",
+                      rank: "Familie",
+                      latin: "Camelidae",
+                      danish: "Kamelfamilien",
+                      description: "En familie af parrettåede hovdyr med lange ben, polstrede trædepuder og stor evne til at klare tørre miljøer. Omfatter kameler, dromedarer, lamaer og alpakaer.",
+                      children: [
+                        {
+                          name: "Camelus",
+                          rank: "Slægt",
+                          latin: "Camelus",
+                          danish: "Kameler",
+                          description: "En slægt af store ørkentilpassede klovdyr med pukler, der lagrer fedt som energireserve. De kan udholde lange perioder med varme og vandmangel.",
+                          children: [
+                            {
+                              name: "Camelus dromedarius",
+                              rank: "Art",
+                              latin: "Camelus dromedarius",
+                              danish: "Dromedar (enpuklet kamel)",
+                              description: "Den enpuklede kamel, som er udbredt som husdyr i tørre områder i Nordafrika, Mellemøsten og dele af Asien. Puklen lagrer fedt, og kroppen er tilpasset til at spare på vand gennem effektiv temperaturregulering og koncentreret urin.",
+                              animalId: "kamel"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
                       name: "Giraffidae",
                       rank: "Familie",
                       latin: "Giraffidae",
@@ -511,6 +537,41 @@ const taxonomyTree = {
                               danish: "Giraf",
                               description: "Verdens højeste nulevende landdyr. Hanner kan blive over 5 meter høje. Deres hjerte vejer op til 11 kg og skal pumpe ekstremt hårdt for at få blodet hele vejen op ad halsen til hjernen.",
                               animalId: "giraf"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      name: "Bovidae",
+                      rank: "Familie",
+                      latin: "Bovidae",
+                      danish: "Skedehornede dyr",
+                      description: "En stor familie af parrettåede hovdyr med permanente horn beklædt af hornskeder. Familien omfatter blandt andet kvæg, får, geder, antiloper og bøfler.",
+                      children: [
+                        {
+                          name: "Bos",
+                          rank: "Slægt",
+                          latin: "Bos",
+                          danish: "Okser og kvæg",
+                          description: "En slægt af store drøvtyggende hovdyr, der omfatter tamkvæg og flere vilde oksearter. De har en kompleks mave, som gør dem i stand til at fordøje græs og andet plantemateriale effektivt.",
+                          children: [
+                            {
+                              name: "Bos taurus",
+                              rank: "Art",
+                              latin: "Bos taurus",
+                              danish: "Tamkvæg",
+                              description: "Den domesticerede ko, som mennesker har holdt i tusinder af år for mælk, kød, trækkraft og læder. Malkekøer er avlet til høj mælkeydelse og er vigtige husdyr i dansk landbrug.",
+                              children: [
+                                {
+                                  name: "Dansk Holstein",
+                                  rank: "Race",
+                                  latin: "Bos taurus",
+                                  danish: "Almindelig dansk malkeko",
+                                  description: "En sortbroget malkeko af Holstein-typen, som er meget almindelig i Danmark. Racen er især avlet til mælkeproduktion og kendes på sin store krop, rolige adfærd og tydelige sorte og hvide aftegninger.",
+                                  animalId: "ko"
+                                }
+                              ]
                             }
                           ]
                         }
@@ -2057,7 +2118,9 @@ const animals = [
   { id: "ecoli", name: "E. coli", scientific: "Escherichia coli", icon: "🦠", theme: "bacteria", image: "images/ecoli.jpg" },
   { id: "sulfolobus", name: "Sulfolobus", scientific: "Sulfolobus acidocaldarius", icon: "🌋", theme: "archaea", image: "images/sulfolobus.jpg" },
   { id: "delfin", name: "Delfin (Øresvin)", scientific: "Tursiops truncatus", icon: "🐬", theme: "dolphin", image: "images/delfin.jpg" },
+  { id: "kamel", name: "Dromedar (Kamel)", scientific: "Camelus dromedarius", icon: "🐪", theme: "camel", image: "images/kamel.png" },
   { id: "giraf", name: "Giraf", scientific: "Giraffa camelopardalis", icon: "🦒", theme: "giraffe", image: "images/giraf.jpg" },
+  { id: "ko", name: "Almindelig dansk malkeko", scientific: "Bos taurus", icon: "🐄", theme: "cow", image: "images/ko.png" },
   { id: "zebra", name: "Steppezebra", scientific: "Equus quagga", icon: "🦓", theme: "zebra", image: "images/zebra.jpg" },
   { id: "arabisk_hest", name: "Arabisk Fuldblod", scientific: "Equus ferus caballus", icon: "🐎", theme: "horse", image: "images/arabisk_hest.jpg" },
   { id: "menneske", name: "Menneske", scientific: "Homo sapiens", icon: "🧍", theme: "human", image: "images/menneske.jpg" },
