@@ -451,12 +451,12 @@ function init() {
     document.querySelectorAll('.menu-card').forEach(card => {
         card.addEventListener('click', (e) => {
             // Do not start mode if clicking on the toggle button container or buttons
-            if (e.target.closest('#formula-toggle-container')) return;
+            if (e.target.closest('.toggle-container')) return;
             startMode(card.dataset.mode);
         });
         
         card.addEventListener('keydown', (e) => {
-            if (e.target.closest('#formula-toggle-container')) return;
+            if (e.target.closest('.toggle-container')) return;
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 startMode(card.dataset.mode);
@@ -520,6 +520,10 @@ function showMenu() {
         clearTimeout(window.formulaAutoAdvanceTimeout);
         window.formulaAutoAdvanceTimeout = null;
     }
+    if (window.ruleBuilderAutoAdvanceTimeout) {
+        clearTimeout(window.ruleBuilderAutoAdvanceTimeout);
+        window.ruleBuilderAutoAdvanceTimeout = null;
+    }
 
     const graphContainer = document.getElementById('problem-graph');
     if (graphContainer) graphContainer.classList.add('hidden');
@@ -535,6 +539,7 @@ function startMode(mode) {
     if (graphContainer) graphContainer.classList.add('hidden');
 
     if (mode === 'substitution') {
+        choicesGrid.className = '';
         document.getElementById('formula-ref-btn').classList.add('hidden');
         shuffleArray(PROBLEMS);
         state.currentProblem = 0;
@@ -547,7 +552,10 @@ function startMode(mode) {
         state.hintOpen = false;
         loadProblem();
     } else if (mode === 'formulas') {
+        choicesGrid.className = '';
         startFormulaQuiz();
+    } else if (mode === 'rule-builder') {
+        startRuleBuilder();
     }
 }
 
@@ -685,6 +693,10 @@ function onContinue() {
         onFormulaContinue();
         return;
     }
+    if (gameMode === 'rule-builder') {
+        onRuleBuilderContinue();
+        return;
+    }
 
     // Substitution mode
     if (state.phase === 'choosing') {
@@ -814,6 +826,10 @@ function onOverlayAction() {
     const action = overlayBtn.dataset.action;
     if (action === 'restart-formulas') {
         onFormulaOverlayAction();
+        return;
+    }
+    if (action === 'restart-rule-builder') {
+        onRuleBuilderOverlayAction();
         return;
     }
     if (action === 'restart') {
