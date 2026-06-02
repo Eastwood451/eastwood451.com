@@ -2226,6 +2226,7 @@ let selectedLineage = [];
 
 // DOM Elementer
 const animalGrid = document.getElementById("animal-grid");
+const animalSearchInput = document.getElementById("animal-search-input");
 const stepperContainer = document.getElementById("stepper-container");
 const detailRankTitle = document.getElementById("detail-rank-title");
 const detailRankMeaning = document.getElementById("detail-rank-meaning");
@@ -2247,10 +2248,31 @@ const subDivGrid = document.getElementById("subdivision-grid");
 
 // Initialisering af dyrevælger-gitteret
 function initAnimalGrid() {
+  const searchTerm = animalSearchInput?.value.trim().toLocaleLowerCase("da-DK") || "";
+  const visibleAnimals = animals
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name, "da-DK", { sensitivity: "base" }))
+    .filter(animal => {
+      const name = animal.name.toLocaleLowerCase("da-DK");
+      const scientific = animal.scientific.toLocaleLowerCase("da-DK");
+      return name.includes(searchTerm) || scientific.includes(searchTerm);
+    });
+
   animalGrid.innerHTML = "";
-  animals.forEach(animal => {
+
+  if (visibleAnimals.length === 0) {
+    animalGrid.innerHTML = `
+      <div class="animal-grid-empty">
+        Ingen resultater. Prøv et andet navn eller latinsk navn.
+      </div>
+    `;
+    return;
+  }
+
+  visibleAnimals.forEach(animal => {
     const card = document.createElement("div");
     card.className = `animal-card theme-${animal.theme}`;
+    card.dataset.animalId = animal.id;
     if (animal.id === currentAnimalId) {
       card.classList.add("active");
     }
@@ -2273,19 +2295,18 @@ function initAnimalGrid() {
   });
 }
 
-// Håndtering af dyrevalg
+function updateAnimalGridActiveState() {
+  const cards = animalGrid.querySelectorAll(".animal-card");
+  cards.forEach(card => {
+    card.classList.toggle("active", card.dataset.animalId === currentAnimalId);
+  });
+}
+
 function selectAnimal(animalId) {
   currentAnimalId = animalId;
   
   // Opdater aktiv klasse i gitteret
-  const cards = animalGrid.querySelectorAll(".animal-card");
-  cards.forEach((card, index) => {
-    if (animals[index].id === animalId) {
-      card.classList.add("active");
-    } else {
-      card.classList.remove("active");
-    }
-  });
+  updateAnimalGridActiveState();
   
   // Hent ny sti
   selectedLineage = getLineageForAnimal(taxonomyTree, animalId);
@@ -2599,6 +2620,140 @@ closeModal.addEventListener("click", () => {
 });
 
 /* ==========================================================================
+   Sammenligningsmodul
+   ========================================================================== */
+function getAnimalById(animalId) {
+  return animals.find(animal => animal.id === animalId);
+}
+
+function getSharedLineageDepth(leftLineage, rightLineage) {
+  const maxDepth = Math.min(leftLineage.length, rightLineage.length);
+  let sharedDepth = -1;
+
+  for (let index = 0; index < maxDepth; index++) {
+    const leftNode = leftLineage[index];
+    const rightNode = rightLineage[index];
+    if (leftNode.rank === rightNode.rank && leftNode.name === rightNode.name) {
+      sharedDepth = index;
+    } else {
+      break;
+    }
+  }
+
+  return sharedDepth;
+}
+
+function populateCompareSelect(selectEl, selectedAnimalId) {
+  if (!selectEl) return;
+
+  selectEl.innerHTML = animals
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name, "da-DK", { sensitivity: "base" }))
+    .map(animal => `
+      <option value="${animal.id}" ${animal.id === selectedAnimalId ? "selected" : ""}>
+        ${animal.name} (${animal.scientific})
+      </option>
+    `)
+    .join("");
+}
+
+function renderCompareColumn(animal, lineage, sharedDepth, sideLabel) {
+  return `
+    <article class="compare-lineage-card theme-${animal.theme}">
+      <div class="compare-hero">
+        <img src="${animal.image}" alt="${animal.name}" class="compare-hero-img">
+        <div class="compare-hero-overlay">
+          <span class="compare-side-label">${sideLabel}</span>
+          <h3>${animal.name}</h3>
+          <span>${animal.scientific}</span>
+        </div>
+      </div>
+      <div class="compare-lineage-list">
+        ${lineage.map((node, index) => {
+          const stateClass = index <= sharedDepth ? "shared" : "different";
+          const rankTitle = rankExplanations[node.rank] ? rankExplanations[node.rank].title : node.rank;
+          return `
+            <div class="compare-row ${stateClass}">
+              <div class="compare-row-index">${index + 1}</div>
+              <div class="compare-row-content">
+                <span class="compare-row-rank">${rankTitle}</span>
+                <strong>${node.danish}</strong>
+                <em>${node.latin}</em>
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </article>
+  `;
+}
+
+function renderCompareView() {
+  if (!compareAnimalLeft || !compareAnimalRight || !compareGrid || !compareSummary) return;
+
+  const leftAnimal = getAnimalById(compareAnimalLeft.value);
+  const rightAnimal = getAnimalById(compareAnimalRight.value);
+  if (!leftAnimal || !rightAnimal) return;
+
+  const leftLineage = getLineageForAnimal(taxonomyTree, leftAnimal.id) || [];
+  const rightLineage = getLineageForAnimal(taxonomyTree, rightAnimal.id) || [];
+  const sharedDepth = getSharedLineageDepth(leftLineage, rightLineage);
+  const sharedNode = sharedDepth >= 0 ? leftLineage[sharedDepth] : null;
+  const splitLeft = leftLineage[sharedDepth + 1];
+  const splitRight = rightLineage[sharedDepth + 1];
+
+  if (leftAnimal.id === rightAnimal.id) {
+    compareSummary.innerHTML = `
+      <strong>Samme organisme valgt.</strong>
+      <span>Hele den viste taksonomiske linje er identisk.</span>
+    `;
+  } else if (sharedNode && splitLeft && splitRight) {
+    const sharedRank = rankExplanations[sharedNode.rank] ? rankExplanations[sharedNode.rank].title : sharedNode.rank;
+    compareSummary.innerHTML = `
+      <strong>Fælles til og med ${sharedRank}: ${sharedNode.danish}.</strong>
+      <span>Grenene skilles derefter ved ${splitLeft.danish} og ${splitRight.danish}.</span>
+    `;
+  } else if (sharedNode) {
+    const sharedRank = rankExplanations[sharedNode.rank] ? rankExplanations[sharedNode.rank].title : sharedNode.rank;
+    compareSummary.innerHTML = `
+      <strong>Fælles til og med ${sharedRank}: ${sharedNode.danish}.</strong>
+      <span>Den ene klassifikation fortsætter længere i databasen.</span>
+    `;
+  } else {
+    compareSummary.innerHTML = `
+      <strong>Ingen fælles taksonomiske niveauer fundet i den viste sti.</strong>
+      <span>Prøv et andet par organismer.</span>
+    `;
+  }
+
+  compareGrid.innerHTML = `
+    ${renderCompareColumn(leftAnimal, leftLineage, sharedDepth, "Organisme 1")}
+    ${renderCompareColumn(rightAnimal, rightLineage, sharedDepth, "Organisme 2")}
+  `;
+}
+
+function initCompareView() {
+  if (!compareAnimalLeft || !compareAnimalRight) return;
+
+  populateCompareSelect(compareAnimalLeft, currentAnimalId || "ulv");
+  populateCompareSelect(compareAnimalRight, "raev");
+
+  compareAnimalLeft.addEventListener("change", renderCompareView);
+  compareAnimalRight.addEventListener("change", renderCompareView);
+
+  if (compareSwapBtn) {
+    compareSwapBtn.addEventListener("click", () => {
+      const leftValue = compareAnimalLeft.value;
+      compareAnimalLeft.value = compareAnimalRight.value;
+      compareAnimalRight.value = leftValue;
+      renderCompareView();
+    });
+  }
+
+  renderCompareView();
+}
+
+/* ==========================================================================
    Quiz Modul Logik
    ========================================================================== */
 const quizData = [
@@ -2631,10 +2786,17 @@ let shuffledQuizData = [];
 
 // View Toggle DOM Elements
 const viewTreeBtn = document.getElementById("view-tree-btn");
+const viewCompareBtn = document.getElementById("view-compare-btn");
 const viewQuizBtn = document.getElementById("view-quiz-btn");
 const animalsSection = document.getElementById("animals-section");
 const visualizerSection = document.getElementById("visualizer-section");
+const compareSection = document.getElementById("compare-section");
 const quizSection = document.getElementById("quiz-section");
+const compareAnimalLeft = document.getElementById("compare-animal-left");
+const compareAnimalRight = document.getElementById("compare-animal-right");
+const compareSwapBtn = document.getElementById("compare-swap-btn");
+const compareSummary = document.getElementById("compare-summary");
+const compareGrid = document.getElementById("compare-grid");
 
 // Quiz DOM Elements
 const quizScoreEl = document.getElementById("quiz-score");
@@ -2778,6 +2940,10 @@ document.addEventListener("click", () => {
 
 // Start appen
 document.addEventListener("DOMContentLoaded", () => {
+  if (animalSearchInput) {
+    animalSearchInput.addEventListener("input", initAnimalGrid);
+  }
+
   initAnimalGrid();
   selectAnimal("løve"); // Vælg løve som standard
 });

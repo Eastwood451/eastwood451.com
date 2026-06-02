@@ -447,10 +447,58 @@ body {
 /* ==========================================================================
    Sektion 1: Dyrevælger Gitter (Animal Selector Grid)
    ========================================================================== */
+.animal-search {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  max-width: 520px;
+}
+
+.animal-search-label {
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.animal-search-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0.75rem 1rem;
+  color: var(--text-primary);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  outline: none;
+  font: inherit;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+}
+
+.animal-search-input::placeholder {
+  color: var(--text-subtle);
+}
+
+.animal-search-input:focus {
+  background-color: rgba(30, 41, 59, 0.9);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
 .animal-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1rem;
+}
+
+.animal-grid-empty {
+  grid-column: 1 / -1;
+  padding: 1.25rem;
+  color: var(--text-muted);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
 }
 
 .animal-card {
@@ -1356,6 +1404,11 @@ body {
 }
 
 @media (max-width: 480px) {
+  .animal-search {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
   .animal-grid {
     grid-template-columns: 1fr;
   }
