@@ -1402,7 +1402,6 @@ input:checked + .slider:before {
     color: var(--text-muted);
     font-size: 0.78rem;
     font-weight: 850;
-    text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 

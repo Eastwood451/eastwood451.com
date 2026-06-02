@@ -20,13 +20,13 @@ const RULE_BUILDER_PROBLEMS = [
         },
         skeleton: {
             title: "Kædereglen",
-            formula: "\\frac{d}{dx} f(g(x)) =",
+            formula: "\\frac{d}{dx}[f(g(x))] = f'(g(x)) \\cdot g'(x)",
             slots: [
                 { id: "outerDerivative", label: "f'(g(x))", correct: "\\cos(x^2)" },
                 { id: "times", label: "\\cdot", fixed: true },
                 { id: "innerDerivative", label: "g'(x)", correct: "2x" },
                 { id: "equals", label: "=", fixed: true },
-                { id: "result", label: "resultat", correct: "2x\\cos(x^2)" }
+                { id: "result", label: "RESULTAT", correct: "2x\\cos(x^2)" }
             ],
             tiles: ["\\cos(x^2)", "2x", "2x\\cos(x^2)", "\\sin(x^2)", "x^2", "\\cos(x)"]
         },
@@ -50,7 +50,7 @@ const RULE_BUILDER_PROBLEMS = [
         },
         skeleton: {
             title: "Produktreglen",
-            formula: "(f\\cdot g)' =",
+            formula: "(f\\cdot g)' = f'\\cdot g + f\\cdot g'",
             slots: [
                 { id: "fprime", label: "f'", correct: "2x" },
                 { id: "g1", label: "g", correct: "e^x" },
@@ -58,7 +58,7 @@ const RULE_BUILDER_PROBLEMS = [
                 { id: "f1", label: "f", correct: "x^2" },
                 { id: "gprime", label: "g'", correct: "e^x" },
                 { id: "equals", label: "=", fixed: true },
-                { id: "result", label: "resultat", correct: "2xe^x+x^2e^x" }
+                { id: "result", label: "RESULTAT", correct: "2xe^x+x^2e^x" }
             ],
             tiles: ["2x", "e^x", "x^2", "2xe^x+x^2e^x", "2xe^x", "x^2e^x"]
         },
@@ -81,13 +81,13 @@ const RULE_BUILDER_PROBLEMS = [
         },
         skeleton: {
             title: "Substitution",
-            formula: "\\int f(g(x))g'(x)\\,dx \\Rightarrow",
+            formula: "\\int f(g(x))g'(x)\\,dx = \\int f(u)\\,du",
             slots: [
                 { id: "u", label: "u", correct: "x^2" },
                 { id: "du", label: "du", correct: "2x\\,dx" },
                 { id: "outer", label: "f(u)", correct: "\\cos(u)" },
                 { id: "primitive", label: "\\int f(u)du", correct: "\\sin(u)+C" },
-                { id: "result", label: "tilbage i x", correct: "\\sin(x^2)+C" }
+                { id: "result", label: "RESULTAT (tilbage i x)", correct: "\\sin(x^2)+C" }
             ],
             tiles: ["x^2", "2x\\,dx", "\\cos(u)", "\\sin(u)+C", "\\sin(x^2)+C", "\\cos(x^2)+C"]
         },
@@ -111,13 +111,13 @@ const RULE_BUILDER_PROBLEMS = [
         },
         skeleton: {
             title: "Kædereglen med potens",
-            formula: "\\frac{d}{dx}(g(x))^n =",
+            formula: "\\frac{d}{dx}[(g(x))^n] = n(g(x))^{n-1} \\cdot g'(x)",
             slots: [
                 { id: "outerDerivative", label: "n(g(x))^{n-1}", correct: "4(3x+1)^3" },
                 { id: "times", label: "\\cdot", fixed: true },
                 { id: "innerDerivative", label: "g'(x)", correct: "3" },
                 { id: "equals", label: "=", fixed: true },
-                { id: "result", label: "resultat", correct: "12(3x+1)^3" }
+                { id: "result", label: "RESULTAT", correct: "12(3x+1)^3" }
             ],
             tiles: ["4(3x+1)^3", "3", "12(3x+1)^3", "(3x+1)^4", "4(3x+1)^4", "3x+1"]
         },
@@ -141,7 +141,7 @@ const RULE_BUILDER_PROBLEMS = [
         },
         skeleton: {
             title: "Kvotientreglen",
-            formula: "\\left(\\frac{f}{g}\\right)' =",
+            formula: "\\left(\\frac{f}{g}\\right)' = \\frac{f'g - fg'}{g^2}",
             slots: [
                 { id: "topLeft", label: "f'g", correct: "2x\\cdot x" },
                 { id: "minus", label: "-", fixed: true },
@@ -149,7 +149,7 @@ const RULE_BUILDER_PROBLEMS = [
                 { id: "over", label: "\\over", fixed: true },
                 { id: "bottom", label: "g^2", correct: "x^2" },
                 { id: "equals", label: "=", fixed: true },
-                { id: "result", label: "resultat", correct: "\\frac{x^2-1}{x^2}" }
+                { id: "result", label: "RESULTAT", correct: "\\frac{x^2-1}{x^2}" }
             ],
             tiles: ["2x\\cdot x", "(x^2+1)\\cdot 1", "x^2", "\\frac{x^2-1}{x^2}", "2x", "x^2+1"]
         },
