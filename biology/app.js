@@ -2043,7 +2043,7 @@ const animals = [
   { id: "harpaphe", name: "Gul-plettet Tusindben", scientific: "Harpaphe haydeniana", icon: "🐛", theme: "millipede", image: "images/harpaphe.jpg" },
   { id: "hund", name: "Hund", scientific: "Canis lupus familiaris", icon: "🐕", theme: "dog", image: "images/hund.jpg" },
   { id: "golden_retriever", name: "Golden Retriever", scientific: "Canis lupus familiaris", icon: "🦮", theme: "dog", image: "images/golden_retriever.jpg" },
-  { id: "schaefer", name: "Schæferhund", scientific: "Canis lupus familiaris", icon: "🐕‍🦺", theme: "dog", image: "images/schaefer.jpg" },
+  { id: "schaefer", name: "Schæferhund", scientific: "Canis lupus familiaris", icon: "🐕‍🦺", theme: "dog", image: "images/schafer.jpg" },
   { id: "boaslange", name: "Boaslange", scientific: "Boa constrictor", icon: "🐍", theme: "snake", image: "images/boaslange.jpg" },
   { id: "kobra", name: "Kobraslange", scientific: "Naja naja", icon: "🐍", theme: "snake", image: "images/kobra.jpg" },
   { id: "staalorm", name: "Stålorm", scientific: "Anguis fragilis", icon: "🦎", theme: "lizard", image: "images/staalorm.jpg" },
