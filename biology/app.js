@@ -1,5 +1,5 @@
 // Biologisk Klassifikation - Data og Logik
-// Omfatter 45 organismer, herunder planter, dyr, bakterier og arkæer.
+// Omfatter 46 organismer, herunder planter, dyr, bakterier og arkæer.
 
 
 
@@ -398,6 +398,32 @@ const taxonomyTree = {
                               danish: "Brun bjørn",
                               description: "En af de største og mest udbredte bjørnearter. Dens kost er utroligt varieret. Den kan fange store laks i floderne, men bruger også meget tid på at grave efter rødder og samle bær før vinterhiet.",
                               animalId: "bjoern"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      name: "Hyaenidae",
+                      rank: "Familie",
+                      latin: "Hyaenidae",
+                      danish: "Hyæner",
+                      description: "En familie af kødædende pattedyr. Selvom de fysisk og adfærdsmæssigt ligner hunde (Canidae), er de faktisk tættere beslægtet med katte (Felidae) og desmerdyr (Viverridae). De kendes på deres kraftige kæber og skrånende ryg.",
+                      children: [
+                        {
+                          name: "Crocuta",
+                          rank: "Slægt",
+                          latin: "Crocuta",
+                          danish: "Plettede hyæner",
+                          description: "En slægt af store hyæner. Nulevende findes kun én art.",
+                          children: [
+                            {
+                              name: "Crocuta crocuta",
+                              rank: "Art",
+                              latin: "Crocuta crocuta",
+                              danish: "Plettet hyæne",
+                              description: "Den største hyæneart. Den er kendt for sin 'leende' vokalisering og for at leve i store, komplekse, matriarkalske klaner. Selvom de ofte omtales som ådselædere, er de yderst dygtige og effektive jægere, der nedlægger det meste af deres føde selv.",
+                              animalId: "hyaene"
                             }
                           ]
                         }
@@ -2039,7 +2065,8 @@ const animals = [
   { id: "huskat", name: "Almindelig Huskat", scientific: "Felis catus", icon: "🐈", theme: "lion", image: "images/huskat.jpg" },
   { id: "naebdyr", name: "Næbdyr", scientific: "Ornithorhynchus anatinus", icon: "🦆", theme: "platypus", image: "images/naebdyr.jpg" },
   { id: "naesehorn", name: "Hvidt Næsehorn", scientific: "Ceratotherium simum", icon: "🦏", theme: "rhino", image: "images/naesehorn.jpg" },
-  { id: "elefant", name: "Afrikansk Elefant", scientific: "Loxodonta africana", icon: "🐘", theme: "elephant", image: "images/elefant.jpg" }
+  { id: "elefant", name: "Afrikansk Elefant", scientific: "Loxodonta africana", icon: "🐘", theme: "elephant", image: "images/elefant.jpg" },
+  { id: "hyaene", name: "Plettet Hyæne", scientific: "Crocuta crocuta", icon: "😂", theme: "hyena", image: "images/hyaene.jpg" }
 ];
 
 // Funktion til at finde stien (lineage) fra roden til et bestemt dyr
