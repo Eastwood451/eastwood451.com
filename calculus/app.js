@@ -742,12 +742,10 @@ function checkAnswer() {
         continueBtn.className = 'next-correct';
         continueBtn.textContent = 'Fortsæt';
 
-        // Auto-advance after 0.5 seconds
-        if (autoAdvanceTimeout) clearTimeout(autoAdvanceTimeout);
-        autoAdvanceTimeout = setTimeout(() => {
+        if (autoAdvanceTimeout) {
+            clearTimeout(autoAdvanceTimeout);
             autoAdvanceTimeout = null;
-            advanceStep();
-        }, 500);
+        }
     } else {
         state.streak = 0;
         showFeedback(false, 'Ikke helt rigtigt', step.wrongExplanation);

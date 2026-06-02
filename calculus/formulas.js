@@ -1158,24 +1158,10 @@ function checkFormulaAnswer() {
         continueBtn.className = 'next-correct';
         continueBtn.textContent = 'Fortsæt';
 
-        // Auto-advance after 0.5 seconds
-        if (formulaAutoAdvanceTimeout) clearTimeout(formulaAutoAdvanceTimeout);
-        formulaAutoAdvanceTimeout = setTimeout(() => {
+        if (formulaAutoAdvanceTimeout) {
+            clearTimeout(formulaAutoAdvanceTimeout);
             formulaAutoAdvanceTimeout = null;
-            const enabledPool = getEnabledFormulaQuestions();
-            const activePool = enabledPool.filter(q => formulaState.sessionPerf[getQuestionKey(q)].streak < 3);
-
-            if (activePool.length === 0) {
-                showFormulaComplete();
-                return;
-            }
-
-            formulaState.currentConstantMap = null;
-            formulaState.currentQuestionWithConstants = null;
-            formulaState.currentQuestion++;
-            formulaState.activeQuestion = sampleNextWeightedQuestion(activePool, getQuestionKey(formulaState.activeQuestion));
-            loadFormulaQuestion();
-        }, 500);
+        }
     } else {
         formulaState.streak = 0;
 

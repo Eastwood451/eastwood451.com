@@ -390,15 +390,23 @@ function onRuleBuilderContinue() {
         checkRuleSkeletonChoice();
         return;
     }
+    if (ruleBuilderState.phase === "feedback-rule") {
+        renderElementsStep();
+        return;
+    }
     if (ruleBuilderState.phase === "elements") {
         checkRuleBuilderElements();
+        return;
+    }
+    if (ruleBuilderState.phase === "feedback-elements") {
+        renderSkeletonStep();
         return;
     }
     if (ruleBuilderState.phase === "slots") {
         checkRuleBuilderSlots();
         return;
     }
-    if (ruleBuilderState.phase === "feedback") {
+    if (ruleBuilderState.phase === "feedback-slots" || ruleBuilderState.phase === "feedback") {
         if (ruleBuilderAutoAdvanceTimeout) {
             clearTimeout(ruleBuilderAutoAdvanceTimeout);
             ruleBuilderAutoAdvanceTimeout = null;
@@ -412,12 +420,11 @@ function checkRuleSkeletonChoice() {
     const isCorrect = ruleBuilderState.selectedRule === problem.correctRule;
 
     if (isCorrect) {
-        showFeedback(true, 'Korrekt skelet!', `${problem.explanation}<br><br>Nu skal du identificere grundelementerne.`);
+        showFeedback(true, 'Korrekt skelet!', `${problem.explanation}<br><br>Klik på knappen for at identificere grundelementerne.`);
         continueBtn.className = 'next-correct';
         continueBtn.textContent = 'Identificer elementer';
-        continueBtn.disabled = true;
+        continueBtn.disabled = false;
         ruleBuilderState.phase = "feedback-rule";
-        setTimeout(renderElementsStep, 800);
         return;
     }
 
@@ -523,12 +530,11 @@ function checkRuleBuilderElements() {
     });
 
     if (allCorrect) {
-        showFeedback(true, 'Grundelementer fundet!', 'Flot! Nu skal du placere dem i det endelige formel-skelet.');
+        showFeedback(true, 'Grundelementer fundet!', 'Flot! Klik på knappen for at gå videre til at placere dem i det endelige formel-skelet.');
         continueBtn.className = 'next-correct';
         continueBtn.textContent = 'Byg formel';
-        continueBtn.disabled = true;
+        continueBtn.disabled = false;
         ruleBuilderState.phase = "feedback-elements";
-        setTimeout(renderSkeletonStep, 800);
     } else {
         showFeedback(false, 'Næsten', 'Nogle af grundelementerne er ikke korrekte. Ret dem og prøv igen.');
         shakeHearts();
@@ -569,10 +575,8 @@ function checkRuleBuilderSlots() {
         showXpPop(`+${xpGain} XP`);
         continueBtn.className = 'next-correct';
         continueBtn.textContent = 'Fortsæt';
-        ruleBuilderAutoAdvanceTimeout = setTimeout(() => {
-            ruleBuilderAutoAdvanceTimeout = null;
-            advanceRuleBuilderProblem();
-        }, 800);
+        continueBtn.disabled = false;
+        ruleBuilderState.phase = "feedback-slots";
     } else {
         ruleBuilderState.streak = 0;
         showFeedback(false, 'Næsten', 'De røde felter passer ikke til rollen i skelettet. Flyt brikkerne og prøv igen.');
