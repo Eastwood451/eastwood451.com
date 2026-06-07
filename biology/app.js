@@ -1164,6 +1164,129 @@ const taxonomyTree = {
                   ]
                 },
                 {
+                  name: "Dinosauria",
+                  rank: "Orden",
+                  latin: "Dinosauria",
+                  danish: "Dinosaurer",
+                  description: "En stor gruppe arkosauriske krybdyr, der dominerede landjorden i Mesozoikum. Gruppen omfatter både uddøde former som Triceratops, Tyrannosaurus og Argentinosaurus samt de nulevende fugle som efterkommere af theropode dinosaurer.",
+                  children: [
+                    {
+                      name: "Ornithischia",
+                      rank: "Underorden",
+                      latin: "Ornithischia",
+                      danish: "Fuglehoftede dinosaurer",
+                      description: "En stor gruppe planteædende dinosaurer med en bækkenbygning, der overfladisk minder om fugles. Gruppen omfatter bl.a. pansrede dinosaurer, andenæbsdinosaurer og hornede dinosaurer.",
+                      children: [
+                        {
+                          name: "Ceratopsidae",
+                          rank: "Familie",
+                          latin: "Ceratopsidae",
+                          danish: "Hornede dinosaurer",
+                          description: "En familie af store planteædende dinosaurer med kraftige kranier, nakkeskjold og ofte horn. De levede især i Nordamerika i sen Kridttid.",
+                          children: [
+                            {
+                              name: "Triceratops",
+                              rank: "Slægt",
+                              latin: "Triceratops",
+                              danish: "Triceratops",
+                              description: "En slægt af store hornede dinosaurer med tre markante horn og et bredt nakkeskjold. Triceratops var en tung planteæder fra sen Kridttid.",
+                              children: [
+                                {
+                                  name: "Triceratops horridus",
+                                  rank: "Art",
+                                  latin: "Triceratops horridus",
+                                  danish: "Triceratops",
+                                  description: "En ikonisk hornet dinosaur fra sen Kridttid i Nordamerika. Den havde to lange horn over øjnene, et kortere næsehorn og et kraftigt næb til at bide sej vegetation.",
+                                  animalId: "triceratops"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      name: "Saurischia",
+                      rank: "Underorden",
+                      latin: "Saurischia",
+                      danish: "Øglehoftede dinosaurer",
+                      description: "En hovedgruppe af dinosaurer, der omfatter theropoderne og de langhalsede sauropodomorfer. Fugle udviklede sig senere fra theropode dinosaurer i denne gren.",
+                      children: [
+                        {
+                          name: "Theropoda",
+                          rank: "Infraorden",
+                          latin: "Theropoda",
+                          danish: "Theropoder",
+                          description: "Primært tobenede dinosaurer, ofte rovdyr, med gribende forlemmer og lette kranier. Gruppen omfatter både Tyrannosaurus og fuglenes forfædre.",
+                          children: [
+                            {
+                              name: "Tyrannosauridae",
+                              rank: "Familie",
+                              latin: "Tyrannosauridae",
+                              danish: "Tyrannosaurider",
+                              description: "En familie af store theropode rovdinosaurer fra sen Kridttid, kendt for kraftige kranier, enorme bidkræfter og relativt små forlemmer.",
+                              children: [
+                                {
+                                  name: "Tyrannosaurus",
+                                  rank: "Slægt",
+                                  latin: "Tyrannosaurus",
+                                  danish: "Tyrannosaurus",
+                                  description: "En slægt af meget store rovdinosaurer med massivt kranium, kraftige kæber og tobenet gang. Den mest kendte art er Tyrannosaurus rex.",
+                                  children: [
+                                    {
+                                      name: "Tyrannosaurus rex",
+                                      rank: "Art",
+                                      latin: "Tyrannosaurus rex",
+                                      danish: "Tyrannosaurus rex",
+                                      description: "Et af de største landlevende rovdyr i Jordens historie. T. rex levede i Nordamerika i sen Kridttid og havde et ekstremt kraftigt bid, stærke bagben og små, men muskuløse forlemmer.",
+                                      animalId: "tyrannosaurus_rex"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          name: "Sauropodomorpha",
+                          rank: "Infraorden",
+                          latin: "Sauropodomorpha",
+                          danish: "Sauropodomorfer",
+                          description: "Planteædende dinosaurer, hvor de mest kendte former havde meget lange halse, lange haler og enorme kroppe. Gruppen rummer de største landdyr, der har levet.",
+                          children: [
+                            {
+                              name: "Titanosauria",
+                              rank: "Familie",
+                              latin: "Titanosauria",
+                              danish: "Titanosaurer",
+                              description: "En mangfoldig gruppe af sauropoder fra Kridttiden, ofte meget store og udbredt på de sydlige kontinenter. Argentinosaurus hører til blandt de største kendte titanosaurer.",
+                              children: [
+                                {
+                                  name: "Argentinosaurus",
+                                  rank: "Slægt",
+                                  latin: "Argentinosaurus",
+                                  danish: "Argentinosaurus",
+                                  description: "En slægt af enorme langhalsede titanosaurer fra Argentina. Fossilerne peger på et dyr blandt de tungeste landdyr, der nogensinde har eksisteret.",
+                                  children: [
+                                    {
+                                      name: "Argentinosaurus huinculensis",
+                                      rank: "Art",
+                                      latin: "Argentinosaurus huinculensis",
+                                      danish: "Argentinosaurus",
+                                      description: "En gigantisk planteædende sauropod fra sen Kridttid i Sydamerika. Den havde lang hals, massiv krop og levede sandsynligvis af højt og lavt plantemateriale i åbne landskaber.",
+                                      animalId: "argentinosaurus"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
                   name: "Crocodilia",
                   rank: "Orden",
                   latin: "Crocodilia",
@@ -2098,6 +2221,9 @@ const animals = [
   { id: "leguan", name: "Grøn Leguan", scientific: "Iguana iguana", icon: "🦎", theme: "lizard", image: "images/leguan.jpg" },
   { id: "slange", name: "Hugorm", scientific: "Vipera berus", icon: "🐍", theme: "snake", image: "images/slange.jpg" },
   { id: "komodovaran", name: "Komodovaran", scientific: "Varanus komodoensis", icon: "🐉", theme: "komodo", image: "images/komodovaran.jpg" },
+  { id: "triceratops", name: "Triceratops", scientific: "Triceratops horridus", icon: "🦕", theme: "triceratops", image: "images/triceratops.png" },
+  { id: "tyrannosaurus_rex", name: "Tyrannosaurus rex", scientific: "Tyrannosaurus rex", icon: "🦖", theme: "tyrannosaur", image: "images/tyrannosaurus_rex.png" },
+  { id: "argentinosaurus", name: "Argentinosaurus", scientific: "Argentinosaurus huinculensis", icon: "🦕", theme: "sauropod", image: "images/argentinosaurus.png" },
   { id: "sort_enke", name: "Sort Enke", scientific: "Latrodectus mactans", icon: "🕷️", theme: "spider", image: "images/sort_enke.jpg" },
   { id: "nordhavsreje", name: "Nordhavsreje", scientific: "Pandalus borealis", icon: "🦐", theme: "shrimp", image: "images/nordhavsreje.jpg" },
   { id: "gepard", name: "Gepard", scientific: "Acinonyx jubatus", icon: "🐆", theme: "cheetah", image: "images/gepard.jpg" },
