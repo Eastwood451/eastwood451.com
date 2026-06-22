@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Livets Træ – Biologisk Klassifikation af Dyr</title>
+  <script src="/auth.js"></script>
   
   <!-- Skrifttyper fra Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,12 +29,13 @@
         <span class="logo-emoji">🌿</span>
         <h1>Livets Træ</h1>
       </div>
-      <p class="header-tagline">Udforsk og lær om den biologiske klassifikation og systematik af 17 fascinerende dyr</p>
+      <p class="header-tagline">Udforsk og lær om den biologiske klassifikation og systematik af fascinerende organismer</p>
       
       <!-- Navigation / Skift Visning -->
       <div class="header-actions">
         <div class="view-toggle">
           <button id="view-tree-btn" class="btn btn-primary">🌳 Livets Træ</button>
+          <button id="view-compare-btn" class="btn btn-secondary">⚖️ Sammenlign</button>
           <button id="view-quiz-btn" class="btn btn-secondary">🎮 Quiz Modul</button>
           <a href="evolution-timeline/index.html" class="btn btn-secondary" style="text-decoration: none;">⏳ Evolutionær Tidslinje</a>
         </div>
@@ -51,6 +53,11 @@
         <div class="section-header">
           <h2>1. Vælg et dyr for at undersøge dets taksonomi</h2>
           <p class="section-desc">Se hvordan dyrene grupperes sammen baseret på fælles evolutionære træk.</p>
+        </div>
+
+        <div class="animal-search">
+          <label class="animal-search-label" for="animal-search-input">Søg</label>
+          <input id="animal-search-input" class="animal-search-input" type="search" placeholder="Søg efter navn eller latinsk navn" autocomplete="off">
         </div>
         
         <div class="animal-grid" id="animal-grid">
@@ -85,18 +92,8 @@
               </div>
             </div>
 
-            <h3 class="column-title" id="lineage-col-title">Taksonomisk Linje</h3>
-            <p class="column-desc" id="lineage-col-desc">Fra det mest generelle (Domæne) til det mest specifikke (Art).</p>
-
-            <!-- Visnings-toggle: Linnéansk vs Kladistisk -->
-            <div class="lineage-mode-toggle">
-              <button id="mode-linnaeus-btn" class="mode-btn active" title="Vis de klassiske taksonomiske niveauer (Domæne, Rige, Orden…)">
-                🏷️ Linnéansk
-              </button>
-              <button id="mode-clade-btn" class="mode-btn" title="Vis de fylogenetiske klader (monofyletiske grupper)">
-                🌿 Kladistisk
-              </button>
-            </div>
+            <h3 class="column-title">Taksonomisk Linje</h3>
+            <p class="column-desc">Fra det mest generelle (Domæne) til det mest specifikke (Art).</p>
             
             <div class="stepper" id="stepper-container">
               <!-- Dynamisk sti genereres af JS -->
@@ -136,6 +133,31 @@
           </div>
         </div>
 
+      </section>
+
+      <!-- Sektion 3: Sammenlign organismer -->
+      <section class="section-compare" id="compare-section" style="display: none;">
+        <div class="compare-container">
+          <div class="section-header">
+            <h2>Sammenlign to organismers taksonomi</h2>
+            <p class="section-desc">Vælg to organismer og se hvor deres klassifikation er ens, og hvor grenene skilles.</p>
+          </div>
+
+          <div class="compare-controls">
+            <label class="compare-select-label" for="compare-animal-left">
+              <span>Organisme 1</span>
+              <select id="compare-animal-left" class="compare-select"></select>
+            </label>
+            <button id="compare-swap-btn" class="btn btn-secondary compare-swap-btn" type="button">⇄ Byt</button>
+            <label class="compare-select-label" for="compare-animal-right">
+              <span>Organisme 2</span>
+              <select id="compare-animal-right" class="compare-select"></select>
+            </label>
+          </div>
+
+          <div class="compare-summary" id="compare-summary"></div>
+          <div class="compare-grid" id="compare-grid"></div>
+        </div>
       </section>
 
       <!-- Sektion 3: Quiz Modul -->
@@ -225,7 +247,6 @@
   </div>
 
   <!-- JS Scripts -->
-  <script src="clade-data.js?v=1"></script>
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>
