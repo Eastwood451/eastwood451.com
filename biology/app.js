@@ -2478,7 +2478,8 @@ function initAnimalGrid() {
       </div>
     `;
     
-    card.addEventListener("click", () => {
+    card.addEventListener("click", (e) => {
+      if (e.target.closest(".foreign-word")) return;
       selectAnimal(animal.id);
     });
     
@@ -2598,6 +2599,7 @@ function renderStepper() {
     `;
     
     step.addEventListener("click", (e) => {
+      if (e.target.closest(".foreign-word")) return;
       // Hvis vi klikker på dropdown eller dets emner, skal vi ikke lukke/togle her
       if (e.target.closest(".stepper-dropdown")) {
         return;
@@ -2788,7 +2790,8 @@ function renderAlternatives(currentNode, currentRank) {
     });
     
     // Gør hele kortet klikbart for at dykke ned i den gren!
-    card.addEventListener("click", () => {
+    card.addEventListener("click", (e) => {
+      if (e.target.closest(".foreign-word")) return;
       // Find det første dyr i listen under denne gren og vælg det
       if (representativeAnimals.length > 0) {
         selectAnimal(representativeAnimals[0].id);
@@ -3212,7 +3215,8 @@ function renderCladeStepper() {
     item.appendChild(bullet);
     item.appendChild(content);
 
-    item.addEventListener("click", () => {
+    item.addEventListener("click", (e) => {
+      if (e.target.closest(".foreign-word")) return;
       activeCladeIndex = index;
       renderCladeStepper();
       updateCladeDetailView();
@@ -3319,6 +3323,7 @@ const etymologyDict = {
   "prokaryota": "Før kerne (græsk: pro = før, karyon = nød/kerne).",
   "animalia": "Fra latin 'animalis' (har en ånde/sjæl).",
   "chordata": "Fra græsk 'chorde' (streng/reb), refererer til rygstrengen.",
+  "chordater": "Dansk form af Chordata. Fra græsk 'chorde' (streng/reb), refererer til rygstrengen.",
   "arthropoda": "Fra græsk 'arthron' (led) og 'podos' (fod/ben).",
   "mammalia": "Fra latin 'mamma' (bryst).",
   "aves": "Fra latin for 'fugle'.",
@@ -3326,12 +3331,16 @@ const etymologyDict = {
   "amphibia": "Fra græsk 'amphi' (begge) og 'bios' (liv) - lever både i vand og på land.",
   "actinopterygii": "Fra græsk 'aktis' (stråle) og 'pteryx' (finne/vinge).",
   "chondrichthyes": "Fra græsk 'chondros' (brusk) og 'ichthys' (fisk).",
+  "placoidskæl": "Fra græsk 'plax' (flad plade) og 'eidos' (form).",
   "fungi": "Fra latin for 'svamp'.",
   "plantae": "Fra latin for 'plante'.",
   "bacteria": "Fra græsk 'bakterion' (lille stav).",
   "archaea": "Fra græsk 'archaios' (gammel/oprindelig).",
   "insecta": "Fra latin 'insectum' (indskåret/opdelt), refererer til leddelt krop.",
   "carnivora": "Fra latin 'caro' (kød) og 'vorare' (at sluge).",
+  "felidae": "Fra latin 'feles' (kat).",
+  "panthera": "Fra græsk 'panther' (panter/stor kat).",
+  "leo": "Fra latin 'leo' (løve).",
   "primates": "Fra latin 'primus' (første/fornemste).",
   "hominidae": "Fra latin 'homo' (menneske).",
   "sapiens": "Fra latin 'sapiens' (vis/fornuftig)."
