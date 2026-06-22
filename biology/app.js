@@ -2410,8 +2410,10 @@ function getAnimalsInTaxon(taxonNode) {
 
 // Global app-tilstand
 let currentAnimalId = "løve";
-let activeRankIndex = 3; // Række (Phylum) som standard, da det er mest spændende at se alternativerne for
+let activeRankIndex = 3; // Række (Phylum) som standard
 let selectedLineage = [];
+let viewMode = "linnaeus"; // "linnaeus" | "clade"
+let activeCladeIndex = 0;  // aktiv trin-index i kladestien
 
 // DOM Elementer
 const animalGrid = document.getElementById("animal-grid");
@@ -2528,11 +2530,16 @@ function selectAnimal(animalId) {
   // Opdater CSS tema-klasse på body for dynamisk baggrundsglød
   document.body.className = `theme-${animalObj.theme}`;
   
-  // Render stien
-  renderStepper();
-  
-  // Opdater detalje-området med den nuværende aktive rang
-  updateDetailView();
+  // Render sti og detaljer afhængigt af visnings-mode
+  if (viewMode === "clade") {
+    const path = (typeof cladePaths !== 'undefined') ? cladePaths[currentAnimalId] : null;
+    activeCladeIndex = path ? Math.max(0, path.length - 3) : 0;
+    renderCladeStepper();
+    updateCladeDetailView();
+  } else {
+    renderStepper();
+    updateDetailView();
+  }
 }
 
 // Render den lodrette taksonomiske sti (stepper)
@@ -3133,6 +3140,198 @@ window.addEventListener("click", (e) => {
   }
 });
 
+// --- KLADISTISK VISNING LOGIK ---
+function setViewMode(mode) {
+  viewMode = mode;
+  const linnaeusBtn = document.getElementById("mode-linnaeus-btn");
+  const cladeBtn = document.getElementById("mode-clade-btn");
+  
+  if (linnaeusBtn && cladeBtn) {
+    if (mode === "linnaeus") {
+      linnaeusBtn.classList.add("active");
+      cladeBtn.classList.remove("active");
+      document.getElementById("lineage-col-title").textContent = "Taksonomisk Linje";
+      document.getElementById("lineage-col-desc").textContent = "Fra det mest generelle (Domæne) til det mest specifikke (Art).";
+    } else {
+      cladeBtn.classList.add("active");
+      linnaeusBtn.classList.remove("active");
+      document.getElementById("lineage-col-title").textContent = "Fylogenetisk Linje";
+      document.getElementById("lineage-col-desc").textContent = "Viser præcis hvordan dyret er beslægtet i en ubrudt udviklingslinje.";
+    }
+  }
+  
+  selectAnimal(currentAnimalId);
+}
+
+function renderCladeStepper() {
+  if (typeof cladePaths === 'undefined') {
+    stepperContainer.innerHTML = '<div class="clade-no-data">Kladistisk data indlæses...</div>';
+    return;
+  }
+  const path = cladePaths[currentAnimalId];
+  if (!path) {
+    stepperContainer.innerHTML = '<div class="clade-no-data">Ingen kladistisk data for dette dyr.</div>';
+    return;
+  }
+
+  stepperContainer.innerHTML = "";
+  
+  path.forEach((node, index) => {
+    const item = document.createElement("div");
+    item.className = "stepper-item clade-step";
+    if (index === activeCladeIndex) item.classList.add("active");
+    if (index === path.length - 1) item.classList.add("stepper-last");
+
+    const line = document.createElement("div");
+    line.className = "stepper-line";
+
+    const bullet = document.createElement("div");
+    bullet.className = "stepper-bullet";
+    bullet.textContent = index === path.length - 1 ? "🎯" : "KLAD";
+
+    const content = document.createElement("div");
+    content.className = "stepper-content";
+
+    const rankEl = document.createElement("div");
+    rankEl.className = "stepper-rank";
+    rankEl.textContent = node.rank;
+
+    const danishEl = document.createElement("div");
+    danishEl.className = "stepper-name-danish";
+    danishEl.textContent = node.danish;
+
+    const latinEl = document.createElement("div");
+    latinEl.className = "stepper-name-latin";
+    latinEl.textContent = node.latin;
+
+    content.appendChild(rankEl);
+    content.appendChild(danishEl);
+    content.appendChild(latinEl);
+
+    item.appendChild(line);
+    item.appendChild(bullet);
+    item.appendChild(content);
+
+    item.addEventListener("click", () => {
+      activeCladeIndex = index;
+      renderCladeStepper();
+      updateCladeDetailView();
+    });
+
+    stepperContainer.appendChild(item);
+  });
+}
+
+function updateCladeDetailView() {
+  if (typeof cladePaths === 'undefined') return;
+  const path = cladePaths[currentAnimalId];
+  if (!path || !path[activeCladeIndex]) return;
+
+  const currentNode = path[activeCladeIndex];
+  
+  detailRankTitle.textContent = "Klad (Monofyletisk gruppe)";
+  detailRankMeaning.textContent = "En klad er en gruppe bestående af en fælles stamfader og alle dens efterkommere.";
+  detailRankEtymology.innerHTML = `<strong>Etymologi:</strong> Fra græsk <em>klados</em> (gren).`;
+  
+  detailTaxonDanish.textContent = currentNode.danish;
+  detailTaxonLatin.textContent = currentNode.latin;
+  detailTaxonDesc.textContent = currentNode.desc || "Denne gruppe repræsenterer en specifik gren på livets træ.";
+  
+  renderCladeAlternatives(path, activeCladeIndex);
+}
+
+function renderCladeAlternatives(path, index) {
+  const currentNode = path[index];
+  subDivTitle.textContent = `Nærmeste slægtskab i appen`;
+  subDivGrid.innerHTML = "";
+  
+  let sharingHtml = "";
+  
+  // Find alle dyr i appen, der også tilhører præcis denne klad (samme latin navn)
+  const sharedAnimals = [];
+  animals.forEach(a => {
+    if (a.id === currentAnimalId) return;
+    const aPath = cladePaths[a.id];
+    if (aPath && aPath.some(n => n.latin === currentNode.latin)) {
+      sharedAnimals.push(a);
+    }
+  });
+
+  if (sharedAnimals.length > 0) {
+    const badgesHtml = sharedAnimals.map(a => `
+      <span class="clade-badge" onclick="selectAnimal('${a.id}')" title="${a.name}" style="cursor:pointer; display:inline-flex; align-items:center; gap:4px; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px; margin:2px;">
+        ${a.icon} ${a.name}
+      </span>
+    `).join("");
+    sharingHtml = `<div style="margin-top:0.8rem; font-size:0.8rem; color:var(--text-muted);">
+      <strong>Andre i appen der tilhører ${currentNode.danish}:</strong><br>
+      <div style="margin-top:0.3rem;">${badgesHtml}</div>
+    </div>`;
+  } else {
+    sharingHtml = `<div style="margin-top:0.8rem; font-size:0.8rem; color:var(--text-muted);"><em>Ingen andre dyr i appen deler præcis denne klad.</em></div>`;
+  }
+
+  let prevHtml = "";
+  if (index > 0) {
+    prevHtml = `<div style="margin-top: 1rem; font-size:0.8rem;">
+      <span style="color:var(--text-muted)">Opstået fra klad: </span> 
+      <strong style="color:var(--text-primary); cursor:pointer;" onclick="activeCladeIndex=${index-1}; renderCladeStepper(); updateCladeDetailView();">⬆️ ${path[index-1].danish}</strong>
+    </div>`;
+  }
+
+  let nextHtml = "";
+  if (index < path.length - 1) {
+    nextHtml = `<div style="margin-top: 0.5rem; font-size:0.8rem;">
+      <span style="color:var(--text-muted)">Udvikler sig videre til: </span> 
+      <strong style="color:var(--text-primary); cursor:pointer;" onclick="activeCladeIndex=${index+1}; renderCladeStepper(); updateCladeDetailView();">⬇️ ${path[index+1].danish}</strong>
+    </div>`;
+  }
+
+  const card = document.createElement("div");
+  card.className = "clade-info-panel";
+  card.innerHTML = `
+    <div class="clade-panel-label">${currentNode.rank}</div>
+    <div class="clade-panel-name">${currentNode.danish}</div>
+    <div class="clade-panel-desc">${currentNode.desc || "Denne gruppe er defineret ved unikke evolutionære træk (synapomorfier), der deles af alle gruppens medlemmer."}</div>
+    ${prevHtml}${nextHtml}
+    ${sharingHtml}
+  `;
+  subDivGrid.appendChild(card);
+}
+
+// Ordbog over fremmedord og deres etymologi
+const etymologyDict = {
+  "prokaryoter": "Før kerne (græsk: pro = før, karyon = nød/kerne).",
+  "eukaryoter": "Ægte kerne (græsk: eu = ægte, karyon = nød/kerne).",
+  "fotosyntese": "At sætte sammen med lys (græsk: photo = lys, synthesis = sammensætning).",
+  "autotrof": "Selv-ernærende (græsk: autos = selv, trophe = ernæring).",
+  "heterotrof": "Anden-ernærende (græsk: heteros = anden, trophe = ernæring).",
+  "morfologiske": "Vedr. form og bygning (græsk: morphe = form, logos = lære).",
+  "monofyletisk": "Af én stamme (græsk: monos = én, phyle = stamme).",
+  "kladistik": "Fra græsk klados = gren.",
+  "fylogenetisk": "Vedr. stammens udvikling (græsk: phylon = stamme, genesis = oprindelse).",
+  "takson": "Fra græsk taxis = ordning.",
+  "taxon": "Fra græsk taxis = ordning.",
+  "ekkolokalisering": "Lyd-stedbestemmelse (græsk echo + latin locus).",
+  "ovovivipari": "Æg-levendefødende (latin: ovum = æg, vivus = levende, parere = at føde).",
+  "konstriktion": "Sammensnøring (latin: constringere)."
+};
+
+function wrapForeignWords(text) {
+  if (!text) return text;
+  let wrappedText = text;
+  const words = Object.keys(etymologyDict).sort((a, b) => b.length - a.length);
+  
+  for (const word of words) {
+    const regex = new RegExp(\`\\\\b(\${word})\\\\b(?![^<]*>)\`, "gi");
+    wrappedText = wrappedText.replace(regex, (match) => {
+      if (match.includes("foreign-word")) return match;
+      return \`<span class="foreign-word" data-word="\${word.toLowerCase()}" style="cursor:help; border-bottom:1px dotted var(--accent);">\${match}</span>\`;
+    });
+  }
+  return wrappedText;
+}
+
 // Global click listener til at lukke dropdown-menuer når der klikkes udenfor
 document.addEventListener("click", () => {
   closeAllDropdowns();
@@ -3142,6 +3341,51 @@ document.addEventListener("click", () => {
 document.addEventListener("DOMContentLoaded", () => {
   if (animalSearchInput) {
     animalSearchInput.addEventListener("input", initAnimalGrid);
+  }
+
+  // Toggle events
+  const modeLinnaeusBtn = document.getElementById("mode-linnaeus-btn");
+  const modeCladeBtn = document.getElementById("mode-clade-btn");
+  
+  if (modeLinnaeusBtn) {
+    modeLinnaeusBtn.addEventListener("click", () => setViewMode("linnaeus"));
+  }
+  if (modeCladeBtn) {
+    modeCladeBtn.addEventListener("click", () => setViewMode("clade"));
+  }
+
+  // Etymology Tooltip Logic
+  const tooltip = document.getElementById("etymology-tooltip");
+  if (tooltip) {
+    document.body.addEventListener("click", (e) => {
+      const foreignWordEl = e.target.closest(".foreign-word");
+      if (foreignWordEl) {
+        const word = foreignWordEl.getAttribute("data-word");
+        const definition = etymologyDict[word];
+        
+        if (definition) {
+          tooltip.innerHTML = \`<strong>\${foreignWordEl.textContent}</strong> \${definition}\`;
+          tooltip.classList.remove("hidden");
+          tooltip.classList.add("show");
+          
+          const rect = foreignWordEl.getBoundingClientRect();
+          tooltip.style.left = \`\${rect.left + window.scrollX}px\`;
+          tooltip.style.top = \`\${rect.bottom + window.scrollY + 5}px\`;
+          
+          tooltip.style.position = 'absolute';
+          tooltip.style.background = 'var(--bg-card)';
+          tooltip.style.border = '1px solid var(--accent)';
+          tooltip.style.padding = '0.5rem';
+          tooltip.style.borderRadius = '8px';
+          tooltip.style.zIndex = '9999';
+          tooltip.style.color = 'var(--text-primary)';
+          tooltip.style.boxShadow = 'var(--shadow-lg)';
+        }
+      } else {
+        tooltip.classList.remove("show");
+        tooltip.classList.add("hidden");
+      }
+    });
   }
 
   initAnimalGrid();
