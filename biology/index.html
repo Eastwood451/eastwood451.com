@@ -92,8 +92,18 @@
               </div>
             </div>
 
-            <h3 class="column-title">Taksonomisk Linje</h3>
-            <p class="column-desc">Fra det mest generelle (Domæne) til det mest specifikke (Art).</p>
+            <h3 class="column-title" id="lineage-col-title">Taksonomisk Linje</h3>
+            <p class="column-desc" id="lineage-col-desc">Fra det mest generelle (Domæne) til det mest specifikke (Art).</p>
+
+            <!-- Visnings-toggle: Linnéansk vs Kladistisk -->
+            <div class="lineage-mode-toggle">
+              <button id="mode-linnaeus-btn" class="mode-btn active" title="Vis de klassiske taksonomiske niveauer (Domæne, Rige, Orden…)">
+                🏷️ Linnéansk
+              </button>
+              <button id="mode-clade-btn" class="mode-btn" title="Vis de fylogenetiske klader (monofyletiske grupper)">
+                🌿 Kladistisk
+              </button>
+            </div>
             
             <div class="stepper" id="stepper-container">
               <!-- Dynamisk sti genereres af JS -->
