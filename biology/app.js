@@ -2576,8 +2576,8 @@ function renderStepper() {
             const isActive = opt.name === node.name;
             return `
               <div class="stepper-dropdown-item ${isActive ? 'active' : ''}" data-taxon-name="${opt.name}">
-                <span>${opt.danish}</span>
-                <span class="stepper-dropdown-item-latin">${opt.latin}</span>
+                <span>${wrapForeignWords(opt.danish)}</span>
+                <span class="stepper-dropdown-item-latin">${wrapForeignWords(opt.latin)}</span>
               </div>
             `;
           }).join("")}
@@ -2590,9 +2590,9 @@ function renderStepper() {
     step.innerHTML = `
       <div class="stepper-bullet">${bulletContent}</div>
       <div class="stepper-content">
-        <div class="stepper-rank">${rankExplanations[node.rank] ? rankExplanations[node.rank].title : node.rank} ${arrowHtml}</div>
-        <div class="stepper-name-danish">${node.danish}</div>
-        <div class="stepper-name-latin">${node.latin}</div>
+        <div class="stepper-rank">${wrapForeignWords(rankExplanations[node.rank] ? rankExplanations[node.rank].title : node.rank)} ${arrowHtml}</div>
+        <div class="stepper-name-danish">${wrapForeignWords(node.danish)}</div>
+        <div class="stepper-name-latin">${wrapForeignWords(node.latin)}</div>
       </div>
       ${dropdownHtml}
     `;
@@ -2669,15 +2669,15 @@ function updateDetailView() {
   // 1. Vis rang-definitionen
   const rankInfo = rankExplanations[rank];
   if (rankInfo) {
-    detailRankTitle.textContent = rankInfo.title;
-    detailRankMeaning.textContent = rankInfo.meaning;
-    detailRankEtymology.innerHTML = `<strong>Etymologi:</strong> ${rankInfo.etymology}`;
+    detailRankTitle.innerHTML = wrapForeignWords(rankInfo.title);
+    detailRankMeaning.innerHTML = wrapForeignWords(rankInfo.meaning);
+    detailRankEtymology.innerHTML = wrapForeignWords(`<strong>Etymologi:</strong> ${rankInfo.etymology}`);
   }
   
   // 2. Vis det specifikke taxons detaljer
-  detailTaxonLatin.textContent = currentNode.latin;
-  detailTaxonDanish.textContent = currentNode.danish;
-  detailTaxonDesc.textContent = currentNode.description;
+  detailTaxonLatin.innerHTML = wrapForeignWords(currentNode.latin);
+  detailTaxonDanish.innerHTML = wrapForeignWords(currentNode.danish);
+  detailTaxonDesc.innerHTML = wrapForeignWords(currentNode.description);
   
   // 3. Find og vis alternative undergrupper (alternativer under forældrenoden)
   renderAlternatives(currentNode, indexToRank(activeRankIndex));
@@ -2767,13 +2767,13 @@ function renderAlternatives(currentNode, currentRank) {
     card.innerHTML = `
       <div class="sub-card-header">
         <div>
-          <span class="sub-card-rank-label">${rankExplanations[child.rank] ? rankExplanations[child.rank].title : child.rank}</span>
-          <h4 class="sub-card-danish">${child.danish}</h4>
-          <span class="sub-card-latin">${child.latin}</span>
+          <span class="sub-card-rank-label">${wrapForeignWords(rankExplanations[child.rank] ? rankExplanations[child.rank].title : child.rank)}</span>
+          <h4 class="sub-card-danish">${wrapForeignWords(child.danish)}</h4>
+          <span class="sub-card-latin">${wrapForeignWords(child.latin)}</span>
         </div>
         ${isNextInLineage ? '<span class="active-badge">Valgte dyrs sti</span>' : ''}
       </div>
-      <p class="sub-card-desc">${child.description}</p>
+      <p class="sub-card-desc">${wrapForeignWords(child.description)}</p>
       ${animalsHtml}
     `;
     
@@ -3194,15 +3194,15 @@ function renderCladeStepper() {
 
     const rankEl = document.createElement("div");
     rankEl.className = "stepper-rank";
-    rankEl.textContent = node.rank;
+    rankEl.innerHTML = wrapForeignWords(node.rank);
 
     const danishEl = document.createElement("div");
     danishEl.className = "stepper-name-danish";
-    danishEl.textContent = node.danish;
+    danishEl.innerHTML = wrapForeignWords(node.danish);
 
     const latinEl = document.createElement("div");
     latinEl.className = "stepper-name-latin";
-    latinEl.textContent = node.latin;
+    latinEl.innerHTML = wrapForeignWords(node.latin);
 
     content.appendChild(rankEl);
     content.appendChild(danishEl);
@@ -3229,13 +3229,13 @@ function updateCladeDetailView() {
 
   const currentNode = path[activeCladeIndex];
   
-  detailRankTitle.textContent = "Klad (Monofyletisk gruppe)";
-  detailRankMeaning.textContent = "En klad er en gruppe bestående af en fælles stamfader og alle dens efterkommere.";
-  detailRankEtymology.innerHTML = `<strong>Etymologi:</strong> Fra græsk <em>klados</em> (gren).`;
+  detailRankTitle.innerHTML = wrapForeignWords("Klad (Monofyletisk gruppe)");
+  detailRankMeaning.innerHTML = wrapForeignWords("En klad er en gruppe bestående af en fælles stamfader og alle dens efterkommere.");
+  detailRankEtymology.innerHTML = wrapForeignWords(`<strong>Etymologi:</strong> Fra græsk <em>klados</em> (gren).`);
   
-  detailTaxonDanish.textContent = currentNode.danish;
-  detailTaxonLatin.textContent = currentNode.latin;
-  detailTaxonDesc.textContent = currentNode.desc || "Denne gruppe repræsenterer en specifik gren på livets træ.";
+  detailTaxonDanish.innerHTML = wrapForeignWords(currentNode.danish);
+  detailTaxonLatin.innerHTML = wrapForeignWords(currentNode.latin);
+  detailTaxonDesc.innerHTML = wrapForeignWords(currentNode.desc || "Denne gruppe repræsenterer en specifik gren på livets træ.");
   
   renderCladeAlternatives(path, activeCladeIndex);
 }
@@ -3290,16 +3290,15 @@ function renderCladeAlternatives(path, index) {
   const card = document.createElement("div");
   card.className = "clade-info-panel";
   card.innerHTML = `
-    <div class="clade-panel-label">${currentNode.rank}</div>
-    <div class="clade-panel-name">${currentNode.danish}</div>
-    <div class="clade-panel-desc">${currentNode.desc || "Denne gruppe er defineret ved unikke evolutionære træk (synapomorfier), der deles af alle gruppens medlemmer."}</div>
+    <div class="clade-panel-label">${wrapForeignWords(currentNode.rank)}</div>
+    <div class="clade-panel-name">${wrapForeignWords(currentNode.danish)}</div>
+    <div class="clade-panel-desc">${wrapForeignWords(currentNode.desc || "Denne gruppe er defineret ved unikke evolutionære træk (synapomorfier), der deles af alle gruppens medlemmer.")}</div>
     ${prevHtml}${nextHtml}
     ${sharingHtml}
   `;
   subDivGrid.appendChild(card);
 }
 
-// Ordbog over fremmedord og deres etymologi
 const etymologyDict = {
   "prokaryoter": "Før kerne (græsk: pro = før, karyon = nød/kerne).",
   "eukaryoter": "Ægte kerne (græsk: eu = ægte, karyon = nød/kerne).",
@@ -3314,7 +3313,28 @@ const etymologyDict = {
   "taxon": "Fra græsk taxis = ordning.",
   "ekkolokalisering": "Lyd-stedbestemmelse (græsk echo + latin locus).",
   "ovovivipari": "Æg-levendefødende (latin: ovum = æg, vivus = levende, parere = at føde).",
-  "konstriktion": "Sammensnøring (latin: constringere)."
+  "konstriktion": "Sammensnøring (latin: constringere).",
+  "biota": "Fra græsk 'biote' (liv) og latin 'biota'.",
+  "eukaryota": "Ægte kerne (græsk: eu = ægte, karyon = nød/kerne).",
+  "prokaryota": "Før kerne (græsk: pro = før, karyon = nød/kerne).",
+  "animalia": "Fra latin 'animalis' (har en ånde/sjæl).",
+  "chordata": "Fra græsk 'chorde' (streng/reb), refererer til rygstrengen.",
+  "arthropoda": "Fra græsk 'arthron' (led) og 'podos' (fod/ben).",
+  "mammalia": "Fra latin 'mamma' (bryst).",
+  "aves": "Fra latin for 'fugle'.",
+  "reptilia": "Fra latin 'repere' (at krybe).",
+  "amphibia": "Fra græsk 'amphi' (begge) og 'bios' (liv) - lever både i vand og på land.",
+  "actinopterygii": "Fra græsk 'aktis' (stråle) og 'pteryx' (finne/vinge).",
+  "chondrichthyes": "Fra græsk 'chondros' (brusk) og 'ichthys' (fisk).",
+  "fungi": "Fra latin for 'svamp'.",
+  "plantae": "Fra latin for 'plante'.",
+  "bacteria": "Fra græsk 'bakterion' (lille stav).",
+  "archaea": "Fra græsk 'archaios' (gammel/oprindelig).",
+  "insecta": "Fra latin 'insectum' (indskåret/opdelt), refererer til leddelt krop.",
+  "carnivora": "Fra latin 'caro' (kød) og 'vorare' (at sluge).",
+  "primates": "Fra latin 'primus' (første/fornemste).",
+  "hominidae": "Fra latin 'homo' (menneske).",
+  "sapiens": "Fra latin 'sapiens' (vis/fornuftig)."
 };
 
 function wrapForeignWords(text) {
