@@ -491,32 +491,6 @@ const taxonomyTree = {
                       ]
                     },
                     {
-                      name: "Camelidae",
-                      rank: "Familie",
-                      latin: "Camelidae",
-                      danish: "Kamelfamilien",
-                      description: "En familie af parrettåede hovdyr med lange ben, polstrede trædepuder og stor evne til at klare tørre miljøer. Omfatter kameler, dromedarer, lamaer og alpakaer.",
-                      children: [
-                        {
-                          name: "Camelus",
-                          rank: "Slægt",
-                          latin: "Camelus",
-                          danish: "Kameler",
-                          description: "En slægt af store ørkentilpassede klovdyr med pukler, der lagrer fedt som energireserve. De kan udholde lange perioder med varme og vandmangel.",
-                          children: [
-                            {
-                              name: "Camelus dromedarius",
-                              rank: "Art",
-                              latin: "Camelus dromedarius",
-                              danish: "Dromedar (enpuklet kamel)",
-                              description: "Den enpuklede kamel, som er udbredt som husdyr i tørre områder i Nordafrika, Mellemøsten og dele af Asien. Puklen lagrer fedt, og kroppen er tilpasset til at spare på vand gennem effektiv temperaturregulering og koncentreret urin.",
-                              animalId: "kamel"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
                       name: "Giraffidae",
                       rank: "Familie",
                       latin: "Giraffidae",
@@ -537,41 +511,6 @@ const taxonomyTree = {
                               danish: "Giraf",
                               description: "Verdens højeste nulevende landdyr. Hanner kan blive over 5 meter høje. Deres hjerte vejer op til 11 kg og skal pumpe ekstremt hårdt for at få blodet hele vejen op ad halsen til hjernen.",
                               animalId: "giraf"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      name: "Bovidae",
-                      rank: "Familie",
-                      latin: "Bovidae",
-                      danish: "Skedehornede dyr",
-                      description: "En stor familie af parrettåede hovdyr med permanente horn beklædt af hornskeder. Familien omfatter blandt andet kvæg, får, geder, antiloper og bøfler.",
-                      children: [
-                        {
-                          name: "Bos",
-                          rank: "Slægt",
-                          latin: "Bos",
-                          danish: "Okser og kvæg",
-                          description: "En slægt af store drøvtyggende hovdyr, der omfatter tamkvæg og flere vilde oksearter. De har en kompleks mave, som gør dem i stand til at fordøje græs og andet plantemateriale effektivt.",
-                          children: [
-                            {
-                              name: "Bos taurus",
-                              rank: "Art",
-                              latin: "Bos taurus",
-                              danish: "Tamkvæg",
-                              description: "Den domesticerede ko, som mennesker har holdt i tusinder af år for mælk, kød, trækkraft og læder. Malkekøer er avlet til høj mælkeydelse og er vigtige husdyr i dansk landbrug.",
-                              children: [
-                                {
-                                  name: "Dansk Holstein",
-                                  rank: "Race",
-                                  latin: "Bos taurus",
-                                  danish: "Almindelig dansk malkeko",
-                                  description: "En sortbroget malkeko af Holstein-typen, som er meget almindelig i Danmark. Racen er især avlet til mælkeproduktion og kendes på sin store krop, rolige adfærd og tydelige sorte og hvide aftegninger.",
-                                  animalId: "ko"
-                                }
-                              ]
                             }
                           ]
                         }
@@ -2230,7 +2169,7 @@ const animals = [
   { id: "harpaphe", name: "Gul-plettet Tusindben", scientific: "Harpaphe haydeniana", icon: "🐛", theme: "millipede", image: "images/harpaphe.jpg" },
   { id: "hund", name: "Hund", scientific: "Canis lupus familiaris", icon: "🐕", theme: "dog", image: "images/hund.jpg" },
   { id: "golden_retriever", name: "Golden Retriever", scientific: "Canis lupus familiaris", icon: "🦮", theme: "dog", image: "images/golden_retriever.jpg" },
-  { id: "schaefer", name: "Schæferhund", scientific: "Canis lupus familiaris", icon: "🐕‍🦺", theme: "dog", image: "images/schafer.jpg" },
+  { id: "schaefer", name: "Schæferhund", scientific: "Canis lupus familiaris", icon: "🐕‍🦺", theme: "dog", image: "images/schaefer.jpg" },
   { id: "boaslange", name: "Boaslange", scientific: "Boa constrictor", icon: "🐍", theme: "snake", image: "images/boaslange.jpg" },
   { id: "kobra", name: "Kobraslange", scientific: "Naja naja", icon: "🐍", theme: "snake", image: "images/kobra.jpg" },
   { id: "staalorm", name: "Stålorm", scientific: "Anguis fragilis", icon: "🦎", theme: "lizard", image: "images/staalorm.jpg" },
@@ -2244,9 +2183,7 @@ const animals = [
   { id: "ecoli", name: "E. coli", scientific: "Escherichia coli", icon: "🦠", theme: "bacteria", image: "images/ecoli.jpg" },
   { id: "sulfolobus", name: "Sulfolobus", scientific: "Sulfolobus acidocaldarius", icon: "🌋", theme: "archaea", image: "images/sulfolobus.jpg" },
   { id: "delfin", name: "Delfin (Øresvin)", scientific: "Tursiops truncatus", icon: "🐬", theme: "dolphin", image: "images/delfin.jpg" },
-  { id: "kamel", name: "Dromedar (Kamel)", scientific: "Camelus dromedarius", icon: "🐪", theme: "camel", image: "images/kamel.png" },
   { id: "giraf", name: "Giraf", scientific: "Giraffa camelopardalis", icon: "🦒", theme: "giraffe", image: "images/giraf.jpg" },
-  { id: "ko", name: "Almindelig dansk malkeko", scientific: "Bos taurus", icon: "🐄", theme: "cow", image: "images/ko.png" },
   { id: "zebra", name: "Steppezebra", scientific: "Equus quagga", icon: "🦓", theme: "zebra", image: "images/zebra.jpg" },
   { id: "arabisk_hest", name: "Arabisk Fuldblod", scientific: "Equus ferus caballus", icon: "🐎", theme: "horse", image: "images/arabisk_hest.jpg" },
   { id: "menneske", name: "Menneske", scientific: "Homo sapiens", icon: "🧍", theme: "human", image: "images/menneske.jpg" },
@@ -2410,12 +2347,13 @@ function getAnimalsInTaxon(taxonNode) {
 
 // Global app-tilstand
 let currentAnimalId = "løve";
-let activeRankIndex = 3; // Række (Phylum) som standard, da det er mest spændende at se alternativerne for
+let activeRankIndex = 3; // Række (Phylum) som standard
 let selectedLineage = [];
+let viewMode = "linnaeus"; // "linnaeus" | "clade"
+let activeCladeIndex = 0;  // aktiv trin-index i kladestien
 
 // DOM Elementer
 const animalGrid = document.getElementById("animal-grid");
-const animalSearchInput = document.getElementById("animal-search-input");
 const stepperContainer = document.getElementById("stepper-container");
 const detailRankTitle = document.getElementById("detail-rank-title");
 const detailRankMeaning = document.getElementById("detail-rank-meaning");
@@ -2437,31 +2375,10 @@ const subDivGrid = document.getElementById("subdivision-grid");
 
 // Initialisering af dyrevælger-gitteret
 function initAnimalGrid() {
-  const searchTerm = animalSearchInput?.value.trim().toLocaleLowerCase("da-DK") || "";
-  const visibleAnimals = animals
-    .slice()
-    .sort((a, b) => a.name.localeCompare(b.name, "da-DK", { sensitivity: "base" }))
-    .filter(animal => {
-      const name = animal.name.toLocaleLowerCase("da-DK");
-      const scientific = animal.scientific.toLocaleLowerCase("da-DK");
-      return name.includes(searchTerm) || scientific.includes(searchTerm);
-    });
-
   animalGrid.innerHTML = "";
-
-  if (visibleAnimals.length === 0) {
-    animalGrid.innerHTML = `
-      <div class="animal-grid-empty">
-        Ingen resultater. Prøv et andet navn eller latinsk navn.
-      </div>
-    `;
-    return;
-  }
-
-  visibleAnimals.forEach(animal => {
+  animals.forEach(animal => {
     const card = document.createElement("div");
     card.className = `animal-card theme-${animal.theme}`;
-    card.dataset.animalId = animal.id;
     if (animal.id === currentAnimalId) {
       card.classList.add("active");
     }
@@ -2484,18 +2401,19 @@ function initAnimalGrid() {
   });
 }
 
-function updateAnimalGridActiveState() {
-  const cards = animalGrid.querySelectorAll(".animal-card");
-  cards.forEach(card => {
-    card.classList.toggle("active", card.dataset.animalId === currentAnimalId);
-  });
-}
-
+// Håndtering af dyrevalg
 function selectAnimal(animalId) {
   currentAnimalId = animalId;
   
   // Opdater aktiv klasse i gitteret
-  updateAnimalGridActiveState();
+  const cards = animalGrid.querySelectorAll(".animal-card");
+  cards.forEach((card, index) => {
+    if (animals[index].id === animalId) {
+      card.classList.add("active");
+    } else {
+      card.classList.remove("active");
+    }
+  });
   
   // Hent ny sti
   selectedLineage = getLineageForAnimal(taxonomyTree, animalId);
@@ -2528,11 +2446,16 @@ function selectAnimal(animalId) {
   // Opdater CSS tema-klasse på body for dynamisk baggrundsglød
   document.body.className = `theme-${animalObj.theme}`;
   
-  // Render stien
-  renderStepper();
-  
-  // Opdater detalje-området med den nuværende aktive rang
-  updateDetailView();
+  // Render sti og detaljer afhængigt af visnings-mode
+  if (viewMode === "clade") {
+    const path = cladePaths[currentAnimalId];
+    activeCladeIndex = path ? Math.max(0, path.length - 3) : 0;
+    renderCladeStepper();
+    updateCladeDetailView();
+  } else {
+    renderStepper();
+    updateDetailView();
+  }
 }
 
 // Render den lodrette taksonomiske sti (stepper)
@@ -2809,140 +2732,6 @@ closeModal.addEventListener("click", () => {
 });
 
 /* ==========================================================================
-   Sammenligningsmodul
-   ========================================================================== */
-function getAnimalById(animalId) {
-  return animals.find(animal => animal.id === animalId);
-}
-
-function getSharedLineageDepth(leftLineage, rightLineage) {
-  const maxDepth = Math.min(leftLineage.length, rightLineage.length);
-  let sharedDepth = -1;
-
-  for (let index = 0; index < maxDepth; index++) {
-    const leftNode = leftLineage[index];
-    const rightNode = rightLineage[index];
-    if (leftNode.rank === rightNode.rank && leftNode.name === rightNode.name) {
-      sharedDepth = index;
-    } else {
-      break;
-    }
-  }
-
-  return sharedDepth;
-}
-
-function populateCompareSelect(selectEl, selectedAnimalId) {
-  if (!selectEl) return;
-
-  selectEl.innerHTML = animals
-    .slice()
-    .sort((a, b) => a.name.localeCompare(b.name, "da-DK", { sensitivity: "base" }))
-    .map(animal => `
-      <option value="${animal.id}" ${animal.id === selectedAnimalId ? "selected" : ""}>
-        ${animal.name} (${animal.scientific})
-      </option>
-    `)
-    .join("");
-}
-
-function renderCompareColumn(animal, lineage, sharedDepth, sideLabel) {
-  return `
-    <article class="compare-lineage-card theme-${animal.theme}">
-      <div class="compare-hero">
-        <img src="${animal.image}" alt="${animal.name}" class="compare-hero-img">
-        <div class="compare-hero-overlay">
-          <span class="compare-side-label">${sideLabel}</span>
-          <h3>${animal.name}</h3>
-          <span>${animal.scientific}</span>
-        </div>
-      </div>
-      <div class="compare-lineage-list">
-        ${lineage.map((node, index) => {
-          const stateClass = index <= sharedDepth ? "shared" : "different";
-          const rankTitle = rankExplanations[node.rank] ? rankExplanations[node.rank].title : node.rank;
-          return `
-            <div class="compare-row ${stateClass}">
-              <div class="compare-row-index">${index + 1}</div>
-              <div class="compare-row-content">
-                <span class="compare-row-rank">${rankTitle}</span>
-                <strong>${node.danish}</strong>
-                <em>${node.latin}</em>
-              </div>
-            </div>
-          `;
-        }).join("")}
-      </div>
-    </article>
-  `;
-}
-
-function renderCompareView() {
-  if (!compareAnimalLeft || !compareAnimalRight || !compareGrid || !compareSummary) return;
-
-  const leftAnimal = getAnimalById(compareAnimalLeft.value);
-  const rightAnimal = getAnimalById(compareAnimalRight.value);
-  if (!leftAnimal || !rightAnimal) return;
-
-  const leftLineage = getLineageForAnimal(taxonomyTree, leftAnimal.id) || [];
-  const rightLineage = getLineageForAnimal(taxonomyTree, rightAnimal.id) || [];
-  const sharedDepth = getSharedLineageDepth(leftLineage, rightLineage);
-  const sharedNode = sharedDepth >= 0 ? leftLineage[sharedDepth] : null;
-  const splitLeft = leftLineage[sharedDepth + 1];
-  const splitRight = rightLineage[sharedDepth + 1];
-
-  if (leftAnimal.id === rightAnimal.id) {
-    compareSummary.innerHTML = `
-      <strong>Samme organisme valgt.</strong>
-      <span>Hele den viste taksonomiske linje er identisk.</span>
-    `;
-  } else if (sharedNode && splitLeft && splitRight) {
-    const sharedRank = rankExplanations[sharedNode.rank] ? rankExplanations[sharedNode.rank].title : sharedNode.rank;
-    compareSummary.innerHTML = `
-      <strong>Fælles til og med ${sharedRank}: ${sharedNode.danish}.</strong>
-      <span>Grenene skilles derefter ved ${splitLeft.danish} og ${splitRight.danish}.</span>
-    `;
-  } else if (sharedNode) {
-    const sharedRank = rankExplanations[sharedNode.rank] ? rankExplanations[sharedNode.rank].title : sharedNode.rank;
-    compareSummary.innerHTML = `
-      <strong>Fælles til og med ${sharedRank}: ${sharedNode.danish}.</strong>
-      <span>Den ene klassifikation fortsætter længere i databasen.</span>
-    `;
-  } else {
-    compareSummary.innerHTML = `
-      <strong>Ingen fælles taksonomiske niveauer fundet i den viste sti.</strong>
-      <span>Prøv et andet par organismer.</span>
-    `;
-  }
-
-  compareGrid.innerHTML = `
-    ${renderCompareColumn(leftAnimal, leftLineage, sharedDepth, "Organisme 1")}
-    ${renderCompareColumn(rightAnimal, rightLineage, sharedDepth, "Organisme 2")}
-  `;
-}
-
-function initCompareView() {
-  if (!compareAnimalLeft || !compareAnimalRight) return;
-
-  populateCompareSelect(compareAnimalLeft, currentAnimalId || "ulv");
-  populateCompareSelect(compareAnimalRight, "raev");
-
-  compareAnimalLeft.addEventListener("change", renderCompareView);
-  compareAnimalRight.addEventListener("change", renderCompareView);
-
-  if (compareSwapBtn) {
-    compareSwapBtn.addEventListener("click", () => {
-      const leftValue = compareAnimalLeft.value;
-      compareAnimalLeft.value = compareAnimalRight.value;
-      compareAnimalRight.value = leftValue;
-      renderCompareView();
-    });
-  }
-
-  renderCompareView();
-}
-
-/* ==========================================================================
    Quiz Modul Logik
    ========================================================================== */
 const quizData = [
@@ -2975,17 +2764,10 @@ let shuffledQuizData = [];
 
 // View Toggle DOM Elements
 const viewTreeBtn = document.getElementById("view-tree-btn");
-const viewCompareBtn = document.getElementById("view-compare-btn");
 const viewQuizBtn = document.getElementById("view-quiz-btn");
 const animalsSection = document.getElementById("animals-section");
 const visualizerSection = document.getElementById("visualizer-section");
-const compareSection = document.getElementById("compare-section");
 const quizSection = document.getElementById("quiz-section");
-const compareAnimalLeft = document.getElementById("compare-animal-left");
-const compareAnimalRight = document.getElementById("compare-animal-right");
-const compareSwapBtn = document.getElementById("compare-swap-btn");
-const compareSummary = document.getElementById("compare-summary");
-const compareGrid = document.getElementById("compare-grid");
 
 // Quiz DOM Elements
 const quizScoreEl = document.getElementById("quiz-score");
@@ -3093,38 +2875,27 @@ function checkAnswer(selectedRank, btnElement) {
 }
 
 // View Toggle Handlinger
-function setActiveView(activeView) {
-  const isTree = activeView === "tree";
-  const isCompare = activeView === "compare";
-  const isQuiz = activeView === "quiz";
-
-  [
-    [viewTreeBtn, isTree],
-    [viewCompareBtn, isCompare],
-    [viewQuizBtn, isQuiz]
-  ].forEach(([button, isActive]) => {
-    if (!button) return;
-    button.classList.toggle("btn-primary", isActive);
-    button.classList.toggle("btn-secondary", !isActive);
+if (viewTreeBtn && viewQuizBtn) {
+  viewTreeBtn.addEventListener("click", () => {
+    viewTreeBtn.classList.add("btn-primary");
+    viewTreeBtn.classList.remove("btn-secondary");
+    viewQuizBtn.classList.add("btn-secondary");
+    viewQuizBtn.classList.remove("btn-primary");
+    animalsSection.style.display = "block";
+    visualizerSection.style.display = "block";
+    quizSection.style.display = "none";
   });
 
-  animalsSection.style.display = isTree ? "block" : "none";
-  visualizerSection.style.display = isTree ? "block" : "none";
-  if (compareSection) compareSection.style.display = isCompare ? "block" : "none";
-  quizSection.style.display = isQuiz ? "block" : "none";
-
-  if (isCompare) {
-    renderCompareView();
-  }
-  if (isQuiz) {
+  viewQuizBtn.addEventListener("click", () => {
+    viewQuizBtn.classList.add("btn-primary");
+    viewQuizBtn.classList.remove("btn-secondary");
+    viewTreeBtn.classList.add("btn-secondary");
+    viewTreeBtn.classList.remove("btn-primary");
+    animalsSection.style.display = "none";
+    visualizerSection.style.display = "none";
+    quizSection.style.display = "block";
     initQuiz(); // Start en ny quiz hver gang vi skifter
-  }
-}
-
-if (viewTreeBtn && viewCompareBtn && viewQuizBtn) {
-  viewTreeBtn.addEventListener("click", () => setActiveView("tree"));
-  viewCompareBtn.addEventListener("click", () => setActiveView("compare"));
-  viewQuizBtn.addEventListener("click", () => setActiveView("quiz"));
+  });
 }
 
 window.addEventListener("click", (e) => {
@@ -3138,13 +2909,207 @@ document.addEventListener("click", () => {
   closeAllDropdowns();
 });
 
-// Start appen
-document.addEventListener("DOMContentLoaded", () => {
-  if (animalSearchInput) {
-    animalSearchInput.addEventListener("input", initAnimalGrid);
+/* ==========================================================================
+   KLADISTISK VISNING
+   ========================================================================== */
+
+/**
+ * Skifter viewMode og opdaterer UI-tilstanden.
+ * @param {"linnaeus"|"clade"} mode
+ */
+function setViewMode(mode) {
+  viewMode = mode;
+
+  const linnaeusBtn = document.getElementById("mode-linnaeus-btn");
+  const cladeBtn2   = document.getElementById("mode-clade-btn");
+  const colTitle    = document.getElementById("lineage-col-title");
+  const colDesc     = document.getElementById("lineage-col-desc");
+
+  if (mode === "clade") {
+    linnaeusBtn && linnaeusBtn.classList.remove("active");
+    cladeBtn2   && cladeBtn2.classList.add("active");
+    if (colTitle) colTitle.textContent = "Kladistisk Linje";
+    if (colDesc)  colDesc.textContent  = "Fylogenetiske klader (monofyletiske grupper) fra Biota ned til arten.";
+    // Sæt activeCladeIndex til næstsidste (art-niveauet)
+    const path = cladePaths[currentAnimalId];
+    activeCladeIndex = path ? Math.max(0, path.length - 3) : 0;
+    renderCladeStepper();
+    updateCladeDetailView();
+  } else {
+    cladeBtn2   && cladeBtn2.classList.remove("active");
+    linnaeusBtn && linnaeusBtn.classList.add("active");
+    if (colTitle) colTitle.textContent = "Taksonomisk Linje";
+    if (colDesc)  colDesc.textContent  = "Fra det mest generelle (Domæne) til det mest specifikke (Art).";
+    renderStepper();
+    updateDetailView();
+  }
+}
+
+/**
+ * Renderer den kladistiske stepper for det aktuelle dyr.
+ */
+function renderCladeStepper() {
+  stepperContainer.innerHTML = "";
+
+  const path = cladePaths[currentAnimalId];
+  if (!path || path.length === 0) {
+    stepperContainer.innerHTML = `<div class="clade-no-data">Ingen kladistisk sti tilgængelig for dette dyr.</div>`;
+    return;
   }
 
+  path.forEach((node, index) => {
+    const step = document.createElement("div");
+    step.className = "stepper-item clade-step";
+    if (index === activeCladeIndex) step.classList.add("active");
+
+    const isLast = index === path.length - 1;
+    const bulletContent = isLast ? "🎯" : node.rank === "BIOTA" ? "🌍" : "KLAD";
+
+    step.innerHTML = `
+      <div class="stepper-bullet">${bulletContent}</div>
+      <div class="stepper-content">
+        <div class="stepper-rank">${node.rank}</div>
+        <div class="stepper-name-danish">${node.danish}</div>
+        <div class="stepper-name-latin">${node.name}</div>
+      </div>
+    `;
+
+    step.addEventListener("click", () => {
+      activeCladeIndex = index;
+      // Opdater aktiv klasse
+      stepperContainer.querySelectorAll(".stepper-item").forEach((s, i) => {
+        s.classList.toggle("active", i === index);
+      });
+      updateCladeDetailView();
+    });
+
+    stepperContainer.appendChild(step);
+  });
+}
+
+/**
+ * Opdaterer detaljevisningen i kladistisk tilstand.
+ */
+function updateCladeDetailView() {
+  const path = cladePaths[currentAnimalId];
+  if (!path || path.length === 0) return;
+
+  const node = path[activeCladeIndex];
+
+  // Del A: Vis kladistisk info i rank-explanation-kortet
+  const rankBadge   = document.getElementById("detail-rank-title");
+  const rankMeaning = document.getElementById("detail-rank-meaning");
+  const rankEtym    = document.getElementById("detail-rank-etymology");
+
+  if (rankBadge)   rankBadge.textContent   = "Klad (Monofyletisk gruppe)";
+  if (rankMeaning) rankMeaning.textContent = "En klad er en stamfader og ALLE dens efterkommere. Klader defineres af fælles evolutionær oprindelse — ikke af ydre lighed.";
+  if (rankEtym)    rankEtym.innerHTML      = "<strong>Etymologi:</strong> Fra græsk <em>klados</em> (gren). Indikerer én enkelt gren på livets træ.";
+
+  // Del B: Vis det specifikke klade-taxon
+  const taxonDanish = document.getElementById("detail-taxon-danish");
+  const taxonLatin  = document.getElementById("detail-taxon-latin");
+  const taxonDesc   = document.getElementById("detail-taxon-desc");
+
+  if (taxonDanish) taxonDanish.textContent = node.danish;
+  if (taxonLatin)  taxonLatin.textContent  = node.name;
+  if (taxonDesc)   taxonDesc.textContent   = node.desc;
+
+  // Del C: Vis søsterklader / kontekst i subdivisions-panelet
+  renderCladeAlternatives(path, activeCladeIndex);
+}
+
+/**
+ * Viser søsterklader og kontekst for det valgte kladestrin.
+ */
+function renderCladeAlternatives(path, index) {
+  const node     = path[index];
+  const isFirst  = index === 0;
+  const isLast   = index === path.length - 1;
+
+  subDivTitle.textContent = isLast
+    ? `${node.danish} — Artsniveauet`
+    : `Kontekst: ${node.danish} i livets fylogeni`;
+
+  subDivGrid.innerHTML = "";
+
+  // Byg en informationskort med fylogenetisk kontekst
+  const card = document.createElement("div");
+  card.className = "clade-info-panel";
+
+  let prevHtml = "";
+  if (!isFirst) {
+    const prev = path[index - 1];
+    prevHtml = `<p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.75rem;">
+      ⬆ Overliggende klad: <strong>${prev.danish}</strong> <em>(${prev.name})</em>
+    </p>`;
+  }
+
+  let nextHtml = "";
+  if (!isLast) {
+    const next = path[index + 1];
+    nextHtml = `<p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">
+      ⬇ Næste klad: <strong>${next.danish}</strong> <em>(${next.name})</em>
+    </p>`;
+  }
+
+  // Find andre dyr i appen der deler dette kladenavn
+  const sharing = animals.filter(a => {
+    const p = cladePaths[a.id];
+    return p && p.some(n => n.name === node.name) && a.id !== currentAnimalId;
+  });
+
+  let sharingHtml = "";
+  if (sharing.length > 0) {
+    sharingHtml = `
+      <div style="margin-top:1rem;">
+        <strong style="font-size:0.8rem;color:#a855f7;text-transform:uppercase;letter-spacing:0.06em;">
+          Andre organismer i samme klad:
+        </strong>
+        <div class="badge-container" style="margin-top:0.5rem;">
+          ${sharing.map(a => `
+            <span class="animal-badge" data-animal-id="${a.id}" style="cursor:pointer;">
+              ${a.icon} ${a.name}
+            </span>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  card.innerHTML = `
+    <div class="clade-panel-label">${node.rank}</div>
+    <div class="clade-panel-name">${node.danish}</div>
+    <div class="clade-panel-desc">${node.desc}</div>
+    ${prevHtml}${nextHtml}
+    ${sharingHtml}
+  `;
+
+  // Gør badges klikbare
+  card.querySelectorAll(".animal-badge").forEach(badge => {
+    badge.addEventListener("click", e => {
+      e.stopPropagation();
+      const id = badge.getAttribute("data-animal-id");
+      selectAnimal(id);
+    });
+  });
+
+  subDivGrid.appendChild(card);
+}
+
+// Start appen
+document.addEventListener("DOMContentLoaded", () => {
   initAnimalGrid();
-  initCompareView();
   selectAnimal("løve"); // Vælg løve som standard
+
+  // Tilslut mode-toggle knapper
+  const modeLinnaeusBtn = document.getElementById("mode-linnaeus-btn");
+  const modeCladeBtn    = document.getElementById("mode-clade-btn");
+
+  if (modeLinnaeusBtn) {
+    modeLinnaeusBtn.addEventListener("click", () => setViewMode("linnaeus"));
+  }
+  if (modeCladeBtn) {
+    modeCladeBtn.addEventListener("click", () => setViewMode("clade"));
+  }
 });
+
