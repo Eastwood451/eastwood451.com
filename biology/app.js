@@ -3323,10 +3323,10 @@ function wrapForeignWords(text) {
   const words = Object.keys(etymologyDict).sort((a, b) => b.length - a.length);
   
   for (const word of words) {
-    const regex = new RegExp(\`\\\\b(\${word})\\\\b(?![^<]*>)\`, "gi");
+    const regex = new RegExp("\\\\b(" + word + ")\\\\b(?![^<]*>)", "gi");
     wrappedText = wrappedText.replace(regex, (match) => {
       if (match.includes("foreign-word")) return match;
-      return \`<span class="foreign-word" data-word="\${word.toLowerCase()}" style="cursor:help; border-bottom:1px dotted var(--accent);">\${match}</span>\`;
+      return '<span class="foreign-word" data-word="' + word.toLowerCase() + '" style="cursor:help; border-bottom:1px dotted var(--accent);">' + match + '</span>';
     });
   }
   return wrappedText;
@@ -3364,13 +3364,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const definition = etymologyDict[word];
         
         if (definition) {
-          tooltip.innerHTML = \`<strong>\${foreignWordEl.textContent}</strong> \${definition}\`;
+          tooltip.innerHTML = '<strong>' + foreignWordEl.textContent + '</strong> ' + definition;
           tooltip.classList.remove("hidden");
           tooltip.classList.add("show");
           
           const rect = foreignWordEl.getBoundingClientRect();
-          tooltip.style.left = \`\${rect.left + window.scrollX}px\`;
-          tooltip.style.top = \`\${rect.bottom + window.scrollY + 5}px\`;
+          tooltip.style.left = (rect.left + window.scrollX) + 'px';
+          tooltip.style.top = (rect.bottom + window.scrollY + 5) + 'px';
           
           tooltip.style.position = 'absolute';
           tooltip.style.background = 'var(--bg-card)';
