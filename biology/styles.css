@@ -2082,3 +2082,53 @@ body {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ==========================================================================
+   Etymology Tooltip & Foreign Words
+   ========================================================================== */
+
+.foreign-word {
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.4);
+  cursor: help;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.foreign-word:hover {
+  border-bottom-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.tooltip {
+  position: absolute;
+  background-color: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  width: max-content;
+  max-width: 300px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.tooltip.show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.tooltip strong {
+  color: var(--text-primary);
+  display: block;
+  margin-bottom: 0.25rem;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+}
+
