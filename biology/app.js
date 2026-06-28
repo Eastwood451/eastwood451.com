@@ -3063,15 +3063,13 @@ function initCompareView() {
       const card = row.closest(".compare-lineage-card");
       if (!card) return;
 
-      const sideLabelEl = card.querySelector(".compare-side-label");
-      if (!sideLabelEl) return;
-
-      const side = sideLabelEl.textContent.trim();
+      const side = sideLabelEl.textContent.trim().toLowerCase();
       const index = parseInt(row.querySelector(".compare-row-index").textContent) - 1;
 
       const leftAnimal = getAnimalById(compareAnimalLeft.value);
       const rightAnimal = getAnimalById(compareAnimalRight.value);
-      const animal = side === "Organisme 1" ? leftAnimal : rightAnimal;
+      const animal = side.includes("1") ? leftAnimal : rightAnimal;
+      if (!animal) return;
 
       let lineage;
       if (viewMode === "clade") {
@@ -3082,7 +3080,7 @@ function initCompareView() {
 
       const node = lineage[index];
       if (node) {
-        showCladeDetailModal(node);
+        showCladeDetailModal(node, animal.id, lineage);
       }
     });
   }
