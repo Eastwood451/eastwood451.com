@@ -2870,7 +2870,9 @@ function renderCompareColumn(animal, lineage, sharedDepth, sideLabel) {
       <div class="compare-lineage-list">
         ${lineage.map((node, index) => {
           const stateClass = index <= sharedDepth ? "shared" : "different";
-          const rankTitle = rankExplanations[node.rank] ? rankExplanations[node.rank].title : node.rank;
+          const rankTitle = viewMode === "clade" 
+            ? (node.rank === "ART" ? "Art (Species)" : "Klad (Clade)")
+            : (rankExplanations[node.rank] ? rankExplanations[node.rank].title : node.rank);
           return `
             <div class="compare-row ${stateClass}">
               <div class="compare-row-index">${index + 1}</div>
@@ -2894,8 +2896,15 @@ function renderCompareView() {
   const rightAnimal = getAnimalById(compareAnimalRight.value);
   if (!leftAnimal || !rightAnimal) return;
 
-  const leftLineage = getLineageForAnimal(taxonomyTree, leftAnimal.id) || [];
-  const rightLineage = getLineageForAnimal(taxonomyTree, rightAnimal.id) || [];
+  let leftLineage, rightLineage;
+  if (viewMode === "clade") {
+    leftLineage = (typeof cladePaths !== 'undefined') ? (cladePaths[leftAnimal.id] || []) : [];
+    rightLineage = (typeof cladePaths !== 'undefined') ? (cladePaths[rightAnimal.id] || []) : [];
+  } else {
+    leftLineage = getLineageForAnimal(taxonomyTree, leftAnimal.id) || [];
+    rightLineage = getLineageForAnimal(taxonomyTree, rightAnimal.id) || [];
+  }
+
   const sharedDepth = getSharedLineageDepth(leftLineage, rightLineage);
   const sharedNode = sharedDepth >= 0 ? leftLineage[sharedDepth] : null;
   const splitLeft = leftLineage[sharedDepth + 1];
@@ -2904,23 +2913,23 @@ function renderCompareView() {
   if (leftAnimal.id === rightAnimal.id) {
     compareSummary.innerHTML = `
       <strong>Samme organisme valgt.</strong>
-      <span>Hele den viste taksonomiske linje er identisk.</span>
+      <span>Hele den viste ${viewMode === "clade" ? "kladistiske" : "taksonomiske"} linje er identisk.</span>
     `;
   } else if (sharedNode && splitLeft && splitRight) {
-    const sharedRank = rankExplanations[sharedNode.rank] ? rankExplanations[sharedNode.rank].title : sharedNode.rank;
+    const sharedRank = viewMode === "clade" ? "Klad" : (rankExplanations[sharedNode.rank] ? rankExplanations[sharedNode.rank].title : sharedNode.rank);
     compareSummary.innerHTML = `
       <strong>Fælles til og med ${sharedRank}: ${sharedNode.danish}.</strong>
       <span>Grenene skilles derefter ved ${splitLeft.danish} og ${splitRight.danish}.</span>
     `;
   } else if (sharedNode) {
-    const sharedRank = rankExplanations[sharedNode.rank] ? rankExplanations[sharedNode.rank].title : sharedNode.rank;
+    const sharedRank = viewMode === "clade" ? "Klad" : (rankExplanations[sharedNode.rank] ? rankExplanations[sharedNode.rank].title : sharedNode.rank);
     compareSummary.innerHTML = `
       <strong>Fælles til og med ${sharedRank}: ${sharedNode.danish}.</strong>
       <span>Den ene klassifikation fortsætter længere i databasen.</span>
     `;
   } else {
     compareSummary.innerHTML = `
-      <strong>Ingen fælles taksonomiske niveauer fundet i den viste sti.</strong>
+      <strong>Ingen fælles ${viewMode === "clade" ? "klader" : "taksonomiske niveauer"} fundet i den viste sti.</strong>
       <span>Prøv et andet par organismer.</span>
     `;
   }
@@ -3148,6 +3157,8 @@ function setViewMode(mode) {
   viewMode = mode;
   const linnaeusBtn = document.getElementById("mode-linnaeus-btn");
   const cladeBtn = document.getElementById("mode-clade-btn");
+  const compareLinnaeusBtn = document.getElementById("compare-mode-linnaeus-btn");
+  const compareCladeBtn = document.getElementById("compare-mode-clade-btn");
   
   if (linnaeusBtn && cladeBtn) {
     if (mode === "linnaeus") {
@@ -3162,8 +3173,19 @@ function setViewMode(mode) {
       document.getElementById("lineage-col-desc").textContent = "Viser præcis hvordan dyret er beslægtet i en ubrudt udviklingslinje.";
     }
   }
+
+  if (compareLinnaeusBtn && compareCladeBtn) {
+    if (mode === "linnaeus") {
+      compareLinnaeusBtn.classList.add("active");
+      compareCladeBtn.classList.remove("active");
+    } else {
+      compareCladeBtn.classList.add("active");
+      compareLinnaeusBtn.classList.remove("active");
+    }
+  }
   
   selectAnimal(currentAnimalId);
+  renderCompareView();
 }
 
 function renderCladeStepper() {
@@ -3381,6 +3403,15 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (modeCladeBtn) {
     modeCladeBtn.addEventListener("click", () => setViewMode("clade"));
+  }
+
+  const compareModeLinnaeusBtn = document.getElementById("compare-mode-linnaeus-btn");
+  const compareModeCladeBtn = document.getElementById("compare-mode-clade-btn");
+  if (compareModeLinnaeusBtn) {
+    compareModeLinnaeusBtn.addEventListener("click", () => setViewMode("linnaeus"));
+  }
+  if (compareModeCladeBtn) {
+    compareModeCladeBtn.addEventListener("click", () => setViewMode("clade"));
   }
 
   // Etymology Tooltip Logic
