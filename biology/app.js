@@ -2942,23 +2942,26 @@ function renderCompareView() {
 }
 
 function getSisterClades(node, animalId, lineage) {
-  const index = lineage.findIndex(n => n.name === node.name || n.latin === node.latin);
+  const index = lineage.findIndex(n => 
+    (node.name && n.name === node.name) || 
+    (node.latin && n.latin === node.latin)
+  );
   if (index <= 0) return []; // Root has no parent, so no sisters
 
   const parentNode = lineage[index - 1];
-  const parentName = parentNode.latin || parentNode.name;
+  const parentName = parentNode.name || parentNode.latin;
 
   const sisters = new Map();
 
   if (viewMode === "clade") {
     if (typeof cladePaths === 'undefined') return [];
     for (const [aId, aPath] of Object.entries(cladePaths)) {
-      const pIdx = aPath.findIndex(n => n.name === parentName || n.latin === parentName);
+      const pIdx = aPath.findIndex(n => n.name === parentName || (n.latin && n.latin === parentName));
       if (pIdx !== -1 && pIdx < aPath.length - 1) {
         const childNode = aPath[pIdx + 1];
-        const childName = childNode.latin || childNode.name;
-        const nodeName = node.latin || node.name;
-        if (childName !== nodeName) {
+        const childName = childNode.name || childNode.latin;
+        const nodeName = node.name || node.latin;
+        if (childName && childName !== nodeName) {
           sisters.set(childName, {
             name: childNode.danish,
             scientific: childName,
