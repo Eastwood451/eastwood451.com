@@ -2991,10 +2991,14 @@ function getSisterClades(node, animalId, lineage) {
 }
 
 function showCladeDetailModal(node, animalId, lineage) {
-  if (cladeDetailModal && cladeDetailTitle && cladeDetailDesc) {
+  const modal = document.getElementById("clade-detail-modal");
+  const titleEl = document.getElementById("clade-detail-title");
+  const descEl = document.getElementById("clade-detail-desc");
+
+  if (modal && titleEl && descEl) {
     const nameDanish = node.danish || node.name || "";
     const nameScientific = node.latin || node.name || "";
-    cladeDetailTitle.innerHTML = `🧬 ${nameDanish} <span style="font-style: italic; font-size: 1.1rem; color: var(--accent); font-weight: normal; margin-left: 0.5rem;">(${nameScientific})</span>`;
+    titleEl.innerHTML = `🧬 ${nameDanish} <span style="font-style: italic; font-size: 1.1rem; color: var(--accent); font-weight: normal; margin-left: 0.5rem;">(${nameScientific})</span>`;
     
     let infoHtml = `<p>${wrapForeignWords(node.desc || node.description || "Ingen beskrivelse tilgængelig.")}</p>`;
     
@@ -3031,70 +3035,84 @@ function showCladeDetailModal(node, animalId, lineage) {
       }
     }
     
-    cladeDetailDesc.innerHTML = infoHtml;
-    cladeDetailModal.classList.add("show");
+    descEl.innerHTML = infoHtml;
+    modal.classList.add("show");
   }
 }
 
 function initCompareView() {
-  if (!compareAnimalLeft || !compareAnimalRight) return;
+  const compAnimalLeft = document.getElementById("compare-animal-left");
+  const compAnimalRight = document.getElementById("compare-animal-right");
+  const compSwapBtn = document.getElementById("compare-swap-btn");
+  const compGrid = document.getElementById("compare-grid");
+  const closeBtn = document.getElementById("close-clade-detail-modal");
+  const modal = document.getElementById("clade-detail-modal");
 
-  populateCompareSelect(compareAnimalLeft, currentAnimalId || "ulv");
-  populateCompareSelect(compareAnimalRight, "raev");
+  if (!compAnimalLeft || !compAnimalRight) return;
 
-  compareAnimalLeft.addEventListener("change", renderCompareView);
-  compareAnimalRight.addEventListener("change", renderCompareView);
+  populateCompareSelect(compAnimalLeft, currentAnimalId || "ulv");
+  populateCompareSelect(compAnimalRight, "raev");
 
-  if (compareSwapBtn) {
-    compareSwapBtn.addEventListener("click", () => {
-      const leftValue = compareAnimalLeft.value;
-      compareAnimalLeft.value = compareAnimalRight.value;
-      compareAnimalRight.value = leftValue;
+  compAnimalLeft.addEventListener("change", renderCompareView);
+  compAnimalRight.addEventListener("change", renderCompareView);
+
+  if (compSwapBtn) {
+    compSwapBtn.addEventListener("click", () => {
+      const leftValue = compAnimalLeft.value;
+      compAnimalLeft.value = compAnimalRight.value;
+      compAnimalRight.value = leftValue;
       renderCompareView();
     });
   }
 
   // Click handler on compare grid rows
-  if (compareGrid) {
-    compareGrid.addEventListener("click", (e) => {
-      const row = e.target.closest(".compare-row");
-      if (!row) return;
+  if (compGrid) {
+    compGrid.addEventListener("click", (e) => {
+      try {
+        const row = e.target.closest(".compare-row");
+        if (!row) return;
 
-      const card = row.closest(".compare-lineage-card");
-      if (!card) return;
+        const card = row.closest(".compare-lineage-card");
+        if (!card) return;
 
-      const side = sideLabelEl.textContent.trim().toLowerCase();
-      const index = parseInt(row.querySelector(".compare-row-index").textContent) - 1;
+        const sideLabelEl = card.querySelector(".compare-side-label");
+        if (!sideLabelEl) return;
 
-      const leftAnimal = getAnimalById(compareAnimalLeft.value);
-      const rightAnimal = getAnimalById(compareAnimalRight.value);
-      const animal = side.includes("1") ? leftAnimal : rightAnimal;
-      if (!animal) return;
+        const side = sideLabelEl.textContent.trim().toLowerCase();
+        const index = parseInt(row.querySelector(".compare-row-index").textContent) - 1;
 
-      let lineage;
-      if (viewMode === "clade") {
-        lineage = (typeof cladePaths !== 'undefined') ? (cladePaths[animal.id] || []) : [];
-      } else {
-        lineage = getLineageForAnimal(taxonomyTree, animal.id) || [];
-      }
+        const leftAnimal = getAnimalById(compAnimalLeft.value);
+        const rightAnimal = getAnimalById(compAnimalRight.value);
+        const animal = side.includes("1") ? leftAnimal : rightAnimal;
+        if (!animal) return;
 
-      const node = lineage[index];
-      if (node) {
-        showCladeDetailModal(node, animal.id, lineage);
+        let lineage;
+        if (viewMode === "clade") {
+          lineage = (typeof cladePaths !== 'undefined') ? (cladePaths[animal.id] || []) : [];
+        } else {
+          lineage = getLineageForAnimal(taxonomyTree, animal.id) || [];
+        }
+
+        const node = lineage[index];
+        if (node) {
+          showCladeDetailModal(node, animal.id, lineage);
+        }
+      } catch (err) {
+        console.error("Fejl ved klik på række:", err);
       }
     });
   }
 
   // Modal dismiss triggers
-  if (closeCladeDetailModalBtn && cladeDetailModal) {
-    closeCladeDetailModalBtn.addEventListener("click", () => {
-      cladeDetailModal.classList.remove("show");
+  if (closeBtn && modal) {
+    closeBtn.addEventListener("click", () => {
+      modal.classList.remove("show");
     });
   }
 
   window.addEventListener("click", (e) => {
-    if (e.target === cladeDetailModal) {
-      cladeDetailModal.classList.remove("show");
+    if (e.target === modal) {
+      modal.classList.remove("show");
     }
   });
 
