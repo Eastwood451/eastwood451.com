@@ -2941,12 +2941,97 @@ function renderCompareView() {
   `;
 }
 
-function showCladeDetailModal(node) {
+function getSisterClades(node, animalId, lineage) {
+  const index = lineage.findIndex(n => n.name === node.name || n.latin === node.latin);
+  if (index <= 0) return []; // Root has no parent, so no sisters
+
+  const parentNode = lineage[index - 1];
+  const parentName = parentNode.latin || parentNode.name;
+
+  const sisters = new Map();
+
+  if (viewMode === "clade") {
+    if (typeof cladePaths === 'undefined') return [];
+    for (const [aId, aPath] of Object.entries(cladePaths)) {
+      const pIdx = aPath.findIndex(n => n.name === parentName || n.latin === parentName);
+      if (pIdx !== -1 && pIdx < aPath.length - 1) {
+        const childNode = aPath[pIdx + 1];
+        const childName = childNode.latin || childNode.name;
+        const nodeName = node.latin || node.name;
+        if (childName !== nodeName) {
+          sisters.set(childName, {
+            name: childNode.danish,
+            scientific: childName,
+            desc: childNode.desc || childNode.description || ""
+          });
+        }
+      }
+    }
+  } else {
+    const pathInTree = getPathToNode(taxonomyTree, parentNode.name);
+    if (pathInTree && pathInTree.length > 0) {
+      const parentInTree = pathInTree[pathInTree.length - 1];
+      if (parentInTree && parentInTree.children) {
+        for (const childNode of parentInTree.children) {
+          const childName = childNode.latin || childNode.name;
+          const nodeName = node.latin || node.name;
+          if (childName !== nodeName) {
+            sisters.set(childName, {
+              name: childNode.danish,
+              scientific: childName,
+              desc: childNode.description || ""
+            });
+          }
+        }
+      }
+    }
+  }
+
+  return Array.from(sisters.values());
+}
+
+function showCladeDetailModal(node, animalId, lineage) {
   if (cladeDetailModal && cladeDetailTitle && cladeDetailDesc) {
     const nameDanish = node.danish || node.name || "";
     const nameScientific = node.latin || node.name || "";
     cladeDetailTitle.innerHTML = `🧬 ${nameDanish} <span style="font-style: italic; font-size: 1.1rem; color: var(--accent); font-weight: normal; margin-left: 0.5rem;">(${nameScientific})</span>`;
-    cladeDetailDesc.innerHTML = wrapForeignWords(node.desc || node.description || "Ingen beskrivelse tilgængelig.");
+    
+    let infoHtml = `<p>${wrapForeignWords(node.desc || node.description || "Ingen beskrivelse tilgængelig.")}</p>`;
+    
+    const sisters = getSisterClades(node, animalId, lineage);
+    if (sisters.length > 0) {
+      const parentNode = lineage[lineage.findIndex(n => n.name === node.name || n.latin === node.latin) - 1];
+      const parentName = parentNode ? (parentNode.danish || parentNode.name) : "";
+      
+      infoHtml += `
+        <div class="sister-clades-section" style="margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+          <h4 style="margin-bottom: 0.75rem; color: var(--accent); font-family: var(--font-heading); font-size: 1.05rem;">
+            Søstergrupper under ${parentName} (${parentNode ? (parentNode.latin || parentNode.name) : ""}):
+          </h4>
+          <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.75rem; max-height: 250px; overflow-y: auto;">
+            ${sisters.map(sis => `
+              <li style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 0.75rem;">
+                <strong>${sis.name}</strong> <span style="font-style: italic; font-size: 0.85rem; color: var(--text-muted);">(${sis.scientific})</span>
+                ${sis.desc ? `<p style="margin: 0.25rem 0 0; font-size: 0.85rem; color: var(--text-subtle); line-height: 1.4;">${wrapForeignWords(sis.desc)}</p>` : ""}
+              </li>
+            `).join("")}
+          </ul>
+        </div>
+      `;
+    } else {
+      const index = lineage.findIndex(n => n.name === node.name || n.latin === node.latin);
+      if (index > 0) {
+        const parentNode = lineage[index - 1];
+        const parentName = parentNode ? (parentNode.danish || parentNode.name) : "";
+        infoHtml += `
+          <div class="sister-clades-section" style="margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem; color: var(--text-muted); font-size: 0.85rem; font-style: italic;">
+            Ingen andre søstergrupper under ${parentName} er registreret i databasen.
+          </div>
+        `;
+      }
+    }
+    
+    cladeDetailDesc.innerHTML = infoHtml;
     cladeDetailModal.classList.add("show");
   }
 }
