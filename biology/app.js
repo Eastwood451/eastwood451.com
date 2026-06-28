@@ -2873,13 +2873,14 @@ function renderCompareColumn(animal, lineage, sharedDepth, sideLabel) {
           const rankTitle = viewMode === "clade" 
             ? (node.rank === "ART" ? "Art (Species)" : "Klad (Clade)")
             : (rankExplanations[node.rank] ? rankExplanations[node.rank].title : node.rank);
+          const scientificName = node.latin || node.name || "";
           return `
             <div class="compare-row ${stateClass}">
               <div class="compare-row-index">${index + 1}</div>
               <div class="compare-row-content">
                 <span class="compare-row-rank">${rankTitle}</span>
                 <strong>${node.danish}</strong>
-                <em>${node.latin}</em>
+                <em>${scientificName}</em>
               </div>
             </div>
           `;
@@ -2940,6 +2941,16 @@ function renderCompareView() {
   `;
 }
 
+function showCladeDetailModal(node) {
+  if (cladeDetailModal && cladeDetailTitle && cladeDetailDesc) {
+    const nameDanish = node.danish || node.name || "";
+    const nameScientific = node.latin || node.name || "";
+    cladeDetailTitle.innerHTML = `🧬 ${nameDanish} <span style="font-style: italic; font-size: 1.1rem; color: var(--accent); font-weight: normal; margin-left: 0.5rem;">(${nameScientific})</span>`;
+    cladeDetailDesc.innerHTML = wrapForeignWords(node.desc || node.description || "Ingen beskrivelse tilgængelig.");
+    cladeDetailModal.classList.add("show");
+  }
+}
+
 function initCompareView() {
   if (!compareAnimalLeft || !compareAnimalRight) return;
 
@@ -2957,6 +2968,52 @@ function initCompareView() {
       renderCompareView();
     });
   }
+
+  // Click handler on compare grid rows
+  if (compareGrid) {
+    compareGrid.addEventListener("click", (e) => {
+      const row = e.target.closest(".compare-row");
+      if (!row) return;
+
+      const card = row.closest(".compare-lineage-card");
+      if (!card) return;
+
+      const sideLabelEl = card.querySelector(".compare-side-label");
+      if (!sideLabelEl) return;
+
+      const side = sideLabelEl.textContent.trim();
+      const index = parseInt(row.querySelector(".compare-row-index").textContent) - 1;
+
+      const leftAnimal = getAnimalById(compareAnimalLeft.value);
+      const rightAnimal = getAnimalById(compareAnimalRight.value);
+      const animal = side === "Organisme 1" ? leftAnimal : rightAnimal;
+
+      let lineage;
+      if (viewMode === "clade") {
+        lineage = (typeof cladePaths !== 'undefined') ? (cladePaths[animal.id] || []) : [];
+      } else {
+        lineage = getLineageForAnimal(taxonomyTree, animal.id) || [];
+      }
+
+      const node = lineage[index];
+      if (node) {
+        showCladeDetailModal(node);
+      }
+    });
+  }
+
+  // Modal dismiss triggers
+  if (closeCladeDetailModalBtn && cladeDetailModal) {
+    closeCladeDetailModalBtn.addEventListener("click", () => {
+      cladeDetailModal.classList.remove("show");
+    });
+  }
+
+  window.addEventListener("click", (e) => {
+    if (e.target === cladeDetailModal) {
+      cladeDetailModal.classList.remove("show");
+    }
+  });
 
   renderCompareView();
 }
@@ -3005,6 +3062,12 @@ const compareAnimalRight = document.getElementById("compare-animal-right");
 const compareSwapBtn = document.getElementById("compare-swap-btn");
 const compareSummary = document.getElementById("compare-summary");
 const compareGrid = document.getElementById("compare-grid");
+
+// Clade Detail Modal DOM Elements
+const cladeDetailModal = document.getElementById("clade-detail-modal");
+const closeCladeDetailModalBtn = document.getElementById("close-clade-detail-modal");
+const cladeDetailTitle = document.getElementById("clade-detail-title");
+const cladeDetailDesc = document.getElementById("clade-detail-desc");
 
 // Quiz DOM Elements
 const quizScoreEl = document.getElementById("quiz-score");

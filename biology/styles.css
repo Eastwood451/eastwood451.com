@@ -1462,6 +1462,14 @@ body {
   border: 1px solid var(--border-glass);
   border-radius: 12px;
   background-color: rgba(15, 23, 42, 0.36);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.compare-row:hover {
+  transform: translateY(-1px);
+  background-color: rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .compare-row.shared {
@@ -1469,9 +1477,17 @@ body {
   background-color: rgba(16, 185, 129, 0.08);
 }
 
+.compare-row.shared:hover {
+  background-color: rgba(16, 185, 129, 0.12);
+}
+
 .compare-row.different {
   border-color: rgba(249, 115, 22, 0.35);
   background-color: rgba(249, 115, 22, 0.055);
+}
+
+.compare-row.different:hover {
+  background-color: rgba(249, 115, 22, 0.08);
 }
 
 .compare-row-index {

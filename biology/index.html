@@ -265,11 +265,24 @@
     </div>
   </div>
 
+  <!-- Modal til specifik Klad-information -->
+  <div class="modal" id="clade-detail-modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2 id="clade-detail-title">🧬 Klad-information</h2>
+        <button class="close-btn" id="close-clade-detail-modal">&times;</button>
+      </div>
+      <div class="modal-body" id="clade-detail-body" style="flex-direction: column; gap: 1rem;">
+        <p id="clade-detail-desc"></p>
+      </div>
+    </div>
+  </div>
+
   <!-- Tooltip til Etymologi -->
   <div id="etymology-tooltip" class="tooltip hidden"></div>
 
   <!-- JS Scripts -->
   <script src="clade-data.js?v=1"></script>
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>
