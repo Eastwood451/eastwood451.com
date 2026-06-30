@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="da">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dimensionsvisualisering</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/canvas.css">
+    <link rel="stylesheet" href="css/toolbar.css">
+</head>
+
+<body>
+    <div id="app">
+        <!-- Toolbar -->
+        <div id="toolbar" class="toolbar">
+            <div class="toolbar-section">
+                <button id="btn-file" class="toolbar-btn dropdown-btn">File ▼</button>
+                <div id="file-menu" class="dropdown-menu hidden">
+                    <button id="btn-save">Gem</button>
+                    <button id="btn-load">Indlæs</button>
+                    <button id="btn-export-svg">Eksport SVG</button>
+                    <button id="btn-export-png">Eksport PNG</button>
+                </div>
+            </div>
+            <div class="toolbar-section">
+                <button id="btn-add-dimension" class="toolbar-btn">+ Dimension</button>
+                <button id="btn-add-marker" class="toolbar-btn">+ Markør</button>
+                <button id="btn-connect" class="toolbar-btn">Forbind</button>
+                <button id="btn-intersection" class="toolbar-btn">+ Fællespunkt</button>
+            </div>
+            <div class="toolbar-section">
+                <span id="mode-display" class="mode-display">Mode: Select</span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="main-content" class="main-content">
+            <!-- Canvas Area -->
+            <div id="canvas-container" class="canvas-container">
+                <svg id="canvas-svg" width="100%" height="100%">
+                    <defs>
+                        <!-- Define arrowheads for dimension endpoints -->
+                        <marker id="endpoint" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+                            <circle cx="5" cy="5" r="3" fill="#333" />
+                        </marker>
+
+                        <!-- Define snap indicator -->
+                        <circle id="snap-indicator" class="snap-indicator" r="15" fill="none" stroke="#00ff00"
+                            stroke-width="2" style="display: none;" />
+                    </defs>
+
+                    <!-- Groups for layering -->
+                    <g id="polygons-layer"></g>
+                    <g id="intersections-layer"></g>
+                    <g id="connections-layer"></g>
+                    <g id="dimensions-layer"></g>
+                    <g id="markers-layer"></g>
+                    <g id="handles-layer"></g>
+                </svg>
+            </div>
+
+            <!-- Property Panel -->
+            <div id="property-panel" class="property-panel">
+                <h3>Egenskaber</h3>
+                <div id="props-content" class="props-content">
+                    <p class="props-empty">Vælg et element</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div id="status-bar" class="status-bar">
+            <span id="status-text">0 dimensioner • 0 markører • 0 forbindelser • 0 fællespunkter</span>
+        </div>
+    </div>
+
+    <!-- Unsnap Modal -->
+    <div id="unsnap-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <h2>Løsn Dimensioner</h2>
+            <p>Vælg hvilke dimensioner der skal løsnes fra dette endepunkt:</p>
+            <div id="unsnap-list" class="unsnap-list"></div>
+            <div class="modal-buttons">
+                <button class="btn-secondary" id="unsnap-cancel">Annuller</button>
+                <button class="btn-primary" id="unsnap-confirm">Løsn Valgte</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/bundle.js"></script>
+    <!-- AI Suite Assistant -->
+    <script src="../SMFI_Suite/bus.js?v=3"></script>
+    <script src="../SMFI_Suite/google-api.js?v=3"></script>
+    <script src="../SMFI_Suite/ai-assistant.js?v=5"></script>
+
+    <!-- Theme Listener -->
+    <script>
+        function applyTheme(theme) {
+            if (theme === 'light') { document.body.classList.add('theme-light'); }
+            else { document.body.classList.remove('theme-light'); }
+        }
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'THEME_CHANGE') { applyTheme(event.data.theme); }
+        });
+        const savedTheme = localStorage.getItem('smfi-theme');
+        if (savedTheme) { applyTheme(savedTheme); }
+
+        // Global Save/Load Listeners
+        if (window.bus) {
+            window.bus.subscribe('request-state', () => {
+                if (window.exportGlobalState) {
+                    window.bus.publish('state-response', { app: 'Dimensionsvisualisering', state: window.exportGlobalState() });
+                }
+            });
+            window.bus.subscribe('load-state', (data) => {
+                if (data && data.apps && data.apps['Dimensionsvisualisering'] && window.importGlobalState) {
+                    window.importGlobalState(data.apps['Dimensionsvisualisering']);
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

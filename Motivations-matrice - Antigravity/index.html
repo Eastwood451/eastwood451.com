@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="da">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Motivationskuben</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- React 18 via CDN (React 19 har ikke UMD-builds) -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <!-- Babel standalone - gør JSX muligt direkte i browseren -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* Dark Theme Overrides (Active when NOT in light mode) */
+    body:not(.theme-light) {
+      background-color: #0f0f1a !important;
+      color: #e0e0e0 !important;
+    }
+
+    body:not(.theme-light) .bg-slate-100 {
+      background-color: #0f0f1a !important;
+    }
+
+    body:not(.theme-light) .bg-slate-50 {
+      background-color: #12121f !important;
+    }
+
+    body:not(.theme-light) .bg-white {
+      background-color: #1a1a2e !important;
+    }
+
+    body:not(.theme-light) .text-slate-800,
+    body:not(.theme-light) .text-slate-700,
+    body:not(.theme-light) .text-slate-600 {
+      color: #e0e0e0 !important;
+    }
+
+    body:not(.theme-light) .text-slate-500,
+    body:not(.theme-light) .text-slate-400 {
+      color: #b0b8c8 !important;
+    }
+
+    body:not(.theme-light) .border-slate-200,
+    body:not(.theme-light) .border-slate-300 {
+      border-color: #2a2a4a !important;
+    }
+
+    body:not(.theme-light) input,
+    body:not(.theme-light) textarea,
+    body:not(.theme-light) select {
+      background-color: #16162a !important;
+      color: #e0e0e0 !important;
+      border-color: #2a2a4a !important;
+    }
+
+    body:not(.theme-light) .text-white {
+      color: #ffffff !important;
+    }
+
+    /* Keep buttons visible */
+
+    @keyframes fadeSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .fade-in {
+      animation: fadeSlideIn 0.4s ease-out;
+    }
+
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useRef, useCallback, useEffect, memo } = React;
+
+    // ────────────────────────────────────────────────
+    // INLINE SVG ICONS (erstatter lucide-react)
+    // ────────────────────────────────────────────────
+
+    const Icon = ({ d, size = 20, className = '' }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        className={className}>
+        {Array.isArray(d) ? d.map((path, i) => <path key={i} d={path} />) : <path d={d} />}
+      </svg>
+    );
+
+    // Individuelle ikoner
+    const CheckCircle2 = ({ size, className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size || 20} height={size || 20} viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" />
+      </svg>
+    );
+
+    const XCircle = ({ size, className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size || 20} height={size || 20} viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <circle cx="12" cy="12" r="10" /><path d="m15 9-6 6" /><path d="m9 9 6 6" />
+      </svg>
+    );
+
+    const Wand2 = ({ size }) => <Icon size={size} d={["M15 4V2", "M15 16v-2", "M8 9h2", "M20 9h2", "M17.8 11.8 19 13", "M15 9h0", "M17.8 6.2 19 5", "m3 21 9-9", "M12.2 6.2 11 5"]} />;
+    const RotateCcw = ({ size }) => <Icon size={size} d={["M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8", "M3 3v5h5"]} />;
+    const Lightbulb = ({ size }) => <Icon size={size} d={["M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5", "M9 18h6", "M10 22h4"]} />;
+    const BookOpen = ({ size }) => <Icon size={size} d={["M12 7v14", "M2 3h6a4 4 0 0 1 4 4", "M22 3h-6a4 4 0 0 0-4 4", "M2 3v15a1 1 0 0 0 1 1h5", "M22 3v15a1 1 0 0 1-1 1h-5"]} />;
+    const Save = ({ size }) => <Icon size={size} d={["M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z", "M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7", "M7 3v4a1 1 0 0 0 1 1h7"]} />;
+    const Printer = ({ size }) => <Icon size={size} d={["M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2", "M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6", "M6 14h12v8H6z"]} />;
+    const XIcon = ({ size }) => <Icon size={size} d={["M18 6 6 18", "M6 6l12 12"]} />;
+    const ShieldAlert = ({ size, className }) => <Icon size={size} className={className} d={["M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z", "M12 8v4", "M12 16h.01"]} />;
+    const Activity = ({ size }) => <Icon size={size} d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2" />;
+    const Download = ({ size }) => <Icon size={size} d={["M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", "M7 10l5 5 5-5", "M12 15V3"]} />;
+    const Upload = ({ size }) => <Icon size={size} d={["M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", "M17 8l-5-5-5 5", "M12 3v12"]} />;
+    const Loader2 = ({ size, className }) => <Icon size={size} className={className} d="M21 12a9 9 0 1 1-6.219-8.56" />;
+    const MessageCircle = ({ size, className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size || 20} height={size || 20} viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z" />
+      </svg>
+    );
+    const SendIcon = ({ size }) => <Icon size={size} d={["M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z", "m21.854 2.147-10.94 10.939"]} />;
+
+    // ────────────────────────────────────────────────
+    // CONSTANTS
+    // ────────────────────────────────────────────────
+
+    const EMPTY_DATA = {
+      do_reward_pos: '', do_reward_neg: '',
+      do_punish_pos: '', do_punish_neg: '',
+      dont_reward_pos: '', dont_reward_neg: '',
+      dont_punish_pos: '', dont_punish_neg: '',
+    };
+
+    const SCENARIOS = {
+      clean_up: {
+        title: 'Rydde op',
+        tip: 'Gør opgaven overskuelig. Sig "Ryd klodserne op" i stedet for "Ryd værelset op".',
+        red_advice: 'Fjern fristelsen: Sluk skærme før kravet stilles.',
+        data: {
+          do_reward_pos: 'Får ros og en stjerne', do_reward_neg: 'Slipper for plageri',
+          do_punish_pos: 'Det er kedeligt', do_punish_neg: 'Mister legetid',
+          dont_reward_pos: 'Kan lege videre', dont_reward_neg: 'Slipper for arbejdet',
+          dont_punish_pos: 'Ingen iPad bagefter', dont_punish_neg: 'Kan ikke finde sit legetøj i morgen',
+        },
+      },
+      homework: {
+        title: 'Lave lektier',
+        tip: 'Start med den sjoveste opgave for at skabe momentum. Brug en timer på 15 min.',
+        red_advice: 'Lav en fast rutine: Lektier lige efter snack, før skærmtid.',
+        data: {
+          do_reward_pos: 'Bliver klogere og får ros', do_reward_neg: 'Slipper for stress i morgen',
+          do_punish_pos: 'Kedeligt og svært', do_punish_neg: 'Mister fri tid nu',
+          dont_reward_pos: 'Kan spille/lege nu', dont_reward_neg: 'Slipper for at tænke',
+          dont_punish_pos: 'Læreren bliver skuffet', dont_punish_neg: 'Falder bagud i klassen',
+        },
+      },
+      vegetables: {
+        title: 'Spise grøntsager',
+        tip: 'Lad barnet vælge mellem 2 grøntsager. "Vil du have gulerødder eller agurk?"',
+        red_advice: 'Server grøntsager først, når barnet er mest sultent.',
+        data: {
+          do_reward_pos: 'Bliver stærk og får dessert', do_reward_neg: 'Slipper for snak om mad',
+          do_punish_pos: 'Smager mærkeligt', do_punish_neg: 'Mister plads til det lækre',
+          dont_reward_pos: 'Kan spise det lækre i stedet', dont_reward_neg: 'Slipper for den dårlige smag',
+          dont_punish_pos: 'Ingen dessert', dont_punish_neg: 'Bliver træt og slap',
+        },
+      },
+    };
+
+    const PRONOUN_LABELS = {
+      han: { subject: 'han', possessive: 'hans' },
+      hun: { subject: 'hun', possessive: 'hendes' },
+      barnet: { subject: 'barnet', possessive: 'barnets' },
+    };
+
+    // ── Bullet Input (auto-resizing textarea with bullet points) ──
+
+    function BulletInput({ value, onChange, className, placeholder }) {
+      const ref = useRef(null);
+
+      // Convert stored value (plain text lines) to bullet display
+      const toBullets = (raw) => {
+        if (!raw) return '';
+        return raw.split('\n').map(l => l.startsWith('• ') ? l : '• ' + l).join('\n');
+      };
+
+      // Strip bullets for storage
+      const fromBullets = (display) => {
+        return display.split('\n').map(l => l.replace(/^• /, '')).join('\n');
+      };
+
+      const displayValue = toBullets(value);
+
+      const autoResize = useCallback((el) => {
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = el.scrollHeight + 'px';
+      }, []);
+
+      useEffect(() => { autoResize(ref.current); }, [value, autoResize]);
+
+      const handleChange = (e) => {
+        const raw = e.target.value;
+        // Ensure every line starts with bullet
+        const fixed = raw.split('\n').map(l => {
+          const stripped = l.replace(/^•\s*/, '');
+          return '• ' + stripped;
+        }).join('\n');
+        e.target.value = fixed;
+        onChange(fromBullets(fixed));
+        autoResize(e.target);
+      };
+
+      const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const ta = e.target;
+          const pos = ta.selectionStart;
+          const val = ta.value;
+          const before = val.slice(0, pos);
+          const after = val.slice(pos);
+          const newVal = before + '\n• ' + after;
+          onChange(fromBullets(newVal));
+          // Set cursor after the new bullet
+          requestAnimationFrame(() => {
+            const newPos = pos + 3; // \n + • + space
+            ta.selectionStart = ta.selectionEnd = newPos;
+            autoResize(ta);
+          });
+        }
+        if (e.key === 'Backspace') {
+          const ta = e.target;
+          const pos = ta.selectionStart;
+          const val = ta.value;
+          // If cursor is right after "• " on a line, delete the entire bullet line
+          const beforeCursor = val.slice(0, pos);
+          if (beforeCursor.endsWith('• ') && (beforeCursor.length === 2 || beforeCursor[beforeCursor.length - 3] === '\n')) {
+            // Check if line is empty (just "• ")
+            const lineStart = beforeCursor.lastIndexOf('\n') + 1;
+            const lineEnd = val.indexOf('\n', pos);
+            const line = val.slice(lineStart, lineEnd === -1 ? val.length : lineEnd);
+            if (line === '• ' && val.includes('\n')) {
+              e.preventDefault();
+              const newVal = val.slice(0, Math.max(0, lineStart - 1)) + val.slice(lineEnd === -1 ? val.length : lineEnd);
+              onChange(fromBullets(newVal || '• '));
+              requestAnimationFrame(() => {
+                const newPos = Math.max(0, lineStart - 1);
+                ta.selectionStart = ta.selectionEnd = newPos;
+                autoResize(ta);
+              });
+            }
+          }
+        }
+      };
+
+      const handleFocus = (e) => {
+        if (!e.target.value) {
+          onChange('');
+          // Will show "• " via toBullets converting empty to "• "
+        }
+      };
+
+      return (
+        <textarea ref={ref} value={displayValue || ''} onChange={handleChange}
+          onKeyDown={handleKeyDown} onFocus={handleFocus}
+          className={className}
+          placeholder={placeholder}
+          rows={1}
+          style={{ resize: 'none', overflow: 'hidden', minHeight: '38px' }} />
+      );
+    }
+
+    // ────────────────────────────────────────────────
+    // MATRIX CELL (en celle i 2x2 matricen)
+    // ────────────────────────────────────────────────
+
+    function MatrixCell({ color, posKey, negKey, posLabel, negLabel, data, onChange }) {
+      const isWhite = color === 'white';
+      const bg = isWhite ? 'bg-white' : 'bg-slate-50';
+      const border = isWhite ? 'border-slate-200' : 'border-slate-200';
+      const accent = 'text-slate-500';
+      const inputBg = isWhite
+        ? 'bg-white border-slate-300 text-slate-800 placeholder-slate-400'
+        : 'bg-slate-100 border-slate-300 text-slate-800 placeholder-slate-400';
+      const dot = isWhite ? 'bg-slate-400' : 'bg-slate-300';
+
+      return (
+        <div className={`${bg} border ${border} rounded-xl p-4 space-y-3 transition-all shadow-sm`}>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${dot}`} />
+              <span className={`text-xs font-semibold ${accent}`}>{posLabel}</span>
+            </div>
+            <BulletInput value={data[posKey]} onChange={(v) => onChange(posKey, v)}
+              className={`w-full ${inputBg} border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400`}
+              placeholder="Tryk Enter for nyt punkt..." />
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${dot} opacity-50`} />
+              <span className={`text-xs font-semibold ${accent} opacity-70`}>{negLabel}</span>
+            </div>
+            <BulletInput value={data[negKey]} onChange={(v) => onChange(negKey, v)}
+              className={`w-full ${inputBg} border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400`}
+              placeholder="Tryk Enter for nyt punkt..." />
+          </div>
+        </div>
+      );
+    }
+
+    // ────────────────────────────────────────────────
+    // MOTIVATION BALANCE BAR
+    // ────────────────────────────────────────────────
+
+    function BalanceBar({ data }) {
+      // Grønne felter = motivation for at gøre det
+      const greenKeys = ['do_reward_pos', 'do_reward_neg', 'dont_punish_pos', 'dont_punish_neg'];
+      // Røde felter = motivation for at lade være
+      const redKeys = ['do_punish_pos', 'do_punish_neg', 'dont_reward_pos', 'dont_reward_neg'];
+
+      const countLines = (k) => data[k] ? data[k].split('\n').filter(l => l.trim()).length : 0;
+      const greenCount = greenKeys.reduce((n, k) => n + countLines(k), 0);
+      const redCount = redKeys.reduce((n, k) => n + countLines(k), 0);
+      const total = greenCount + redCount;
+
+      const greenPct = total > 0 ? (greenCount / total) * 100 : 50;
+
+      let label = 'Udfyld felterne for at se balancen';
+      if (total > 0) {
+        if (greenCount > redCount) label = 'Motivationen vejer tungest — godt udgangspunkt!';
+        else if (redCount > greenCount) label = 'Modstanden vejer tungest — fokusér på de grønne felter';
+        else label = 'Motivation og modstand er i balance';
+      }
+
+      return (
+        <div className="space-y-2">
+          <div className="flex justify-between text-xs font-bold uppercase tracking-wide">
+            <span className="text-emerald-600">Motivation ({greenCount})</span>
+            <span className="text-red-500">Modstand ({redCount})</span>
+          </div>
+          <div className="h-4 bg-slate-200 rounded-full overflow-hidden flex">
+            <div className="bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-500 rounded-l-full"
+              style={{ width: `${greenPct}%` }} />
+            <div className="bg-gradient-to-r from-red-400 to-red-500 transition-all duration-500 rounded-r-full flex-1" />
+          </div>
+          <p className="text-xs text-slate-500 text-center">{label}</p>
+        </div>
+      );
+    }
+
+    // ────────────────────────────────────────────────
+    // SUMMARY VIEW
+    // ────────────────────────────────────────────────
+
+    function SummaryCard({ color, label, items }) {
+      if (!items.length) return null;
+      const borderCls = color === 'emerald' ? 'border-emerald-100' : color === 'red' ? 'border-red-100' : 'border-slate-200';
+      const labelCls = color === 'emerald' ? 'text-emerald-600' : color === 'red' ? 'text-red-600' : 'text-slate-500';
+      return (
+        <div className={`bg-white p-3 rounded-lg border ${borderCls}`}>
+          <div className={`text-xs font-bold ${labelCls} uppercase mb-1`}>{label}</div>
+          <ul className="list-disc list-inside text-sm">
+            {items.map((item, i) => <li key={i}>{item}</li>)}
+          </ul>
+        </div>
+      );
+    }
+
+    function SummaryView({ topic, negation, data, tip, redAdvice, behaviorType, onClose }) {
+      const topicColor = behaviorType === 'positiv' ? 'emerald' : behaviorType === 'negativ' ? 'red' : 'slate';
+      const negColor = behaviorType === 'positiv' ? 'red' : behaviorType === 'negativ' ? 'emerald' : 'slate';
+      const colorMap = {
+        emerald: { bg: 'bg-emerald-50', border: 'border-emerald-100', heading: 'text-emerald-800', borderB: 'border-emerald-200', tipBg: 'bg-emerald-100', tipBorder: 'border-emerald-200', tipText: 'text-emerald-900' },
+        red: { bg: 'bg-red-50', border: 'border-red-100', heading: 'text-red-800', borderB: 'border-red-200', tipBg: 'bg-red-100', tipBorder: 'border-red-200', tipText: 'text-red-900' },
+        slate: { bg: 'bg-slate-50', border: 'border-slate-200', heading: 'text-slate-700', borderB: 'border-slate-300', tipBg: 'bg-slate-100', tipBorder: 'border-slate-200', tipText: 'text-slate-800' },
+      };
+      const tc = colorMap[topicColor];
+      const nc = colorMap[negColor];
+
+      // Helper: expand a multi-line field into labelled items
+      const expand = (prefix, val) => {
+        if (!val) return [];
+        return val.split('\n').filter(l => l.trim()).map(l => `${prefix}: ${l.trim()}`);
+      };
+
+      return (
+        <div className="fixed inset-0 z-50 bg-slate-900/90 flex items-center justify-center p-4 overflow-y-auto"
+          role="dialog" aria-modal="true">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="p-6 bg-slate-100 border-b border-slate-200 flex justify-between items-center">
+              <div>
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Plan</div>
+                <h2 className="text-3xl font-bold text-slate-800">{topic || 'Aftale'}</h2>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => window.print()}
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-bold transition-colors">
+                  <Printer size={18} /> Print
+                </button>
+                <button onClick={onClose}
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold transition-colors">
+                  <XIcon size={18} /> Luk
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-8 overflow-y-auto flex-1 bg-slate-50">
+              <div className="grid md:grid-cols-2 gap-8">
+                {/* Topic box */}
+                <div className={`${tc.bg} rounded-xl border-2 ${tc.border} p-6 shadow-sm flex flex-col`}>
+                  <h3 className={`${tc.heading} font-bold text-xl mb-4 flex items-center gap-2 border-b ${tc.borderB} pb-2`}>
+                    {topic ? `Motivation for at ${topic.toLowerCase()}` : 'FORTSÆT (Motivation)'}
+                  </h3>
+                  <div className="space-y-4 flex-1">
+                    <SummaryCard color={topicColor} label="Belønning ved at gøre det"
+                      items={[
+                        ...expand('Tilføjes', data.do_reward_pos),
+                        ...expand('Fjernes', data.do_reward_neg),
+                      ]} />
+                    <SummaryCard color={topicColor} label="Straf ved at lade være"
+                      items={[
+                        ...expand('Tilføjes', data.dont_punish_pos),
+                        ...expand('Fjernes', data.dont_punish_neg),
+                      ]} />
+                  </div>
+                  {tip && (
+                    <div className={`mt-4 p-3 ${tc.tipBg} border ${tc.tipBorder} rounded-lg text-sm ${tc.tipText}`}>
+                      <span className="font-bold block mb-1">Tip:</span>{tip}
+                    </div>
+                  )}
+                </div>
+
+                {/* Negation box */}
+                <div className={`${nc.bg} rounded-xl border-2 ${nc.border} p-6 shadow-sm flex flex-col`}>
+                  <h3 className={`${nc.heading} font-bold text-xl mb-4 flex items-center gap-2 border-b ${nc.borderB} pb-2`}>
+                    {negation ? `Motivation for at ${negation.toLowerCase()}` : 'STOP (Straf)'}
+                  </h3>
+                  <div className="space-y-4 flex-1">
+                    <SummaryCard color={negColor} label="Straf ved at gøre det"
+                      items={[
+                        ...expand('Tilføjes', data.do_punish_pos),
+                        ...expand('Fjernes', data.do_punish_neg),
+                      ]} />
+                    <SummaryCard color={negColor} label="Belønning ved at lade være"
+                      items={[
+                        ...expand('Tilføjes', data.dont_reward_pos),
+                        ...expand('Fjernes', data.dont_reward_neg),
+                      ]} />
+                  </div>
+                  {redAdvice && (
+                    <div className={`mt-4 p-3 ${nc.tipBg} border ${nc.tipBorder} rounded-lg text-sm ${nc.tipText}`}>
+                      <span className="font-bold block mb-1 flex items-center gap-1">
+                        <ShieldAlert size={14} /> Strategi:
+                      </span>{redAdvice}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ────────────────────────────────────────────────
+    // EXPORT VIEW (copyable text for LLM)
+    // ────────────────────────────────────────────────
+
+    function ExportView({ text, onClose }) {
+      const textareaRef = React.useRef(null);
+      const [copied, setCopied] = React.useState(false);
+
+      const handleCopy = () => {
+        if (textareaRef.current) {
+          textareaRef.current.select();
+          navigator.clipboard.writeText(text).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          });
+        }
+      };
+
+      return (
+        <div className="fixed inset-0 z-50 bg-slate-900/90 flex items-center justify-center p-4 overflow-y-auto"
+          role="dialog" aria-modal="true">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 bg-slate-100 border-b border-slate-200 flex justify-between items-center">
+              <div>
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Eksport</div>
+                <h2 className="text-xl font-bold text-slate-800">Kopiér til LLM-analyse</h2>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={handleCopy}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition-colors ${copied
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-blue-600 hover:bg-blue-500 text-white'
+                    }`}>
+                  {copied ? <><CheckCircle2 size={18} /> Kopieret!</> : <><Save size={18} /> Kopiér alt</>}
+                </button>
+                <button onClick={onClose}
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold transition-colors">
+                  <XIcon size={18} /> Luk
+                </button>
+              </div>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1 bg-slate-50">
+              <p className="text-sm text-slate-500 mb-3">Markér og kopiér teksten herunder, og indsæt den i din foretrukne LLM (ChatGPT, Claude, Gemini m.fl.) for analyse og anbefalinger.</p>
+              <textarea ref={textareaRef} readOnly value={text}
+                className="w-full h-96 bg-white border border-slate-300 rounded-lg p-4 text-sm font-mono text-slate-800 resize-none focus:ring-2 focus:ring-blue-500 outline-none"
+                onClick={(e) => e.target.select()} />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ────────────────────────────────────────────────
+    // CHAT COMPONENTS
+    // ────────────────────────────────────────────────
+
+    function ChatMessage({ role, text }) {
+      const isUser = role === 'user';
+      return (
+        <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+          <div className={`max-w-[85%] rounded-xl px-3 py-2 text-sm leading-relaxed ${isUser
+            ? 'bg-purple-600 text-white rounded-br-sm'
+            : 'bg-white border border-slate-200 text-slate-800 rounded-bl-sm shadow-sm'
+            }`}>
+            <div className="whitespace-pre-wrap">{text}</div>
+          </div>
+        </div>
+      );
+    }
+
+    function ChatPanel({ messages, input, onInputChange, onSend, loading, error, onClose }) {
+      const messagesEndRef = useRef(null);
+      const textareaRef = useRef(null);
+
+      useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, [messages, loading]);
+
+      useEffect(() => {
+        if (textareaRef.current) {
+          textareaRef.current.style.height = 'auto';
+          textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px';
+        }
+      }, [input]);
+
+      const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          onSend(input);
+        }
+      };
+
+      return (
+        <div className="fixed top-0 right-0 bottom-0 z-40 w-full sm:w-[400px] bg-white border-l border-slate-200 shadow-2xl flex flex-col"
+          style={{ animation: 'slideInRight 0.3s ease-out' }}>
+
+          {/* Header */}
+          <div className="p-4 bg-purple-600 text-white flex justify-between items-center shrink-0">
+            <div>
+              <h3 className="text-lg font-bold">Chat med AI</h3>
+              <p className="text-purple-200 text-xs">Drøft din analyse i realtid</p>
+            </div>
+            <button onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-purple-500 transition-colors">
+              <XIcon size={18} />
+            </button>
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
+            {messages.length === 0 && (
+              <div className="text-center text-slate-400 text-sm mt-8">
+                <MessageCircle size={32} className="mx-auto mb-2 opacity-50" />
+                <p className="font-medium">Stil et spørgsmål om din analyse...</p>
+                <p className="text-xs mt-1">AI'en kender din matrice og kan give feedback.</p>
+              </div>
+            )}
+            {messages.map((msg, i) => (
+              <ChatMessage key={i} role={msg.role} text={msg.text} />
+            ))}
+            {loading && (
+              <div className="flex items-center gap-2 text-purple-500 text-sm">
+                <Loader2 size={16} className="animate-spin" />
+                <span>Tænker...</span>
+              </div>
+            )}
+            {error && (
+              <div className="text-red-600 bg-red-50 px-3 py-2 rounded-lg text-sm flex items-center gap-1">
+                <ShieldAlert size={14} /> {error}
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input */}
+          <div className="p-3 border-t border-slate-200 bg-white shrink-0">
+            <div className="flex gap-2">
+              <textarea ref={textareaRef} value={input} onChange={(e) => onInputChange(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Skriv en besked..."
+                rows={1}
+                className="flex-1 bg-slate-100 border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-purple-400 resize-none" />
+              <button onClick={() => onSend(input)} disabled={loading || !input.trim()}
+                className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-bold transition-all flex items-center gap-1 shrink-0">
+                <SendIcon size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ────────────────────────────────────────────────
+    // MAIN APP
+    // ────────────────────────────────────────────────
+
+    function MotivationsKube() {
+      const [module, setModule] = useState('analyse'); // 'analyse' | 'motiver'
+      const [topic, setTopic] = useState('');
+      const [negation, setNegation] = useState('');
+      const [data, setData] = useState(EMPTY_DATA);
+      const [tip, setTip] = useState('');
+      const [redAdvice, setRedAdvice] = useState('');
+      const [pronoun, setPronoun] = useState('han');
+      const [behaviorType, setBehaviorType] = useState('neutral');
+
+      const [showSummary, setShowSummary] = useState(false);
+      const [showExport, setShowExport] = useState(false);
+      const [showChat, setShowChat] = useState(false);
+      const [loading, setLoading] = useState(false);
+      const [statusMsg, setStatusMsg] = useState('');
+      const [errorMsg, setErrorMsg] = useState(null);
+
+      // Chat state
+      const [chatMessages, setChatMessages] = useState([]);
+      const [chatInput, setChatInput] = useState('');
+      const [chatLoading, setChatLoading] = useState(false);
+      const [chatError, setChatError] = useState(null);
+
+      const sub = PRONOUN_LABELS[pronoun].subject;
+      const pos = PRONOUN_LABELS[pronoun].possessive;
+
+      // ── Global Save/Load Bus Hooks ──
+      const stateRef = useRef({ module, topic, negation, data, tip, redAdvice, pronoun, behaviorType });
+      useEffect(() => {
+        stateRef.current = { module, topic, negation, data, tip, redAdvice, pronoun, behaviorType };
+      }, [module, topic, negation, data, tip, redAdvice, pronoun, behaviorType]);
+
+      useEffect(() => {
+        if (!window.bus) return;
+        const handleRequest = () => {
+          window.bus.publish('state-response', { app: 'Motivations-matrice', state: stateRef.current });
+        };
+        const handleLoad = (payload) => {
+          if (payload && payload.apps && payload.apps['Motivations-matrice']) {
+            const s = payload.apps['Motivations-matrice'];
+            if (s.module !== undefined) setModule(s.module);
+            if (s.topic !== undefined) setTopic(s.topic);
+            if (s.negation !== undefined) setNegation(s.negation);
+            if (s.data !== undefined) setData(s.data);
+            if (s.tip !== undefined) setTip(s.tip);
+            if (s.redAdvice !== undefined) setRedAdvice(s.redAdvice);
+            if (s.pronoun !== undefined) setPronoun(s.pronoun);
+            if (s.behaviorType !== undefined) setBehaviorType(s.behaviorType);
+          }
+        };
+        window.bus.subscribe('request-state', handleRequest);
+        window.bus.subscribe('load-state', handleLoad);
+        return () => {
+          window.bus.unsubscribe('request-state', handleRequest);
+          window.bus.unsubscribe('load-state', handleLoad);
+        };
+      }, []);
+
+      // ── AI ──
+
+      const generateWithGemini = useCallback(async () => {
+        if (!topic.trim()) {
+          setErrorMsg("Skriv et emne først");
+          return;
+        }
+        setLoading(true);
+        setStatusMsg('Sender forespørgsel...');
+        setErrorMsg(null);
+
+        const ønsket = topic.trim();
+        const uønsket = negation.trim() || '(det modsatte)';
+
+        const prompt = module === 'motiver'
+          ? `Opgave: Hjælp med at motivere en person til at udføre den ønskede adfærd "${ønsket}" og stoppe den uønskede adfærd "${uønsket}".
+          Brug en 2x2 motivationsmatrice (Gevinst/Straf × Gøre det/Lade være).
+          Sprog: Dansk. Format: Kun JSON. Svar uddybende med 1-3 sætninger per felt.
+
+          Matricens logik:
+          - "Gøre det + Gevinst" handler om den ØNSKEDE adfærd ("${ønsket}"):
+            do_reward_pos = Hvad får du ud af at ${ønsket.toLowerCase()}? (direkte belønning/gevinst)
+            do_reward_neg = Hvad slipper du for ved at ${ønsket.toLowerCase()}? (ubehag du undgår)
+          - "Gøre det + Straf" handler om den UØNSKEDE adfærd ("${uønsket}"):
+            do_punish_pos = Hvad er straffen/udgiften ved at ${uønsket.toLowerCase()}? (negative konsekvenser)
+            do_punish_neg = Hvilke fornøjelser går du glip af, hvis du ${uønsket.toLowerCase()}? (tabte muligheder)
+          - "Lade være + Gevinst" handler om at STOPPE den uønskede adfærd ("${uønsket}"):
+            dont_reward_pos = Hvad ville du opnå, hvis du lod være med at ${uønsket.toLowerCase()}? (gevinst ved at stoppe)
+            dont_reward_neg = Hvad slipper du for ved at lade være med at ${uønsket.toLowerCase()}? (ubehag du undgår)
+          - "Lade være + Straf" handler om at UNDLADE den ønskede adfærd ("${ønsket}"):
+            dont_punish_pos = Hvad er straffen hvis du lader være med at ${ønsket.toLowerCase()}? (konsekvens af passivitet)
+            dont_punish_neg = Hvilke fornøjelser går du glip af ved at lade være med at ${ønsket.toLowerCase()}? (tabte glæder)
+
+          JSON Struktur:
+          {
+            "do_reward_pos": "1-3 sætninger",
+            "do_reward_neg": "1-3 sætninger",
+            "do_punish_pos": "1-3 sætninger",
+            "do_punish_neg": "1-3 sætninger",
+            "dont_reward_pos": "1-3 sætninger",
+            "dont_reward_neg": "1-3 sætninger",
+            "dont_punish_pos": "1-3 sætninger",
+            "dont_punish_neg": "1-3 sætninger",
+            "tip": "Et konkret råd til at øge motivationen for at ${ønsket.toLowerCase()}",
+            "red_advice": "Et konkret råd til at mindske fristelsen til at ${uønsket.toLowerCase()}"
+          }`
+          : `Opgave: Analyser handlingen "${ønsket}" (negation: "${uønsket}") ud fra en operant betingnings-motivationsmatrice.
+          Sprog: Dansk. Format: Kun JSON. Svar kort og præcist per felt.
+          JSON Struktur:
+          {
+            "do_reward_pos": "Kort tekst (Gulerod – gevinst ved at gøre det)",
+            "do_reward_neg": "Kort tekst (Slipper for – ubehag man undgår ved at gøre det)",
+            "do_punish_pos": "Kort tekst (Prisen – straf for at gøre det)",
+            "do_punish_neg": "Kort tekst (Mister – gevinst man mister ved at gøre det)",
+            "dont_reward_pos": "Kort tekst (Fristelse – gevinst ved at lade være)",
+            "dont_reward_neg": "Kort tekst (Undgår – ubehag man undgår ved at lade være)",
+            "dont_punish_pos": "Kort tekst (Konsekvens – straf for at lade være)",
+            "dont_punish_neg": "Kort tekst (Risiko – gevinst man mister ved at lade være)",
+            "tip": "Et pædagogisk råd til at øge motivationen",
+            "red_advice": "Konkret råd til at mindske modstanden/fristelsen"
+          }`;
+
+        try {
+          const apiKey = 'AIzaSyDbOFUp6EtE2f4wNXtoEm7eyeLOrdYQnHw';
+          const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { responseMimeType: 'application/json' },
+              }),
+            }
+          );
+          if (!response.ok) throw new Error(`Server svarede med kode: ${response.status}`);
+
+          setStatusMsg('Behandler svar...');
+          const result = await response.json();
+          const rawText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (!rawText) throw new Error('Modtog tomt svar fra AI');
+
+          const startIdx = rawText.indexOf('{');
+          const endIdx = rawText.lastIndexOf('}');
+          if (startIdx === -1 || endIdx === -1) throw new Error("Kunne ikke læse AI'ens svar");
+
+          const parsed = JSON.parse(rawText.substring(startIdx, endIdx + 1));
+          setData({
+            do_reward_pos: parsed.do_reward_pos ?? '',
+            do_reward_neg: parsed.do_reward_neg ?? '',
+            do_punish_pos: parsed.do_punish_pos ?? '',
+            do_punish_neg: parsed.do_punish_neg ?? '',
+            dont_reward_pos: parsed.dont_reward_pos ?? '',
+            dont_reward_neg: parsed.dont_reward_neg ?? '',
+            dont_punish_pos: parsed.dont_punish_pos ?? '',
+            dont_punish_neg: parsed.dont_punish_neg ?? '',
+          });
+          setTip(parsed.tip ?? '');
+          setRedAdvice(parsed.red_advice ?? '');
+          setStatusMsg('Færdig!');
+          setTimeout(() => setStatusMsg(''), 3000);
+        } catch (err) {
+          setErrorMsg(`Fejl: ${err.message || 'Ukendt fejl'}. Tjek din internetforbindelse.`);
+          setStatusMsg('');
+        } finally {
+          setLoading(false);
+        }
+      }, [topic, negation, module]);
+
+      // ── Chat ──
+
+      const buildChatContext = useCallback(() => {
+        const lines = [
+          'Du er en hjælpsom assistent der rådgiver om motivation og adfærd baseret på operant betingning.',
+          'Brugeren arbejder med en motivationsmatrice. Her er den aktuelle tilstand:',
+          '',
+          `Modul: ${module === 'motiver' ? 'Motivér' : 'Analysér'}`,
+          `Ønsket adfærd: ${topic || '(ikke angivet)'}`,
+          `Uønsket adfærd: ${negation || '(ikke angivet)'}`,
+          `Adfærdstype: ${behaviorType}`,
+          '',
+          'Matricedata:',
+          `  Gøre det + Gevinst (positiv): ${data.do_reward_pos || '(tom)'}`,
+          `  Gøre det + Gevinst (negativ): ${data.do_reward_neg || '(tom)'}`,
+          `  Gøre det + Straf (positiv): ${data.do_punish_pos || '(tom)'}`,
+          `  Gøre det + Straf (negativ): ${data.do_punish_neg || '(tom)'}`,
+          `  Lade være + Gevinst (positiv): ${data.dont_reward_pos || '(tom)'}`,
+          `  Lade være + Gevinst (negativ): ${data.dont_reward_neg || '(tom)'}`,
+          `  Lade være + Straf (positiv): ${data.dont_punish_pos || '(tom)'}`,
+          `  Lade være + Straf (negativ): ${data.dont_punish_neg || '(tom)'}`,
+        ];
+        if (tip) lines.push(`Motivations-tip: ${tip}`);
+        if (redAdvice) lines.push(`Modstandsstrategi: ${redAdvice}`);
+        lines.push('', 'Svar på dansk. Giv konkrete, pædagogiske råd. Hold svarene korte og direkte.');
+        return lines.join('\n');
+      }, [module, topic, negation, behaviorType, data, tip, redAdvice]);
+
+      const sendChatMessage = useCallback(async (userText) => {
+        if (!userText.trim()) return;
+
+        const userMsg = { role: 'user', text: userText.trim() };
+        setChatMessages(prev => [...prev, userMsg]);
+        setChatInput('');
+        setChatLoading(true);
+        setChatError(null);
+
+        try {
+          const apiKey = 'AIzaSyDbOFUp6EtE2f4wNXtoEm7eyeLOrdYQnHw';
+          const contextText = buildChatContext();
+
+          // Build multi-turn contents array
+          const contents = [
+            { role: 'user', parts: [{ text: contextText }] },
+            { role: 'model', parts: [{ text: 'Forstået. Jeg har overblik over motivationsmatricen. Hvad vil du gerne drøfte?' }] },
+          ];
+
+          // Add previous messages (limit to last 20 for token safety)
+          const recentMessages = chatMessages.slice(-20);
+          for (const msg of recentMessages) {
+            contents.push({ role: msg.role === 'model' ? 'model' : 'user', parts: [{ text: msg.text }] });
+          }
+
+          // Add the new user message
+          contents.push({ role: 'user', parts: [{ text: userText.trim() }] });
+
+          const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ contents }),
+            }
+          );
+
+          if (!response.ok) throw new Error(`Serverfejl: ${response.status}`);
+
+          const result = await response.json();
+          const aiText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (!aiText) throw new Error('Tomt svar fra AI');
+
+          setChatMessages(prev => [...prev, { role: 'model', text: aiText }]);
+        } catch (err) {
+          setChatError(`Fejl: ${err.message}`);
+        } finally {
+          setChatLoading(false);
+        }
+      }, [chatMessages, buildChatContext]);
+
+      // ── Handlers ──
+
+      const handleChange = useCallback((key, value) => {
+        setData(prev => ({ ...prev, [key]: value }));
+      }, []);
+
+      const loadScenario = useCallback((key) => {
+        const s = SCENARIOS[key];
+        if (!s) return;
+        setTopic(s.title); setData(s.data); setTip(s.tip); setRedAdvice(s.red_advice);
+        setErrorMsg(null);
+      }, []);
+
+      const reset = useCallback(() => {
+        setTopic(''); setNegation(''); setData(EMPTY_DATA); setTip(''); setRedAdvice('');
+        setErrorMsg(null); setStatusMsg(''); setShowSummary(false);
+      }, []);
+
+      // ── Eksport / Import ──
+
+      const buildExportText = useCallback(() => {
+        const s = PRONOUN_LABELS[pronoun].subject;
+        const lines = [];
+        lines.push(`=== MOTIVATIONSANALYSE ===`);
+        lines.push(`Emne: ${topic || '(ikke angivet)'}`);
+        lines.push(`Barn (pronomen): ${s}`);
+        lines.push(`Dato: ${new Date().toLocaleDateString('da-DK')}`);
+        lines.push('');
+        lines.push(`--- NÅR ${s.toUpperCase()} GØR DET (${topic || 'handlingen'}) ---`);
+        lines.push('');
+        lines.push('BELØNNING (grøn — motiverer):');
+        if (data.do_reward_pos) lines.push(`  • Noget godt tilføjes: ${data.do_reward_pos}`);
+        if (data.do_reward_neg) lines.push(`  • Noget ubehageligt fjernes: ${data.do_reward_neg}`);
+        lines.push('');
+        lines.push('STRAF (rød — modarbejder):');
+        if (data.do_punish_pos) lines.push(`  • Noget ubehageligt tilføjes: ${data.do_punish_pos}`);
+        if (data.do_punish_neg) lines.push(`  • Noget godt fjernes: ${data.do_punish_neg}`);
+        lines.push('');
+        lines.push(`--- NÅR ${s.toUpperCase()} LADER VÆRE ---`);
+        lines.push('');
+        lines.push('BELØNNING (rød — modarbejder):');
+        if (data.dont_reward_pos) lines.push(`  • Noget godt tilføjes: ${data.dont_reward_pos}`);
+        if (data.dont_reward_neg) lines.push(`  • Noget ubehageligt fjernes: ${data.dont_reward_neg}`);
+        lines.push('');
+        lines.push('STRAF (grøn — motiverer):');
+        if (data.dont_punish_pos) lines.push(`  • Noget ubehageligt tilføjes: ${data.dont_punish_pos}`);
+        if (data.dont_punish_neg) lines.push(`  • Noget godt fjernes: ${data.dont_punish_neg}`);
+        if (tip || redAdvice) {
+          lines.push('');
+          lines.push('--- PÆDAGOGISKE TIPS ---');
+          if (tip) lines.push(`Øg motivationen: ${tip}`);
+          if (redAdvice) lines.push(`Mindsk modstanden: ${redAdvice}`);
+        }
+        lines.push('');
+        lines.push('=== SLUT PÅ ANALYSE ===');
+        lines.push('');
+        lines.push('Analysér venligst denne motivationsmatrice baseret på operant betingning (belønning/straf × positiv/negativ). Giv konkrete, pædagogiske anbefalinger til forældre/pædagoger om, hvordan de bedst kan motivere barnet.');
+        return lines.join('\n');
+      }, [topic, data, tip, redAdvice, pronoun]);
+
+      const exportData = useCallback(() => {
+        setShowExport(true);
+      }, []);
+
+      const fileInputRef = useRef(null);
+
+      const importData = useCallback((e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          try {
+            const parsed = JSON.parse(evt.target.result);
+            if (parsed.data) setData(parsed.data);
+            if (parsed.topic) setTopic(parsed.topic);
+            if (parsed.tip) setTip(parsed.tip);
+            if (parsed.redAdvice) setRedAdvice(parsed.redAdvice);
+            if (parsed.pronoun) setPronoun(parsed.pronoun);
+            setErrorMsg(null);
+            setStatusMsg('Importeret!');
+            setTimeout(() => setStatusMsg(''), 3000);
+          } catch {
+            setErrorMsg('Kunne ikke læse filen. Er det en gyldig JSON-fil?');
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+      }, []);
+
+      // ── RENDER ──
+
+      return (
+        <div className="min-h-screen bg-slate-100 text-slate-800 font-sans flex flex-col">
+          {showSummary && (
+            <SummaryView topic={topic} negation={negation} data={data} tip={tip} redAdvice={redAdvice}
+              behaviorType={behaviorType} onClose={() => setShowSummary(false)} />
+          )}
+          {showExport && (
+            <ExportView text={buildExportText()} onClose={() => setShowExport(false)} />
+          )}
+          {showChat && (
+            <ChatPanel
+              messages={chatMessages} input={chatInput}
+              onInputChange={setChatInput} onSend={sendChatMessage}
+              loading={chatLoading} error={chatError}
+              onClose={() => setShowChat(false)} />
+          )}
+
+          {/* MODULE TABS */}
+          <div className="bg-white border-b border-slate-200 z-30">
+            <div className="max-w-5xl mx-auto flex">
+              <button onClick={() => setModule('analyse')}
+                className={`flex-1 py-3 text-sm font-bold uppercase tracking-wide text-center transition-colors border-b-2 ${module === 'analyse'
+                  ? 'border-blue-600 text-blue-600 bg-blue-50/50'
+                  : 'border-transparent text-slate-400 hover:text-slate-600'
+                  }`}>
+                Analysér
+              </button>
+              <button onClick={() => setModule('motiver')}
+                className={`flex-1 py-3 text-sm font-bold uppercase tracking-wide text-center transition-colors border-b-2 ${module === 'motiver'
+                  ? 'border-emerald-600 text-emerald-600 bg-emerald-50/50'
+                  : 'border-transparent text-slate-400 hover:text-slate-600'
+                  }`}>
+                Motivér
+              </button>
+            </div>
+          </div>
+
+          {/* HEADER */}
+          <header className="bg-white border-b border-slate-200 shadow-sm z-20">
+            <div className="p-4 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center max-w-5xl mx-auto w-full">
+              <div className="flex-1 w-full md:w-auto">
+                <div className="flex gap-3 mb-1">
+                  <div className="flex-1">
+                    <label htmlFor="topic-input"
+                      className="text-[10px] uppercase font-bold text-blue-600 tracking-wider mb-1 block">
+                      {module === 'motiver' ? 'Ønsket adfærd' : 'Adfærd (gøre det)'}
+                    </label>
+                    <input id="topic-input" type="text" value={topic}
+                      onChange={(e) => setTopic(e.target.value)}
+                      placeholder={module === 'motiver' ? "F.eks. 'Lave lektier'..." : "F.eks. 'Beholde arbejde'..."}
+                      className="bg-white border border-slate-300 text-slate-800 text-lg font-bold rounded-lg px-4 py-2 w-full focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                  <div className="flex-1">
+                    <label htmlFor="negation-input"
+                      className="text-[10px] uppercase font-bold text-red-500 tracking-wider mb-1 block">
+                      {module === 'motiver' ? 'Uønsket adfærd' : 'Negation (lade være)'}
+                    </label>
+                    <input id="negation-input" type="text" value={negation}
+                      onChange={(e) => setNegation(e.target.value)}
+                      placeholder={module === 'motiver' ? "F.eks. 'Prokrastinere'..." : "F.eks. 'Sige op'..."}
+                      className="bg-white border border-slate-300 text-slate-800 text-lg font-bold rounded-lg px-4 py-2 w-full focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                  <div className="flex items-end">
+                    <button onClick={generateWithGemini} disabled={loading}
+                      className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all shadow-lg shadow-purple-200"
+                      aria-label="Generer med AI">
+                      {loading ? <Loader2 size={20} className="animate-spin" /> : <Wand2 size={20} />}
+                      <span className="hidden md:inline">Tryllestav</span>
+                    </button>
+                  </div>
+                </div>
+                <div className="h-6 mt-1 text-xs font-medium flex items-center gap-2">
+                  {statusMsg && <span className="text-purple-600 flex items-center gap-1 animate-pulse"><Activity size={12} /> {statusMsg}</span>}
+                  {errorMsg && <span className="text-red-600 bg-red-50 px-2 py-0.5 rounded flex items-center gap-1" role="alert"><ShieldAlert size={12} /> {errorMsg}</span>}
+                </div>
+              </div>
+
+              <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 items-center flex-wrap">
+                <select value={behaviorType} onChange={(e) => setBehaviorType(e.target.value)}
+                  className="px-2 py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-300 outline-none"
+                  aria-label="Adfærdstype">
+                  <option value="neutral">Neutral adfærd</option>
+                  <option value="positiv">Positiv adfærd</option>
+                  <option value="negativ">Negativ adfærd</option>
+                </select>
+                {module === 'analyse' && (
+                  <select value={pronoun} onChange={(e) => setPronoun(e.target.value)}
+                    className="px-2 py-2 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-300 outline-none"
+                    aria-label="Vælg pronomen">
+                    <option value="han">Han</option>
+                    <option value="hun">Hun</option>
+                    <option value="barnet">Barnet</option>
+                  </select>
+                )}
+
+                <button onClick={exportData}
+                  className="whitespace-nowrap px-3 py-2 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-300 transition-colors flex items-center gap-2">
+                  <Download size={14} /> Eksportér
+                </button>
+                <button onClick={() => fileInputRef.current?.click()}
+                  className="whitespace-nowrap px-3 py-2 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-300 transition-colors flex items-center gap-2">
+                  <Upload size={14} /> Importér
+                </button>
+                <input ref={fileInputRef} type="file" accept=".json" onChange={importData} className="hidden" />
+                <button onClick={reset}
+                  className="whitespace-nowrap px-3 py-2 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-300 transition-colors flex items-center gap-2">
+                  <RotateCcw size={14} /> Nulstil
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* MAIN: 2x2 MATRICE */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-5xl mx-auto p-6 space-y-6">
+
+              {/* Tip & strategi banners */}
+              {(tip || redAdvice) && (
+                <div className="grid md:grid-cols-2 gap-4">
+                  {tip && (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 fade-in">
+                      <div className="flex items-start gap-3">
+                        <Lightbulb size={18} className="text-emerald-600 shrink-0 mt-0.5" />
+                        <div>
+                          <h4 className="font-bold text-emerald-700 text-xs uppercase tracking-wide mb-1">Tip: Øg motivationen</h4>
+                          <p className="text-sm text-slate-700 leading-relaxed">{tip}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {redAdvice && (
+                    <div className="bg-red-50 border border-red-200 rounded-xl p-4 fade-in">
+                      <div className="flex items-start gap-3">
+                        <ShieldAlert size={18} className="text-red-500 shrink-0 mt-0.5" />
+                        <div>
+                          <h4 className="font-bold text-red-600 text-xs uppercase tracking-wide mb-1">Tip: Mindsk modstanden</h4>
+                          <p className="text-sm text-slate-700 leading-relaxed">{redAdvice}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 2x2 MATRIX */}
+              {(() => {
+                const fortsaetColor = behaviorType === 'positiv' ? 'text-emerald-600' : behaviorType === 'negativ' ? 'text-red-500' : 'text-slate-800';
+                const stopColor = behaviorType === 'positiv' ? 'text-red-500' : behaviorType === 'negativ' ? 'text-emerald-600' : 'text-slate-800';
+                const doLabel = 'Gøre det';
+                const dontLabel = 'Lade være';
+
+                // Shorthand for inserting topic/negation into Motivér labels
+                const ø = topic ? topic.toLowerCase() : 'den ønskede adfærd';
+                const m = negation ? negation.toLowerCase() : 'den uønskede adfærd';
+
+                // Labels per module
+                const labels = module === 'motiver' ? {
+                  nv_pos: `Hvad får du ud af at ${ø}?`,
+                  nv_neg: `Hvad slipper du for ved at ${ø}?`,
+                  no_pos: `Hvad er straffen/udgiften ved at ${m}?`,
+                  no_neg: `Hvilke fornøjelser går du glip af, hvis du ${m}?`,
+                  sv_pos: `Hvad ville du opnå, hvis du lod være med at ${m}?`,
+                  sv_neg: `Hvad slipper du for ved at lade være med at ${m}?`,
+                  so_pos: `Hvad er straffen/udgiften hvis du lader være med at ${ø}?`,
+                  so_neg: `Hvilke fornøjelser går du glip af ved at lade være med at ${ø}?`,
+                } : {
+                  nv_pos: `Hvad er ${pos} gevinst ved at gøre det?`,
+                  nv_neg: `Hvilket ubehag undgår ${sub} ved at gøre det?`,
+                  no_pos: `Hvad er ${pos} straf for at gøre det?`,
+                  no_neg: `Hvilken gevinst mister ${sub} ved at gøre det?`,
+                  sv_pos: `Hvad er ${pos} gevinst ved at lade være?`,
+                  sv_neg: `Hvilket ubehag undgår ${sub} ved at lade være?`,
+                  so_pos: `Hvad er ${pos} straf for at lade være med at gøre det?`,
+                  so_neg: `Hvilken gevinst mister ${sub} ved at lade være med at gøre det?`,
+                };
+
+                return (
+                  <div className="relative">
+                    {/* Column headers */}
+                    <div className="grid grid-cols-[140px_1fr_1fr] gap-4 mb-3">
+                      <div></div>
+                      <div className="text-center">
+                        <span className="text-sm font-bold uppercase tracking-wide text-blue-600">
+                          Gevinst
+                        </span>
+                      </div>
+                      <div className="text-center">
+                        <span className="text-sm font-bold uppercase tracking-wide text-slate-500">
+                          Straf
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Row 1 */}
+                    <div className="grid grid-cols-[140px_1fr_1fr] gap-4 mb-4">
+                      <div className="flex items-center justify-end pr-2">
+                        <div className="text-right">
+                          <div className="text-sm font-bold uppercase tracking-wide text-slate-700">{doLabel}</div>
+                        </div>
+                      </div>
+                      {/* NV — FORTSÆT */}
+                      <div className="relative">
+                        <MatrixCell color="white"
+                          posKey="do_reward_pos" negKey="do_reward_neg"
+                          posLabel={labels.nv_pos} negLabel={labels.nv_neg}
+                          data={data} onChange={handleChange} />
+                        <span className={`absolute bottom-2 right-3 text-[10px] font-bold uppercase tracking-wider ${fortsaetColor} pointer-events-none opacity-70`}>FORTSÆT</span>
+                      </div>
+                      {/* NØ — STOP */}
+                      <div className="relative">
+                        <MatrixCell color="gray"
+                          posKey="do_punish_pos" negKey="do_punish_neg"
+                          posLabel={labels.no_pos} negLabel={labels.no_neg}
+                          data={data} onChange={handleChange} />
+                        <span className={`absolute bottom-2 left-3 text-[10px] font-bold uppercase tracking-wider ${stopColor} pointer-events-none opacity-70`}>STOP</span>
+                      </div>
+                    </div>
+
+                    {/* Row 2 */}
+                    <div className="grid grid-cols-[140px_1fr_1fr] gap-4">
+                      <div className="flex items-center justify-end pr-2">
+                        <div className="text-right">
+                          <div className="text-sm font-bold uppercase tracking-wide text-slate-700">{dontLabel}</div>
+                        </div>
+                      </div>
+                      {/* SV — STOP */}
+                      <div className="relative">
+                        <MatrixCell color="gray"
+                          posKey="dont_reward_pos" negKey="dont_reward_neg"
+                          posLabel={labels.sv_pos} negLabel={labels.sv_neg}
+                          data={data} onChange={handleChange} />
+                        <span className={`absolute top-2 right-3 text-[10px] font-bold uppercase tracking-wider ${stopColor} pointer-events-none opacity-70`}>STOP</span>
+                      </div>
+                      {/* SØ — FORTSÆT */}
+                      <div className="relative">
+                        <MatrixCell color="white"
+                          posKey="dont_punish_pos" negKey="dont_punish_neg"
+                          posLabel={labels.so_pos} negLabel={labels.so_neg}
+                          data={data} onChange={handleChange} />
+                        <span className={`absolute top-2 left-3 text-[10px] font-bold uppercase tracking-wider ${fortsaetColor} pointer-events-none opacity-70`}>FORTSÆT</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+
+              {/* GEM KNAP */}
+              <button onClick={() => setShowSummary(true)}
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-3 px-6 rounded-xl shadow-md transform transition-all active:scale-95">
+                <Save size={20} /> Gem & Se Plan
+              </button>
+
+              {/* MOTIVATION SUMMARY CARDS */}
+              {(() => {
+                const splitLines = (v) => v ? v.split('\n').filter(l => l.trim()).map(l => l.trim()) : [];
+                const fortsaetPos = [...splitLines(data.do_reward_pos), ...splitLines(data.dont_punish_neg)];
+                const fortsaetNeg = [...splitLines(data.do_reward_neg), ...splitLines(data.dont_punish_pos)];
+                const stopPos = [...splitLines(data.do_punish_pos), ...splitLines(data.dont_reward_neg)];
+                const stopNeg = [...splitLines(data.do_punish_neg), ...splitLines(data.dont_reward_pos)];
+                const hasFortsaet = fortsaetPos.length > 0 || fortsaetNeg.length > 0;
+                const hasStop = stopPos.length > 0 || stopNeg.length > 0;
+                if (!hasFortsaet && !hasStop) return null;
+                return (
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {(() => {
+                      const tCol = behaviorType === 'positiv' ? 'emerald' : behaviorType === 'negativ' ? 'red' : 'slate';
+                      const nCol = behaviorType === 'positiv' ? 'red' : behaviorType === 'negativ' ? 'emerald' : 'slate';
+                      const cls = (c) => ({
+                        bg: c === 'emerald' ? 'bg-emerald-50' : c === 'red' ? 'bg-red-50' : 'bg-slate-50',
+                        border: c === 'emerald' ? 'border-emerald-200' : c === 'red' ? 'border-red-200' : 'border-slate-200',
+                        heading: c === 'emerald' ? 'text-emerald-800' : c === 'red' ? 'text-red-800' : 'text-slate-700',
+                        label: c === 'emerald' ? 'text-emerald-600' : c === 'red' ? 'text-red-600' : 'text-slate-500',
+                      });
+                      const tc = cls(tCol);
+                      const nc = cls(nCol);
+                      return <>
+                        {/* FORTSÆT card */}
+                        <div className={`${tc.bg} border-2 ${tc.border} rounded-xl p-5 shadow-sm`}>
+                          <h4 className={`${tc.heading} font-bold text-sm uppercase tracking-wide mb-3 flex items-center gap-2 border-b ${tc.border} pb-2`}>
+                            <CheckCircle2 size={18} /> {topic || 'Fortsæt'} — Motivation
+                          </h4>
+                          {fortsaetPos.length > 0 && (
+                            <div className="mb-3">
+                              <div className={`text-[10px] font-bold ${tc.label} uppercase tracking-wide mb-1`}>Positiv belønning (noget godt tilføjes)</div>
+                              <ul className="list-disc list-inside text-sm text-slate-700 space-y-0.5">
+                                {fortsaetPos.map((item, i) => <li key={i}>{item}</li>)}
+                              </ul>
+                            </div>
+                          )}
+                          {fortsaetNeg.length > 0 && (
+                            <div>
+                              <div className={`text-[10px] font-bold ${tc.label} uppercase tracking-wide mb-1`}>Negativ belønning (noget ubehageligt fjernes)</div>
+                              <ul className="list-disc list-inside text-sm text-slate-700 space-y-0.5">
+                                {fortsaetNeg.map((item, i) => <li key={i}>{item}</li>)}
+                              </ul>
+                            </div>
+                          )}
+                          {!hasFortsaet && <p className="text-xs text-slate-400 italic">Ingen felter udfyldt endnu</p>}
+                        </div>
+
+                        {/* STOP card */}
+                        <div className={`${nc.bg} border-2 ${nc.border} rounded-xl p-5 shadow-sm`}>
+                          <h4 className={`${nc.heading} font-bold text-sm uppercase tracking-wide mb-3 flex items-center gap-2 border-b ${nc.border} pb-2`}>
+                            <XCircle size={18} /> {negation || 'Stop'} — Modstand
+                          </h4>
+                          {stopPos.length > 0 && (
+                            <div className="mb-3">
+                              <div className={`text-[10px] font-bold ${nc.label} uppercase tracking-wide mb-1`}>Positiv straf (noget ubehageligt tilføjes)</div>
+                              <ul className="list-disc list-inside text-sm text-slate-700 space-y-0.5">
+                                {stopPos.map((item, i) => <li key={i}>{item}</li>)}
+                              </ul>
+                            </div>
+                          )}
+                          {stopNeg.length > 0 && (
+                            <div>
+                              <div className={`text-[10px] font-bold ${nc.label} uppercase tracking-wide mb-1`}>Negativ straf (noget godt fjernes)</div>
+                              <ul className="list-disc list-inside text-sm text-slate-700 space-y-0.5">
+                                {stopNeg.map((item, i) => <li key={i}>{item}</li>)}
+                              </ul>
+                            </div>
+                          )}
+                          {!hasStop && <p className="text-xs text-slate-400 italic">Ingen felter udfyldt endnu</p>}
+                        </div>
+                      </>;
+                    })()}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+
+          {/* Chat FAB */}
+          {!showChat && (
+            <button onClick={() => setShowChat(true)}
+              className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-purple-600 hover:bg-purple-500 text-white rounded-full shadow-lg shadow-purple-200 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+              aria-label="Åbn chat">
+              <MessageCircle size={24} />
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    // ── Mount ──
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(React.StrictMode, null, React.createElement(MotivationsKube)));
+  </script>
+  <!-- AI Suite Assistant -->
+  <script src="../SMFI_Suite/bus.js?v=3"></script>
+  <script src="../SMFI_Suite/google-api.js?v=3"></script>
+  <script src="../SMFI_Suite/ai-assistant.js?v=5"></script>
+
+  <!-- Theme Listener -->
+  <script>
+    function applyGlobalTheme(theme) {
+      if (theme === 'light') { document.body.classList.add('theme-light'); }
+      else { document.body.classList.remove('theme-light'); }
+    }
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'THEME_CHANGE') { applyGlobalTheme(event.data.theme); }
+    });
+    const savedGlobalTheme = localStorage.getItem('smfi-theme');
+    if (savedGlobalTheme) { applyGlobalTheme(savedGlobalTheme); }
+  </script>
+</body>
+
+</html>

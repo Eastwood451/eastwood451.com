@@ -1,0 +1,1916 @@
+<!DOCTYPE html>
+<html lang="da">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Propositions-tester</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0f0f1a;
+      --text: #e0e0e0;
+      --text-muted: #888;
+      --input-bg: #1a1a2e;
+      --input-border: #2a2a4a;
+      --input-text: #fff;
+      --placeholder: #4a4a6a;
+      --btn-info-bg: #16162a;
+      --btn-info-text: #b0b8c8;
+      --btn-info-border: #2a2a4a;
+      --btn-info-hover: #1a1a2e;
+      --spinner-track: #2a2a4a;
+      --cell-bg: #16162a;
+      --cell-border: #2a2a4a;
+      --cell-hover-border: #4a4a6a;
+      --cell-text: #c8ccd4;
+      --modal-bg: #1a1a2e;
+      --modal-border: #2a2a4a;
+      --modal-text: #b0b8c8;
+      --modal-h2: #a5b4fc;
+      --modal-h3: #6ee7b7;
+      --modal-code-bg: #0f0f1a;
+      --modal-code-text: #f9a8d4;
+      --modal-close: #666;
+      --modal-close-hover: #fff;
+      --overlay-bg: rgba(0, 0, 0, .7);
+      --tag-bg: rgba(99, 102, 241, .15);
+      --tag-text: #a5b4fc;
+      --tag-border: rgba(99, 102, 241, .3);
+    }
+
+    body.theme-light {
+      --bg: #f5f5f5;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --input-bg: #fff;
+      --input-border: #cbd5e1;
+      --input-text: #0f172a;
+      --placeholder: #94a3b8;
+      --btn-info-bg: #e2e8f0;
+      --btn-info-text: #475569;
+      --btn-info-border: #cbd5e1;
+      --btn-info-hover: #cbd5e1;
+      --spinner-track: #d1d5db;
+      --cell-bg: #fff;
+      --cell-border: #e2e8f0;
+      --cell-hover-border: #94a3b8;
+      --cell-text: #334155;
+      --modal-bg: #fff;
+      --modal-border: #e2e8f0;
+      --modal-text: #475569;
+      --modal-h2: #2563eb;
+      --modal-h3: #059669;
+      --modal-code-bg: #f1f5f9;
+      --modal-code-text: #be185d;
+      --modal-close: #94a3b8;
+      --modal-close-hover: #0f172a;
+      --overlay-bg: rgba(0, 0, 0, .4);
+      --tag-bg: rgba(99, 102, 241, .1);
+      --tag-text: #4f46e5;
+      --tag-border: rgba(99, 102, 241, .25);
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background .3s, color .3s;
+    }
+
+    header {
+      text-align: center;
+      padding: 1.5rem 1rem .5rem;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      background: linear-gradient(135deg, #6ee7b7, #3b82f6);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: .3rem;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: .95rem;
+    }
+
+    /* ---- Proposition input ---- */
+    .prop-bar {
+      max-width: 900px;
+      margin: 1rem auto .5rem;
+      padding: 0 1rem;
+      display: flex;
+      gap: .5rem;
+      align-items: center;
+    }
+
+    .prop-bar input {
+      flex: 1;
+      padding: .75rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--input-text);
+      font-size: 1.05rem;
+      font-weight: 600;
+      outline: none;
+      transition: border-color .2s, background .3s;
+    }
+
+    .prop-bar input:focus {
+      border-color: #3b82f6;
+    }
+
+    .prop-bar input::placeholder {
+      color: var(--placeholder);
+      font-weight: 400;
+    }
+
+    .btn {
+      padding: .65rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .1s, opacity .2s;
+      white-space: nowrap;
+    }
+
+    .btn:active {
+      transform: scale(.96);
+    }
+
+    .btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      color: #fff;
+    }
+
+    .btn-examples {
+      background: linear-gradient(135deg, #8b5cf6, #a855f7);
+      color: #fff;
+    }
+
+    .btn-info {
+      background: var(--btn-info-bg);
+      color: var(--btn-info-text);
+      border: 1px solid var(--btn-info-border);
+      font-size: .8rem;
+      padding: .5rem .8rem;
+    }
+
+    .btn-info:hover {
+      background: var(--btn-info-hover);
+      color: var(--text);
+    }
+
+    .controls-row {
+      max-width: 900px;
+      margin: 0 auto .8rem;
+      padding: 0 1rem;
+      display: flex;
+      justify-content: flex-end;
+      gap: .5rem;
+    }
+
+    /* ---- Spinner ---- */
+    .spinner-wrap {
+      display: none;
+      text-align: center;
+      padding: 1.5rem;
+    }
+
+    .spinner-wrap.active {
+      display: block;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid var(--spinner-track);
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      margin: 0 auto .8rem;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .error-msg {
+      text-align: center;
+      color: #f87171;
+      padding: .5rem;
+      display: none;
+    }
+
+    .error-msg.active {
+      display: block;
+    }
+
+    /* ---- Matrix ---- */
+    .matrix-wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1rem 3rem;
+    }
+
+    .matrix-header {
+      display: grid;
+      grid-template-columns: 100px 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .matrix-header div {
+      text-align: center;
+      font-weight: 700;
+      font-size: .95rem;
+      padding: .4rem;
+      border-radius: 8px;
+    }
+
+    .col-true {
+      background: #064e3b;
+      color: #6ee7b7;
+    }
+
+    .col-false {
+      background: #4c0519;
+      color: #fda4af;
+    }
+
+    .col-evidence {
+      background: #1e3a5f;
+      color: #7dd3fc;
+    }
+
+    .col-counter {
+      background: #422006;
+      color: #fdba74;
+    }
+
+    .row-true {
+      background: #064e3b;
+      color: #6ee7b7;
+    }
+
+    .row-false {
+      background: #4c0519;
+      color: #fda4af;
+    }
+
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: 100px 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .row-label {
+      writing-mode: vertical-lr;
+      transform: rotate(180deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: .95rem;
+      border-radius: 8px;
+      padding: .4rem;
+    }
+
+    .row-evidence {
+      background: #1e3a5f;
+      color: #7dd3fc;
+    }
+
+    .row-counter {
+      background: #422006;
+      color: #fdba74;
+    }
+
+    .cell {
+      background: var(--cell-bg);
+      border: 1px solid var(--cell-border);
+      border-radius: 10px;
+      padding: 1rem;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      transition: border-color .2s, background .3s;
+    }
+
+    .cell:hover {
+      border-color: var(--cell-hover-border);
+    }
+
+    .cell h3 {
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: .5rem;
+      padding-bottom: .4rem;
+      border-bottom: 1px solid var(--cell-border);
+    }
+
+    .cell.true-evidence h3 {
+      color: #6ee7b7;
+    }
+
+    .cell.false-evidence h3 {
+      color: #fda4af;
+    }
+
+    .cell.true-counter h3 {
+      color: #7dd3fc;
+    }
+
+    .cell.false-counter h3 {
+      color: #fdba74;
+    }
+
+    /* Textarea inside cells */
+    .cell textarea {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--cell-text);
+      font-family: inherit;
+      font-size: .85rem;
+      line-height: 1.5;
+      resize: none;
+      outline: none;
+      min-height: 120px;
+    }
+
+    .cell textarea::placeholder {
+      color: var(--placeholder);
+      font-style: italic;
+    }
+
+    /* AI feedback area */
+    .cell .ai-feedback {
+      margin-top: .5rem;
+      padding-top: .5rem;
+      border-top: 1px dashed var(--cell-border);
+    }
+
+    .cell .ai-feedback .fb-item {
+      margin-bottom: .6rem;
+    }
+
+    .cell .ai-feedback .user-text {
+      font-size: .82rem;
+      color: var(--cell-text);
+      font-weight: 600;
+      margin-bottom: .2rem;
+    }
+
+    .cell .ai-feedback .ai-comment {
+      padding: .35rem .6rem;
+      border-left: 3px solid #8b5cf6;
+      background: rgba(139, 92, 246, .08);
+      border-radius: 0 4px 4px 0;
+      font-size: .78rem;
+      line-height: 1.4;
+      color: #c4b5fd;
+    }
+
+    :root.light .ai-comment {
+      background: rgba(139, 92, 246, .07);
+      color: #6d28d9;
+    }
+
+    .tag {
+      display: inline-block;
+      margin-top: .2rem;
+      padding: .1rem .4rem;
+      font-size: .68rem;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+      text-decoration: none;
+    }
+
+    .tag:hover {
+      transform: scale(1.03);
+    }
+
+    .tag.type-fallacy {
+      background: rgba(239, 68, 68, .12);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, .3);
+    }
+
+    .tag.type-fallacy:hover {
+      background: rgba(239, 68, 68, .25);
+    }
+
+    .tag.type-bias {
+      background: rgba(251, 191, 36, .12);
+      color: #fbbf24;
+      border: 1px solid rgba(251, 191, 36, .3);
+    }
+
+    .tag.type-bias:hover {
+      background: rgba(251, 191, 36, .25);
+    }
+
+    /* AI-generated example items */
+    .cell .example-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .cell .example-list li {
+      position: relative;
+      padding: .3rem 0 .3rem 1rem;
+      font-size: .82rem;
+      line-height: 1.4;
+      color: var(--cell-text);
+      margin-bottom: .2rem;
+    }
+
+    .cell .example-list li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: .55rem;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+
+    .cell.true-evidence .example-list li::before {
+      background: #6ee7b7;
+    }
+
+    .cell.false-evidence .example-list li::before {
+      background: #fda4af;
+    }
+
+    .cell.true-counter .example-list li::before {
+      background: #7dd3fc;
+    }
+
+    .cell.false-counter .example-list li::before {
+      background: #fdba74;
+    }
+
+    /* ---- Modals ---- */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--overlay-bg);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--modal-bg);
+      border: 1px solid var(--modal-border);
+      border-radius: 14px;
+      max-width: 700px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 2rem;
+      position: relative;
+    }
+
+    .modal h2 {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+      color: var(--modal-h2);
+    }
+
+    .modal h3 {
+      font-size: 1rem;
+      margin: 1.2rem 0 .5rem;
+      color: var(--modal-h3);
+    }
+
+    .modal p,
+    .modal li {
+      font-size: .92rem;
+      line-height: 1.6;
+      color: var(--modal-text);
+    }
+
+    .modal ul {
+      margin-left: 1.2rem;
+      margin-bottom: .8rem;
+    }
+
+    .modal code {
+      background: var(--modal-code-bg);
+      padding: .15rem .4rem;
+      border-radius: 4px;
+      font-size: .85rem;
+      color: var(--modal-code-text);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: var(--modal-close);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .modal-close:hover {
+      color: var(--modal-close-hover);
+    }
+
+    .modal .detail-type-label {
+      display: inline-block;
+      padding: .2rem .6rem;
+      border-radius: 4px;
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: .5rem;
+    }
+
+    .modal .detail-type-label.fallacy {
+      background: rgba(239, 68, 68, .15);
+      color: #f87171;
+    }
+
+    .modal .detail-type-label.bias {
+      background: rgba(251, 191, 36, .15);
+      color: #fbbf24;
+    }
+
+    .modal .poster-img {
+      width: 100%;
+      border-radius: 8px;
+      margin-top: 1rem;
+      cursor: pointer;
+      transition: transform .2s;
+    }
+
+    .modal .poster-img:hover {
+      transform: scale(1.02);
+    }
+
+    /* ---- Tabs ---- */
+    .tab-bar {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: .5rem 1rem 0;
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--cell-border);
+    }
+
+    .tab-btn {
+      padding: .65rem 1.4rem;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: color .2s, border-color .2s;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      color: var(--text);
+      border-bottom-color: #3b82f6;
+    }
+
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* ---- Kendt Viden matrix colours ---- */
+    .col-know {
+      background: #1e3a5f;
+      color: #7dd3fc;
+    }
+
+    .col-unknow {
+      background: #4c0519;
+      color: #fda4af;
+    }
+
+    .row-known {
+      background: #064e3b;
+      color: #6ee7b7;
+    }
+
+    .row-unknown {
+      background: #422006;
+      color: #fdba74;
+    }
+
+    .cell.kv-kk h3 {
+      color: #6ee7b7;
+    }
+
+    .cell.kv-ku h3 {
+      color: #fda4af;
+    }
+
+    .cell.kv-uk h3 {
+      color: #7dd3fc;
+    }
+
+    .cell.kv-uu h3 {
+      color: #fdba74;
+    }
+
+    .cell.kv-kk .example-list li::before {
+      background: #6ee7b7;
+    }
+
+    .cell.kv-ku .example-list li::before {
+      background: #fda4af;
+    }
+
+    .cell.kv-uk .example-list li::before {
+      background: #7dd3fc;
+    }
+
+    .cell.kv-uu .example-list li::before {
+      background: #fdba74;
+    }
+
+    /* ---- Konkurrerende hypoteser (ACH) ---- */
+    .hyp-card {
+      background: var(--cell-bg);
+      border: 1px solid var(--cell-border);
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+
+    .hyp-card-header {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .75rem 1rem;
+      background: rgba(99, 102, 241, .08);
+      border-bottom: 1px solid var(--cell-border);
+    }
+
+    .hyp-title-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-bottom: 1px dashed var(--cell-border);
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 600;
+      padding: .2rem .4rem;
+      outline: none;
+    }
+
+    .hyp-title-input:focus {
+      border-bottom-color: #6366f1;
+    }
+
+    .hyp-title-input::placeholder {
+      color: var(--placeholder);
+      font-weight: 400;
+    }
+
+    .btn-remove-hyp {
+      background: rgba(239, 68, 68, .12);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, .25);
+      border-radius: 6px;
+      padding: .3rem .7rem;
+      font-size: .8rem;
+      cursor: pointer;
+      transition: background .15s;
+      white-space: nowrap;
+    }
+
+    .btn-remove-hyp:hover {
+      background: rgba(239, 68, 68, .25);
+    }
+
+    .hyp-matrix {
+      padding: .75rem 1rem 1rem;
+    }
+
+    .hyp-matrix .matrix-header {
+      margin-bottom: 4px;
+    }
+
+    .hyp-matrix .matrix-grid {
+      gap: 6px;
+    }
+
+    .hyp-matrix .cell {
+      min-height: 110px;
+    }
+
+    .hyp-matrix .cell textarea {
+      min-height: 55px;
+    }
+
+    .hyp-result-card {
+      background: var(--cell-bg);
+      border: 1px solid var(--cell-border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .hyp-result-card h3 {
+      font-size: 1rem;
+      color: #a5b4fc;
+      margin-bottom: .5rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      flex-wrap: wrap;
+    }
+
+    .rank-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff;
+      font-size: .75rem;
+      font-weight: 700;
+      padding: .15rem .5rem;
+      border-radius: 12px;
+    }
+
+    .hyp-verdict {
+      font-size: .9rem;
+      line-height: 1.6;
+      color: var(--text);
+      margin-bottom: .5rem;
+    }
+
+    .hyp-score-bar {
+      height: 6px;
+      background: var(--input-border);
+      border-radius: 3px;
+      margin-top: .5rem;
+      overflow: hidden;
+    }
+
+    .hyp-score-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+      border-radius: 3px;
+    }
+
+    .hyp-conclusion {
+      background: rgba(99, 102, 241, .08);
+      border: 1px solid rgba(99, 102, 241, .25);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .hyp-conclusion h3 {
+      color: #a5b4fc;
+      margin-bottom: .5rem;
+      font-size: 1rem;
+    }
+
+    .hyp-conclusion p {
+      font-size: .9rem;
+      line-height: 1.6;
+      color: var(--text);
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 700px) {
+
+      .matrix-header,
+      .matrix-grid {
+        grid-template-columns: 36px 1fr 1fr;
+      }
+
+      .row-label {
+        font-size: .75rem;
+      }
+
+      .cell {
+        padding: .6rem;
+        min-height: 140px;
+      }
+
+      .prop-bar {
+        flex-wrap: wrap;
+      }
+
+      .prop-bar input {
+        min-width: 0;
+      }
+
+      .tab-btn {
+        font-size: .82rem;
+        padding: .5rem .8rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1 id="appTitle">Propositions-tester</h1>
+    <p id="appSubtitle">Udfyld din proposition og belæg &mdash; lad AI sparring udfordre din tænkning</p>
+  </header>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="prop-tab">Propositions-tester</button>
+    <button class="tab-btn" data-tab="kv-tab">Kendt Viden-tester</button>
+    <button class="tab-btn" data-tab="hyp-tab">Konkurrerende hypoteser</button>
+  </div>
+
+  <!-- ============ TAB 1: PROPOSITIONS-TESTER ============ -->
+  <div class="tab-panel active" id="prop-tab">
+
+    <div class="prop-bar">
+      <input type="text" id="propInput" placeholder='Proposition: f.eks. "Calcium er et metal"' />
+      <button class="btn btn-primary" id="submitBtn" title="Analysér dine belæg">Submit</button>
+      <button class="btn btn-examples" id="examplesBtn" title="AI udfylder eksempler">Eksempler</button>
+    </div>
+
+    <div class="controls-row">
+      <button class="btn btn-info" id="infoBtn">i &mdash; Logik-lektion</button>
+    </div>
+
+    <div class="spinner-wrap" id="spinner">
+      <div class="spinner"></div>
+      <p id="spinnerText">Analyserer&hellip;</p>
+    </div>
+    <div class="error-msg" id="errorMsg"></div>
+
+    <div class="matrix-wrap">
+      <div class="matrix-header">
+        <div></div>
+        <div class="col-evidence">BEVIS</div>
+        <div class="col-counter">MODBEVIS</div>
+      </div>
+      <div class="matrix-grid">
+        <div class="row-label row-true">SAND</div>
+        <div class="cell true-evidence" id="cell-te">
+          <h3>Sandt Bevis</h3>
+          <textarea placeholder="Skriv dine sande beviser her (ét per linje)..."></textarea>
+          <div class="ai-feedback" style="display:none"></div>
+        </div>
+        <div class="cell true-counter" id="cell-tc">
+          <h3>Sandt Modbevis</h3>
+          <textarea placeholder="Skriv sande modbeviser her (ét per linje)..."></textarea>
+          <div class="ai-feedback" style="display:none"></div>
+        </div>
+
+        <div class="row-label row-false">FALSK</div>
+        <div class="cell false-evidence" id="cell-fe">
+          <h3>Falsk Bevis</h3>
+          <textarea placeholder="Skriv mulige falske beviser her (ét per linje)..."></textarea>
+          <div class="ai-feedback" style="display:none"></div>
+        </div>
+        <div class="cell false-counter" id="cell-fc">
+          <h3>Falsk Modbevis</h3>
+          <textarea placeholder="Skriv mulige falske modbeviser her (ét per linje)..."></textarea>
+          <div class="ai-feedback" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /prop-tab -->
+
+  <!-- ============ TAB 2: KENDT VIDEN-TESTER ============ -->
+  <div class="tab-panel" id="kv-tab">
+
+    <div class="prop-bar">
+      <input type="text" id="kvInput" placeholder='Emne: f.eks. "Kunstig intelligens" eller "Bæredygtig energi"' />
+      <button class="btn btn-primary" id="kvSubmitBtn" title="Analysér dine input">Submit</button>
+      <button class="btn btn-examples" id="kvExamplesBtn" title="AI udfylder eksempler">Eksempler</button>
+    </div>
+
+    <div class="controls-row">
+      <button class="btn btn-info" id="kvInfoBtn">i &mdash; Om Kendt Viden</button>
+    </div>
+
+    <div class="spinner-wrap" id="kvSpinner">
+      <div class="spinner"></div>
+      <p id="kvSpinnerText">Analyserer&hellip;</p>
+    </div>
+    <div class="error-msg" id="kvErrorMsg"></div>
+
+    <div class="matrix-wrap">
+      <div class="matrix-header">
+        <div></div>
+        <div class="col-know">VED</div>
+        <div class="col-unknow">VED IKKE</div>
+      </div>
+      <div class="matrix-grid">
+        <div class="row-label row-known">KENDT</div>
+        <div class="cell kv-kk" id="cell-kk">
+          <h3>Kendt Viden</h3>
+          <textarea placeholder="Ting du ved, at du ved (ét per linje)..."></textarea>
+          <div class="ai-feedback" style="display:none"></div>
+        </div>
+        <div class="cell kv-ku" id="cell-ku">
+          <h3>Kendt Ikke-viden</h3>
+          <textarea placeholder="Ting du ved, at du ikke ved (ét per linje)..."></textarea>
+          <div class="ai-feedback" style="display:none"></div>
+        </div>
+
+        <div class="row-label row-unknown">IKKE KENDT</div>
+        <div class="cell kv-uk" id="cell-uk">
+          <h3>Ukendt Viden</h3>
+          <textarea placeholder="Tavs viden, ubevidst kompetence (ét per linje)..."></textarea>
+          <div class="ai-feedback" style="display:none"></div>
+        </div>
+        <div class="cell kv-uu" id="cell-uu">
+          <h3>Ukendt Ikke-viden</h3>
+          <textarea placeholder="Blinde pletter, unknown unknowns (ét per linje)..."></textarea>
+          <div class="ai-feedback" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /kv-tab -->
+
+  <!-- ============ TAB 3: KONKURRERENDE HYPOTESER ============ -->
+  <div class="tab-panel" id="hyp-tab">
+
+    <div class="prop-bar">
+      <input type="text" id="hypDatum" placeholder='Faktum: f.eks. "Vinduet er knust" eller "Salget faldt 30%"' />
+    </div>
+
+    <div class="controls-row">
+      <button class="btn btn-info" id="hypInfoBtn">i &mdash; Om ACH / IBE</button>
+    </div>
+
+    <div id="hypContainer" style="max-width:1100px;margin:0 auto;padding:0 1rem;"></div>
+
+    <div style="max-width:1100px;margin:.25rem auto 1rem;padding:0 1rem;display:flex;gap:.5rem;flex-wrap:wrap;">
+      <button class="btn btn-examples" id="hypAddBtn">+ Tilføj hypotese</button>
+      <button class="btn btn-primary" id="hypSubmitBtn">Sammenlign med AI</button>
+    </div>
+
+    <div class="spinner-wrap" id="hypSpinner">
+      <div class="spinner"></div>
+      <p id="hypSpinnerText">Sammenligner hypoteser&hellip;</p>
+    </div>
+    <div class="error-msg" id="hypErrorMsg"></div>
+
+    <div id="hypResult" style="max-width:1100px;margin:0 auto 3rem;padding:0 1rem;display:none;"></div>
+
+  </div><!-- /hyp-tab -->
+
+  <!-- ACH info modal -->
+  <div class="modal-overlay" id="hypModal">
+    <div class="modal">
+      <button class="modal-close" id="hypModalClose">&times;</button>
+      <h2>Konkurrerende hypoteser &mdash; ACH &amp; IBE</h2>
+      <h3>Analysis of Competing Hypotheses (ACH)</h3>
+      <p>ACH er en analytisk metode udviklet af CIA-analytiker Richards Heuer. I stedet for at lede efter bevis
+        <em>for</em> din favorithypotese, systematiserer metoden evaluering af alle konkurrerende forklaringer
+        op mod det samme sæt af observationer.</p>
+      <h3>Inference to the Best Explanation (IBE)</h3>
+      <p>IBE (abduktiv slutning) er en logisk metode til at vælge den hypotese, der <em>bedst</em> forklarer de
+        tilgængelige observationer &mdash; ikke blot den der er mulig, men den der giver den mest sammenhængende,
+        parsimoniske og forudsigelseskraftige forklaring.</p>
+      <h3>Matricen (2&times;2 per hypotese)</h3>
+      <ul>
+        <li><strong>Sandt bevis for</strong> &mdash; observationer der faktisk understøtter hypotesen.</li>
+        <li><strong>Sandt modbevis</strong> &mdash; observationer der faktisk modsiger hypotesen.</li>
+        <li><strong>Falsk bevis for</strong> &mdash; tilsyneladende bevis der ved nærmere analyse ikke holder.</li>
+        <li><strong>Falsk modbevis</strong> &mdash; tilsyneladende modbevis der faktisk ikke afkræfter hypotesen.</li>
+      </ul>
+      <h3>Brug</h3>
+      <ul>
+        <li>Skriv det faktum/datum du vil forklare øverst</li>
+        <li>Opret mindst 2 konkurrerende hypoteser</li>
+        <li>Udfyld matricerne og lad AI rangere hypoteserne</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Kendt Viden info modal -->
+  <div class="modal-overlay" id="kvModal">
+    <div class="modal">
+      <button class="modal-close" id="kvModalClose">&times;</button>
+      <h2>Kendt Viden-matricen</h2>
+      <h3>Hvad er det?</h3>
+      <p>Matricen er inspireret af <strong>Johari-vinduet</strong> og <strong>Rumsfelds</strong> berømte taksonomi. Den
+        deler viden op i fire kategorier baseret på to dimensioner: <em>om vi ved det</em> (bevidsthed) og <em>om det er
+          kendt</em> (tilgængelighed).</p>
+      <h3>De fire kvadranter</h3>
+      <ul>
+        <li><strong>Kendt Viden</strong> &mdash; Ting vi bevidst ved. Etableret fakta, f&aelig;rdigheder vi mestrer, og
+          viden vi kan artikulere.</li>
+        <li><strong>Kendt Ikke-viden</strong> &mdash; Ting vi ved, at vi ikke ved. Sp&oslash;rgsm&aring;l vi kan stille,
+          huller vi er bevidste om.</li>
+        <li><strong>Ukendt Viden</strong> &mdash; Ting vi ved, uden at v&aelig;re bevidste om det. Ubevidst kompetence,
+          tavs viden, intuition.</li>
+        <li><strong>Ukendt Ikke-viden</strong> &mdash; Ting vi ikke ved, at vi ikke ved. Blinde pletter, uopdagede
+          discipliner, &ldquo;unknown unknowns&rdquo;.</li>
+      </ul>
+      <h3>Hvorfor er det nyttigt?</h3>
+      <p>Ved at kortl&aelig;gge viden p&aring; denne m&aring;de kan du:</p>
+      <ul>
+        <li>Identificere blinde pletter og antagelser</li>
+        <li>Prioritere l&aelig;ring og forskning</li>
+        <li>Opdage ubevidst kompetence du kan g&oslash;re eksplicit</li>
+        <li>Finde nye forskningsfelter og discipliner du ikke kendte</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Logik-lektion modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <button class="modal-close" id="modalClose">&times;</button>
+      <h2>Formel logik &amp; sandhedsmatricen</h2>
+      <h3>Hvad er en proposition?</h3>
+      <p>En <strong>proposition</strong> er et udsagn, der enten er sandt eller falsk. Eksempel: "Vand koger ved 100
+        &deg;C ved havniveau" er en proposition; "Luk d&oslash;ren!" er <strong>ikke</strong> en proposition.</p>
+      <h3>Bevis vs. modbevis</h3>
+      <ul>
+        <li><strong>Bevis</strong> &mdash; data eller argumenter der <em>underst&oslash;tter</em> propositionen.</li>
+        <li><strong>Modbevis</strong> &mdash; data eller argumenter der <em>modsiger</em> propositionen.</li>
+      </ul>
+      <h3>Sandhedsmatricen (2 &times; 2)</h3>
+      <ul>
+        <li><strong>Sandt bevis</strong> &mdash; korrekte fakta der underst&oslash;tter propositionen.</li>
+        <li><strong>Falsk bevis</strong> &mdash; fejlagtige p&aring;stande der <em>ligner</em> bevis, men ikke holder.
+        </li>
+        <li><strong>Sandt modbevis</strong> &mdash; korrekte fakta der modsiger propositionen.</li>
+        <li><strong>Falsk modbevis</strong> &mdash; fejlagtige p&aring;stande der <em>ligner</em> modbevis, men ikke
+          holder.</li>
+      </ul>
+      <h3>Formelle begreber</h3>
+      <ul>
+        <li><code>P</code> &mdash; propositionen.</li>
+        <li><code>&not;P</code> &mdash; negationen.</li>
+        <li><strong>Modus ponens</strong>: Hvis <code>P &rArr; Q</code> og <code>P</code>, s&aring; <code>Q</code>.</li>
+        <li><strong>Modus tollens</strong>: Hvis <code>P &rArr; Q</code> og <code>&not;Q</code>, s&aring;
+          <code>&not;P</code>.
+        </li>
+        <li><strong>Falsifikation</strong> (Popper): En proposition er videnskabelig, hvis den kan modvises.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Detail modal (fallacy/bias) -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal">
+      <button class="modal-close" id="detailModalClose">&times;</button>
+      <div id="detailContent"></div>
+    </div>
+  </div>
+
+  <script>
+    // =====================================================
+    // FALLACY & BIAS REFERENCE DATABASE
+    // =====================================================
+    const REFERENCE = {
+      strawman: { type: 'fallacy', name: 'Strawman', da: 'Stramand', desc: 'At fordreje en modstanders argument til en svagere version, som er nemmere at angribe.', example: 'Person A: "Vi burde have strengere regler for pesticider." Person B: "Så du vil bare forbyde alt landbrug?"', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      false_cause: { type: 'fallacy', name: 'False Cause', da: 'Falsk årsag', desc: 'At antage at fordi to ting sker sammen eller efter hinanden, så må den ene være årsag til den anden.', example: 'Iskagesalget stiger om sommeren, og flere drukner. Ergo forårsager is drukning.', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      appeal_to_emotion: { type: 'fallacy', name: 'Appeal to Emotion', da: 'Appel til følelser', desc: 'At bruge følelsesmæssig manipulation i stedet for logiske argumenter.', example: '"Tænk på børnene!" brugt som argument uden faktuel understøttelse.', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      fallacy_fallacy: { type: 'fallacy', name: 'The Fallacy Fallacy', da: 'Fejlslutnings-fejlslutningen', desc: 'At antage at fordi et argument indeholder en logisk fejl, så er konklusionen nødvendigvis forkert.', example: '"Din begrundelse var ulogisk, ergo er motion ikke sundt."', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      slippery_slope: { type: 'fallacy', name: 'Slippery Slope', da: 'Glidebaneargument', desc: 'At påstå at én handling uundgåeligt vil føre til en kæde af negative konsekvenser.', example: '"Hvis vi tillader dette, ender vi med totalt kaos."', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      ad_hominem: { type: 'fallacy', name: 'Ad Hominem', da: 'Personangreb', desc: 'At angribe personen bag argumentet i stedet for argumentet selv.', example: '"Du er ikke læge, så du kan ikke udtale dig om sundhed."', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      tu_quoque: { type: 'fallacy', name: 'Tu Quoque', da: 'Whataboutism', desc: 'At undgå kritik ved at pege på modstanderens hykleri.', example: '"Du siger jeg skal stoppe med at ryge, men du drikker jo selv."', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      personal_incredulity: { type: 'fallacy', name: 'Personal Incredulity', da: 'Personlig utroværdighed', desc: 'At afvise noget fordi man personligt ikke kan forstå det.', example: '"Jeg kan ikke forstå evolution, så det kan ikke passe."', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      special_pleading: { type: 'fallacy', name: 'Special Pleading', da: 'Særlig undtagelse', desc: 'At kræve en undtagelse fra en regel uden tilstrækkelig begrundelse.', example: '"Alle andre tilfælde følger mønsteret, men mit er specielt."', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      loaded_question: { type: 'fallacy', name: 'Loaded Question', da: 'Ledende spørgsmål', desc: 'At stille et spørgsmål der indeholder en ubevist antagelse.', example: '"Er du holdt op med at slå din kone?"', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      burden_of_proof: { type: 'fallacy', name: 'Burden of Proof', da: 'Bevisbyrde', desc: 'At placere bevisbyrden hos den der benægter en påstand.', example: '"Bevis at der IKKE findes enhjørninger."', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      ambiguity: { type: 'fallacy', name: 'Ambiguity', da: 'Tvetydighed', desc: 'At bruge dobbelttydige ord til at vildlede.', example: '"Alle mennesker er lige. Tvillinger er lige. Ergo er alle tvillinger."', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      gamblers_fallacy: { type: 'fallacy', name: "Gambler's Fallacy", da: 'Spillerens fejlslutning', desc: 'At tro at uafhængige tilfældige hændelser påvirker hinanden.', example: '"Rødt 5 gange i træk, nu MÅ det blive sort."', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      bandwagon: { type: 'fallacy', name: 'Bandwagon', da: 'Medløber-argumentet', desc: 'At argumentere for at noget er sandt fordi mange mennesker tror det.', example: '"Millioner bruger produktet, så det må være godt."', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      appeal_to_authority: { type: 'fallacy', name: 'Appeal to Authority', da: 'Autoritetsargument', desc: 'At bruge en autoritets mening som bevis, især uden relevant ekspertise.', example: '"En berømt skuespiller siger vacciner er farlige."', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      composition_division: { type: 'fallacy', name: 'Composition/Division', da: 'Komposition/Division', desc: 'At antage at det der gælder for delen, også gælder for helheden.', example: '"Hver del af flyet er let, så flyet må være let."', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      no_true_scotsman: { type: 'fallacy', name: 'No True Scotsman', da: 'Ingen sand skotte', desc: 'At beskytte en generalisering ved at omdefinere gruppen.', example: '"Ingen rigtig dansker ville gøre sådan noget."', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      genetic_fallacy: { type: 'fallacy', name: 'Genetic Fallacy', da: 'Genetisk fejlslutning', desc: 'At bedømme noget udelukkende ud fra dets oprindelse.', example: '"Den idé kommer fra en upålidelig kilde."', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      black_or_white: { type: 'fallacy', name: 'Black-or-White', da: 'Sort/hvid-tænkning', desc: 'At præsentere kun to muligheder, når der er flere.', example: '"Enten er du med os, eller imod os."', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      begging_the_question: { type: 'fallacy', name: 'Begging the Question', da: 'Cirkelslutning', desc: 'At antage sandheden af det man forsøger at bevise.', example: '"Bibelen er sand fordi det er Guds ord, og vi ved det er Guds ord fordi Bibelen siger det."', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      appeal_to_nature: { type: 'fallacy', name: 'Appeal to Nature', da: 'Appel til det naturlige', desc: 'At argumentere for at noget er godt fordi det er "naturligt".', example: '"Kemikalier er unaturlige og derfor skadelige."', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      anecdotal: { type: 'fallacy', name: 'Anecdotal', da: 'Anekdotisk bevis', desc: 'At bruge personlige oplevelser som bevis i stedet for systematisk evidens.', example: '"Min bedstefar røg og blev 95, så rygning er ikke farligt."', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      texas_sharpshooter: { type: 'fallacy', name: 'Texas Sharpshooter', da: 'Texas-skarpskyttefejlen', desc: 'At cherry-picke data der passer til ens konklusion.', example: 'At udvælge statistikker der støtter ens pointe, mens man ignorerer resten.', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      middle_ground: { type: 'fallacy', name: 'Middle Ground', da: 'Midtervejsfejlen', desc: 'At antage at sandheden altid ligger midt imellem to positioner.', example: '"Den ene siger 2+2=4, den anden siger 6, så svaret er nok 5."', poster: 'SchoolOfThought_FallaciesPoster_A3-1.jpg' },
+      anchoring: { type: 'bias', name: 'Anchoring', da: 'Ankring', desc: 'Den første information (ankeret) påvirker uforholdsmæssigt vores vurderinger.', example: 'En vare til 1000 kr sat ned til 500 kr virker billig uanset reel værdi.', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      availability_heuristic: { type: 'bias', name: 'Availability Heuristic', da: 'Tilgængelighedsheuristik', desc: 'Vi vurderer sandsynlighed baseret på hvor let vi husker eksempler.', example: 'Nyheder om flyulykker gør at man overvurderer risikoen ved at flyve.', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      curse_of_knowledge: { type: 'bias', name: 'Curse of Knowledge', da: 'Vidensforbandelsen', desc: 'Når man ved noget, er det svært at forestille sig at andre ikke ved det.', example: 'En ekspert forklarer uden at indse at tilhørerne mangler begreber.', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      confirmation_bias: { type: 'bias', name: 'Confirmation Bias', da: 'Bekræftelsesbias', desc: 'Tendensen til at søge information der bekræfter det man allerede tror.', example: 'Man googler kun artikler der støtter ens synspunkt.', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      dunning_kruger: { type: 'bias', name: 'Dunning-Kruger Effect', da: 'Dunning-Kruger-effekten', desc: 'Lav kompetence fører til overvurdering af egne evner.', example: 'En begynder tror de kan bygge Facebook på en weekend.', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      belief_bias: { type: 'bias', name: 'Belief Bias', da: 'Trosbias', desc: 'At vurdere argumenter baseret på om man tror konklusionen.', example: 'Man accepterer et dårligt argument fordi konklusionen passer.', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      self_serving_bias: { type: 'bias', name: 'Self-Serving Bias', da: 'Selvtjenende bias', desc: 'At tilskrive succeser til egne evner men fiaskoer til ydre omstændigheder.', example: '"Jeg bestod fordi jeg er klog. Jeg dumpede fordi eksaminator var uretfærdig."', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      backfire_effect: { type: 'bias', name: 'Backfire Effect', da: 'Bagslag-effekten', desc: 'Modbeviser kan paradoksalt nok styrke overbevisningen.', example: 'Modbeviser til en konspirationsteori styrker troen på den.', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      barnum_effect: { type: 'bias', name: 'Barnum Effect', da: 'Barnum-effekten', desc: 'At acceptere vage beskrivelser som præcist passende til én selv.', example: 'Horoskoper der passer på alle.', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      groupthink: { type: 'bias', name: 'Groupthink', da: 'Gruppetænkning', desc: 'Gruppens ønske om harmoni overskygger kritisk tænkning.', example: 'Et team godkender en dårlig beslutning fordi ingen tør sige fra.', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      negativity_bias: { type: 'bias', name: 'Negativity Bias', da: 'Negativitetsbias', desc: 'Negative oplevelser påvirker os mere end positive.', example: 'Én dårlig anmeldelse ud af 100 gode påvirker uforholdsmæssigt.', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      declinism: { type: 'bias', name: 'Declinism', da: 'Forfaldsbias', desc: 'At se fortiden som bedre og forvente at fremtiden bliver værre.', example: '"Alt var bedre i gamle dage."', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      framing_effect: { type: 'bias', name: 'Framing Effect', da: 'Indramningseffekt', desc: 'Måden information præsenteres på påvirker vores beslutninger.', example: '"90% overlever" lyder bedre end "10% dør".', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      fundamental_attribution_error: { type: 'bias', name: 'Fundamental Attribution Error', da: 'Fundamental tilskrivningsfejl', desc: 'Andres adfærd forklares af karakter, ens egen af situation.', example: '"Han kørte for rødt fordi han er hensynsløs. Jeg fordi jeg havde travlt."', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      halo_effect: { type: 'bias', name: 'Halo Effect', da: 'Glorieeffekten', desc: 'Et positivt indtryk på ét område påvirker bedømmelse på andre.', example: 'En attraktiv person antages at være intelligent og kompetent.', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      optimism_bias: { type: 'bias', name: 'Optimism Bias', da: 'Optimismebias', desc: 'At overvurdere sandsynlighed for positive udfald.', example: '"Det sker ikke for mig."', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      pessimism_bias: { type: 'bias', name: 'Pessimism Bias', da: 'Pessimismebias', desc: 'At overvurdere sandsynlighed for negative udfald.', example: '"Det går helt sikkert galt."', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      just_world: { type: 'bias', name: 'Just World Hypothesis', da: 'Den retfærdige verden', desc: 'Troen på at folk får hvad de fortjener.', example: '"Hvis hun blev fyret, har hun nok gjort noget forkert."', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      in_group_bias: { type: 'bias', name: 'In-Group Bias', da: 'Indgruppebias', desc: 'At favorisere personer der tilhører ens egen gruppe.', example: 'At stole mere på folk med samme politiske overbevisning.', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      placebo_effect: { type: 'bias', name: 'Placebo Effect', da: 'Placeboeffekten', desc: 'At opleve effekt af behandling uden aktiv virkning.', example: 'Sukkerpiller lindrer smerte fordi patienten tror det virker.', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      bystander_effect: { type: 'bias', name: 'Bystander Effect', da: 'Tilskuereffekten', desc: 'Jo flere tilskuere, jo mindre sandsynligt at nogen griber ind.', example: 'Ingen ringer 112 fordi alle tror "en anden gør det".', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      reactance: { type: 'bias', name: 'Reactance', da: 'Reaktans', desc: 'At gøre det modsatte af hvad man bliver bedt om.', example: 'Teenagere ryger fordi de bliver fortalt de ikke må.', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      spotlight_effect: { type: 'bias', name: 'Spotlight Effect', da: 'Rampelyseffekten', desc: 'At overvurdere hvor meget andre lægger mærke til ens fejl.', example: 'Man tror alle bemærkede pletten, men ingen lagde mærke til det.', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' },
+      sunk_cost: { type: 'bias', name: 'Sunk Cost Fallacy', da: 'Tabte omkostninger', desc: 'At fortsætte fordi man allerede har investeret, selvom det er bedst at stoppe.', example: '"Jeg har set halvdelen af filmen, så jeg ser den færdig."', poster: 'CognitiveBiases_HighRes_1800x1800.jpg' }
+    };
+    const ALL_KEYS = Object.keys(REFERENCE);
+
+    // =====================================================
+    // TABS
+    // =====================================================
+    const TAB_TITLES = {
+      'prop-tab': { title: 'Propositions-tester', subtitle: 'Udfyld din proposition og belæg \u2014 lad AI sparring udfordre din tænkning' },
+      'kv-tab': { title: 'Kendt Viden-tester', subtitle: 'Kortlæg hvad du ved, ikke ved, og ikke ved du ikke ved' },
+      'hyp-tab': { title: 'Konkurrerende hypoteser', subtitle: 'Opstil konkurrerende forklaringer og lad AI vurdere den bedste \u2014 IBE / ACH' }
+    };
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+        const info = TAB_TITLES[btn.dataset.tab];
+        if (info) {
+          document.getElementById('appTitle').textContent = info.title;
+          document.getElementById('appSubtitle').textContent = info.subtitle;
+        }
+      });
+    });
+
+    // =====================================================
+    // DOM REFS
+    // =====================================================
+    const GEMINI_API_KEY = 'AIzaSyCURPG6bTOj7tscoXHAf-aQtT3Nm8vTDJM';
+    const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+    const propInput = document.getElementById('propInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const examplesBtn = document.getElementById('examplesBtn');
+    const spinner = document.getElementById('spinner');
+    const spinnerText = document.getElementById('spinnerText');
+    const errorMsg = document.getElementById('errorMsg');
+    const infoBtn = document.getElementById('infoBtn');
+    const modal = document.getElementById('modal');
+    const modalClose = document.getElementById('modalClose');
+    const detailModal = document.getElementById('detailModal');
+    const detailClose = document.getElementById('detailModalClose');
+    const detailContent = document.getElementById('detailContent');
+
+    const CELL_IDS = ['cell-te', 'cell-fe', 'cell-tc', 'cell-fc'];
+    const CELL_KEYS = ['sandt_bevis', 'falsk_bevis', 'sandt_modbevis', 'falsk_modbevis'];
+    const CELL_LABELS = ['Sandt Bevis', 'Falsk Bevis', 'Sandt Modbevis', 'Falsk Modbevis'];
+
+    function getTextarea(cellId) { return document.querySelector(`#${cellId} textarea`); }
+    function getFeedback(cellId) { return document.querySelector(`#${cellId} .ai-feedback`); }
+
+    // =====================================================
+    // MODALS
+    // =====================================================
+    infoBtn.addEventListener('click', () => modal.classList.add('active'));
+    modalClose.addEventListener('click', () => modal.classList.remove('active'));
+    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('active'); });
+    detailClose.addEventListener('click', () => detailModal.classList.remove('active'));
+    detailModal.addEventListener('click', e => { if (e.target === detailModal) detailModal.classList.remove('active'); });
+
+    function showFallacyDetail(key) {
+      const ref = REFERENCE[key]; if (!ref) return;
+      const typeLabel = ref.type === 'fallacy' ? 'Logisk fejlslutning' : 'Kognitiv bias';
+      detailContent.innerHTML = `
+        <div class="detail-type-label ${ref.type}">${typeLabel}</div>
+        <h2>${ref.name}</h2><h3>${ref.da}</h3>
+        <p>${ref.desc}</p>
+        <h3>Eksempel</h3><p><em>${ref.example}</em></p>
+        <img class="poster-img" src="${ref.poster}" alt="${ref.name}"
+             onclick="window.open('${ref.poster}','_blank')"
+             title="Klik for fuld størrelse" />`;
+      detailModal.classList.add('active');
+    }
+
+    document.addEventListener('click', e => {
+      const tag = e.target.closest('.tag');
+      if (tag && tag.dataset.key) { e.preventDefault(); showFallacyDetail(tag.dataset.key); }
+    });
+
+    // =====================================================
+    // HELPERS
+    // =====================================================
+    function escapeHTML(str) {
+      const d = document.createElement('div'); d.textContent = str; return d.innerHTML;
+    }
+
+    function setLoading(on, text) {
+      submitBtn.disabled = on;
+      examplesBtn.disabled = on;
+      if (text) spinnerText.textContent = text;
+      spinner.classList.toggle('active', on);
+      errorMsg.classList.remove('active');
+    }
+
+    function getUserLines(cellId) {
+      const val = getTextarea(cellId).value.trim();
+      if (!val) return [];
+      return val.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    }
+
+    async function callGemini(prompt) {
+      const res = await fetch(GEMINI_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.7 }
+        })
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData?.error?.message || `API-fejl ${res.status}`);
+      }
+      const data = await res.json();
+      const parts = data.candidates?.[0]?.content?.parts || [];
+      let rawText = '';
+      for (const p of parts) { if (p.text) rawText = p.text; }
+      if (!rawText) throw new Error('Tomt svar fra AI');
+      return JSON.parse(rawText.replace(/```json\s*/gi, '').replace(/```/g, '').trim());
+    }
+
+    function renderTag(refKey) {
+      const ref = refKey && REFERENCE[refKey] ? REFERENCE[refKey] : null;
+      if (!ref) return '';
+      const cls = ref.type === 'fallacy' ? 'type-fallacy' : 'type-bias';
+      return ` <a class="tag ${cls}" data-key="${refKey}" href="#">${ref.da}</a>`;
+    }
+
+    // =====================================================
+    // SUBMIT: Analyse user's entries
+    // =====================================================
+    submitBtn.addEventListener('click', analyseUserInput);
+
+    async function analyseUserInput() {
+      const prop = propInput.value.trim();
+      if (!prop) { propInput.focus(); return; }
+
+      // Collect user entries per cell
+      const userEntries = {};
+      let hasAny = false;
+      CELL_IDS.forEach((id, i) => {
+        const lines = getUserLines(id);
+        userEntries[CELL_KEYS[i]] = lines;
+        if (lines.length) hasAny = true;
+      });
+
+      if (!hasAny) {
+        errorMsg.textContent = 'Skriv mindst ét belæg i en af de fire kvadranter før du trykker Submit.';
+        errorMsg.classList.add('active');
+        return;
+      }
+
+      setLoading(true, 'Analyserer dine belæg\u2026');
+
+      const prompt = `Du er en kritisk sparringspartner der er ekspert i logiske fejlslutninger og kognitive bias.
+
+PROPOSITION: "${prop}"
+
+Brugeren har selv udfyldt en 2x2 sandhedsmatrice med sine bedste bud på belæg. Din opgave er at ANALYSERE og KOMMENTERE hvert enkelt af brugerens punkter. For hvert punkt skal du:
+
+1. Vurdere om punktet er KORREKT placeret i den pågældende kvadrant (er det virkelig sandt/falsk bevis/modbevis?)
+2. Vurdere om punktets indhold er faktuelt korrekt eller ukorrekt
+3. Identificere den mest relevante logiske fejlslutning eller kognitive bias
+4. Skrive en konstruktiv, specifik kommentar (2-3 sætninger) der forklarer din vurdering
+
+Brug KUN disse nøgler til "ref": ${ALL_KEYS.join(', ')}
+
+Brugerens input:
+${CELL_KEYS.map((k, i) => `"${k}": ${JSON.stringify(userEntries[k])}`).join('\n')}
+
+Svar KUN med valid JSON (ingen markdown udenfor JSON):
+{
+  "sandt_bevis": [{"bruger_tekst": "...", "kommentar": "...", "ref": "nøgle", "korrekt_placeret": true/false}, ...],
+  "falsk_bevis": [{"bruger_tekst": "...", "kommentar": "...", "ref": "nøgle", "korrekt_placeret": true/false}, ...],
+  "sandt_modbevis": [{"bruger_tekst": "...", "kommentar": "...", "ref": "nøgle", "korrekt_placeret": true/false}, ...],
+  "falsk_modbevis": [{"bruger_tekst": "...", "kommentar": "...", "ref": "nøgle", "korrekt_placeret": true/false}, ...]
+}
+
+Hvis en kvadrant er tom (ingen bruger-input), returner et tomt array for den. Skriv på dansk.`;
+
+      try {
+        const parsed = await callGemini(prompt);
+
+        CELL_IDS.forEach((cellId, i) => {
+          const key = CELL_KEYS[i];
+          const items = parsed[key];
+          const fb = getFeedback(cellId);
+          if (!Array.isArray(items) || items.length === 0) { fb.style.display = 'none'; return; }
+
+          fb.style.display = '';
+          fb.innerHTML = items.map(item => {
+            const placedIcon = item.korrekt_placeret === false ? '&#10060;' : '&#9989;';
+            return `<div class="fb-item">
+              <div class="user-text">${placedIcon} ${escapeHTML(item.bruger_tekst || '')}</div>
+              <div class="ai-comment">${escapeHTML(item.kommentar || '')}${renderTag(item.ref)}</div>
+            </div>`;
+          }).join('');
+        });
+
+      } catch (err) {
+        errorMsg.textContent = `Fejl: ${err.message}`;
+        errorMsg.classList.add('active');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // =====================================================
+    // EXAMPLES: AI fills the matrix
+    // =====================================================
+    examplesBtn.addEventListener('click', generateExamples);
+
+    async function generateExamples() {
+      const prop = propInput.value.trim();
+      if (!prop) { propInput.focus(); return; }
+
+      setLoading(true, 'Genererer eksempler\u2026');
+
+      const prompt = `Du er en analytisk AI. Brugeren giver dig en proposition. Generer MINDST 7 eksempler per felt i en 2x2 sandhedsmatrice.
+
+PROPOSITION: "${prop}"
+
+De fire felter:
+1. "sandt_bevis": Sande fakta der UNDERSTØTTER propositionen.
+2. "falsk_bevis": Fejlagtige påstande der LIGNER bevis men IKKE holder. Forklar kort hvorfor de er forkerte.
+3. "sandt_modbevis": Sande fakta der MODSIGER propositionen.
+4. "falsk_modbevis": Fejlagtige påstande der LIGNER modbevis men IKKE holder. Forklar kort hvorfor de er forkerte.
+
+For hvert punkt angiv også relevant bias/fejlslutning med en af disse nøgler:
+${ALL_KEYS.join(', ')}
+
+Svar KUN med valid JSON:
+{
+  "sandt_bevis": [{"punkt": "tekst", "ref": "nøgle"}, ...],
+  "falsk_bevis": [{"punkt": "tekst", "ref": "nøgle"}, ...],
+  "sandt_modbevis": [{"punkt": "tekst", "ref": "nøgle"}, ...],
+  "falsk_modbevis": [{"punkt": "tekst", "ref": "nøgle"}, ...]
+}
+
+Skriv på dansk. Mindst 7 punkter per felt.`;
+
+      try {
+        const parsed = await callGemini(prompt);
+
+        CELL_IDS.forEach((cellId, i) => {
+          const key = CELL_KEYS[i];
+          const items = parsed[key];
+          const fb = getFeedback(cellId);
+          if (!Array.isArray(items)) { fb.style.display = 'none'; return; }
+
+          // Put examples into the feedback area as a list
+          fb.style.display = '';
+          fb.innerHTML = '<ul class="example-list">' + items.map(item => {
+            const text = typeof item === 'string' ? item : item.punkt;
+            return `<li>${escapeHTML(text)}${renderTag(typeof item === 'object' ? item.ref : null)}</li>`;
+          }).join('') + '</ul>';
+        });
+
+      } catch (err) {
+        errorMsg.textContent = `Fejl: ${err.message}`;
+        errorMsg.classList.add('active');
+      } finally {
+        setLoading(false);
+      }
+    }
+    // =====================================================
+    // KENDT VIDEN-TESTER
+    // =====================================================
+    const kvInput = document.getElementById('kvInput');
+    const kvSubmitBtn = document.getElementById('kvSubmitBtn');
+    const kvExamplesBtn = document.getElementById('kvExamplesBtn');
+    const kvSpinner = document.getElementById('kvSpinner');
+    const kvSpinnerText = document.getElementById('kvSpinnerText');
+    const kvErrorMsg = document.getElementById('kvErrorMsg');
+    const kvInfoBtn = document.getElementById('kvInfoBtn');
+    const kvModal = document.getElementById('kvModal');
+    const kvModalClose = document.getElementById('kvModalClose');
+
+    kvInfoBtn.addEventListener('click', () => kvModal.classList.add('active'));
+    kvModalClose.addEventListener('click', () => kvModal.classList.remove('active'));
+    kvModal.addEventListener('click', e => { if (e.target === kvModal) kvModal.classList.remove('active'); });
+
+    const KV_CELL_IDS = ['cell-kk', 'cell-ku', 'cell-uk', 'cell-uu'];
+    const KV_CELL_KEYS = ['kendt_viden', 'kendt_ikke_viden', 'ukendt_viden', 'ukendt_ikke_viden'];
+    const KV_CELL_LABELS = ['Kendt Viden', 'Kendt Ikke-viden', 'Ukendt Viden', 'Ukendt Ikke-viden'];
+
+    function kvGetTextarea(cellId) { return document.querySelector(`#${cellId} textarea`); }
+    function kvGetFeedback(cellId) { return document.querySelector(`#${cellId} .ai-feedback`); }
+    function kvGetUserLines(cellId) {
+      const val = kvGetTextarea(cellId).value.trim();
+      if (!val) return [];
+      return val.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    }
+
+    function kvSetLoading(on, text) {
+      kvSubmitBtn.disabled = on;
+      kvExamplesBtn.disabled = on;
+      if (text) kvSpinnerText.textContent = text;
+      kvSpinner.classList.toggle('active', on);
+      kvErrorMsg.classList.remove('active');
+    }
+
+    // --- Submit: Analyse user's entries ---
+    kvSubmitBtn.addEventListener('click', async () => {
+      const topic = kvInput.value.trim();
+      if (!topic) { kvInput.focus(); return; }
+
+      const userEntries = {};
+      let hasAny = false;
+      KV_CELL_IDS.forEach((id, i) => {
+        const lines = kvGetUserLines(id);
+        userEntries[KV_CELL_KEYS[i]] = lines;
+        if (lines.length) hasAny = true;
+      });
+
+      if (!hasAny) {
+        kvErrorMsg.textContent = 'Skriv mindst ét punkt i en af de fire kvadranter før du trykker Submit.';
+        kvErrorMsg.classList.add('active');
+        return;
+      }
+
+      kvSetLoading(true, 'Analyserer dine input\u2026');
+
+      const prompt = `Du er en videns-analytiker og kritisk sparringspartner.
+
+EMNE: "${topic}"
+
+Brugeren har selv udfyldt en Johari/Rumsfeld-matrice med sine bud. Din opgave er at ANALYSERE og KOMMENTERE hvert enkelt punkt. For hvert punkt skal du:
+
+1. Vurdere om punktet er KORREKT placeret i den pågældende kvadrant
+2. Vurdere om indholdet er faktuelt korrekt
+3. Identificere den mest relevante logiske fejlslutning eller kognitive bias
+4. Skrive en konstruktiv, specifik kommentar (2-3 sætninger)
+
+Kvadranterne:
+- kendt_viden: Ting man bevidst ved (Known Knowns)
+- kendt_ikke_viden: Ting man ved man ikke ved (Known Unknowns)
+- ukendt_viden: Tavs/ubevidst viden (Unknown Knowns)
+- ukendt_ikke_viden: Blinde pletter (Unknown Unknowns)
+
+Brug KUN disse nøgler til "ref": ${ALL_KEYS.join(', ')}
+
+Brugerens input:
+${KV_CELL_KEYS.map((k, i) => `"${k}": ${JSON.stringify(userEntries[k])}`).join('\n')}
+
+Svar KUN med valid JSON (ingen markdown udenfor JSON):
+{
+  "kendt_viden": [{"bruger_tekst": "...", "kommentar": "...", "ref": "nøgle", "korrekt_placeret": true/false}, ...],
+  "kendt_ikke_viden": [{"bruger_tekst": "...", "kommentar": "...", "ref": "nøgle", "korrekt_placeret": true/false}, ...],
+  "ukendt_viden": [{"bruger_tekst": "...", "kommentar": "...", "ref": "nøgle", "korrekt_placeret": true/false}, ...],
+  "ukendt_ikke_viden": [{"bruger_tekst": "...", "kommentar": "...", "ref": "nøgle", "korrekt_placeret": true/false}, ...]
+}
+
+Hvis en kvadrant er tom, returner et tomt array. Skriv på dansk.`;
+
+      try {
+        const parsed = await callGemini(prompt);
+
+        KV_CELL_IDS.forEach((cellId, i) => {
+          const key = KV_CELL_KEYS[i];
+          const items = parsed[key];
+          const fb = kvGetFeedback(cellId);
+          if (!Array.isArray(items) || items.length === 0) { fb.style.display = 'none'; return; }
+
+          fb.style.display = '';
+          fb.innerHTML = items.map(item => {
+            const placedIcon = item.korrekt_placeret === false ? '&#10060;' : '&#9989;';
+            return `<div class="fb-item">
+              <div class="user-text">${placedIcon} ${escapeHTML(item.bruger_tekst || '')}</div>
+              <div class="ai-comment">${escapeHTML(item.kommentar || '')}${renderTag(item.ref)}</div>
+            </div>`;
+          }).join('');
+        });
+
+      } catch (err) {
+        kvErrorMsg.textContent = `Fejl: ${err.message}`;
+        kvErrorMsg.classList.add('active');
+      } finally {
+        kvSetLoading(false);
+      }
+    });
+
+    // --- Eksempler: AI fills the matrix ---
+    kvExamplesBtn.addEventListener('click', async () => {
+      const topic = kvInput.value.trim();
+      if (!topic) { kvInput.focus(); return; }
+
+      kvSetLoading(true, 'Genererer eksempler\u2026');
+
+      const prompt = `Du er en videns-analytiker der hjælper med at kortlægge viden inden for et givet emne.
+
+EMNE: "${topic}"
+
+Udfyld en Johari-vindue / Rumsfeld-matrice med MINDST 7 punkter per kvadrant:
+
+1. "kendt_viden" (Known Knowns): Etablerede fakta og velkendt viden inden for emnet.
+
+2. "kendt_ikke_viden" (Known Unknowns): Kendte åbne spørgsmål, aktive forskningsområder, anerkendte huller i vores viden.
+
+3. "ukendt_viden" (Unknown Knowns): Tavs viden, underbevidste antagelser, ubevidst kompetence, implicitte regler, viden fra tilgrænsende felter der ER relevant men sjældent forbindes med emnet.
+
+4. "ukendt_ikke_viden" (Unknown Unknowns): Blinde pletter, uopdagede sammenhænge, forskningsfelter de fleste ikke kender til, overraskende discipliner der har relevans, potentielle paradigmeskift. Vær kreativ og tværfaglig her.
+
+For hvert punkt, angiv den mest relevante kognitive bias eller logiske fejlslutning med en af disse nøgler:
+${ALL_KEYS.join(', ')}
+
+Svar KUN med valid JSON (ingen markdown udenfor JSON):
+{
+  "kendt_viden": [{"punkt": "...", "ref": "nøgle"}, ...],
+  "kendt_ikke_viden": [{"punkt": "...", "ref": "nøgle"}, ...],
+  "ukendt_viden": [{"punkt": "...", "ref": "nøgle"}, ...],
+  "ukendt_ikke_viden": [{"punkt": "...", "ref": "nøgle"}, ...]
+}
+
+Skriv på dansk. Mindst 7 punkter per felt. Vær specifik, konkret og overraskende — undgå banaliteter.`;
+
+      try {
+        const parsed = await callGemini(prompt);
+
+        KV_CELL_IDS.forEach((cellId, i) => {
+          const key = KV_CELL_KEYS[i];
+          const items = parsed[key];
+          const fb = kvGetFeedback(cellId);
+          if (!Array.isArray(items)) { fb.style.display = 'none'; return; }
+
+          fb.style.display = '';
+          fb.innerHTML = '<ul class="example-list">' + items.map(item => {
+            const text = typeof item === 'string' ? item : item.punkt;
+            return `<li>${escapeHTML(text)}${renderTag(typeof item === 'object' ? item.ref : null)}</li>`;
+          }).join('') + '</ul>';
+        });
+
+      } catch (err) {
+        kvErrorMsg.textContent = `Fejl: ${err.message}`;
+        kvErrorMsg.classList.add('active');
+      } finally {
+        kvSetLoading(false);
+      }
+    });
+
+    // =====================================================
+    // KONKURRERENDE HYPOTESER (ACH / IBE)
+    // =====================================================
+    let hypotheses = [
+      { id: 'h1', title: '', cells: { te: '', tc: '', fe: '', fc: '' } },
+      { id: 'h2', title: '', cells: { te: '', tc: '', fe: '', fc: '' } }
+    ];
+
+    const hypContainer = document.getElementById('hypContainer');
+    const hypDatum = document.getElementById('hypDatum');
+    const hypAddBtn = document.getElementById('hypAddBtn');
+    const hypSubmitBtn = document.getElementById('hypSubmitBtn');
+    const hypSpinner = document.getElementById('hypSpinner');
+    const hypSpinnerText = document.getElementById('hypSpinnerText');
+    const hypErrorMsg = document.getElementById('hypErrorMsg');
+    const hypResult = document.getElementById('hypResult');
+    const hypInfoBtn = document.getElementById('hypInfoBtn');
+    const hypModal = document.getElementById('hypModal');
+    const hypModalClose = document.getElementById('hypModalClose');
+
+    hypInfoBtn.addEventListener('click', () => hypModal.classList.add('active'));
+    hypModalClose.addEventListener('click', () => hypModal.classList.remove('active'));
+    hypModal.addEventListener('click', e => { if (e.target === hypModal) hypModal.classList.remove('active'); });
+
+    function hypUID() { return 'h' + Math.random().toString(36).slice(2, 9); }
+
+    function renderHypotheses() {
+      hypContainer.innerHTML = hypotheses.map((hyp, idx) => `
+        <div class="hyp-card" data-hid="${hyp.id}">
+          <div class="hyp-card-header">
+            <span style="color:var(--text-muted);font-size:.85rem;white-space:nowrap">Hypotese ${idx + 1}</span>
+            <input class="hyp-title-input" type="text" placeholder='Titel: f.eks. "Tyveri"'
+                   value="${escapeHTML(hyp.title)}" data-hid="${hyp.id}" data-field="title" />
+            ${hypotheses.length > 1 ? `<button class="btn-remove-hyp" data-hid="${hyp.id}">Fjern</button>` : ''}
+          </div>
+          <div class="hyp-matrix">
+            <div class="matrix-header">
+              <div></div>
+              <div class="col-evidence">BEVIS FOR</div>
+              <div class="col-counter">MODBEVIS</div>
+            </div>
+            <div class="matrix-grid">
+              <div class="row-label row-true">SAND</div>
+              <div class="cell true-evidence">
+                <h3>Sandt bevis for</h3>
+                <textarea placeholder="Observationer der understøtter hypotesen (ét per linje)..." data-hid="${hyp.id}" data-cell="te">${escapeHTML(hyp.cells.te)}</textarea>
+              </div>
+              <div class="cell true-counter">
+                <h3>Sandt modbevis</h3>
+                <textarea placeholder="Observationer der modsiger hypotesen (ét per linje)..." data-hid="${hyp.id}" data-cell="tc">${escapeHTML(hyp.cells.tc)}</textarea>
+              </div>
+              <div class="row-label row-false">FALSK</div>
+              <div class="cell false-evidence">
+                <h3>Falsk bevis for</h3>
+                <textarea placeholder="Tilsyneladende bevis der faktisk ikke holder..." data-hid="${hyp.id}" data-cell="fe">${escapeHTML(hyp.cells.fe)}</textarea>
+              </div>
+              <div class="cell false-counter">
+                <h3>Falsk modbevis</h3>
+                <textarea placeholder="Tilsyneladende modbevis der faktisk ikke holder..." data-hid="${hyp.id}" data-cell="fc">${escapeHTML(hyp.cells.fc)}</textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function syncHypState() {
+      hypContainer.querySelectorAll('textarea[data-hid]').forEach(ta => {
+        const hyp = hypotheses.find(h => h.id === ta.dataset.hid);
+        if (hyp && ta.dataset.cell) hyp.cells[ta.dataset.cell] = ta.value;
+      });
+      hypContainer.querySelectorAll('input.hyp-title-input[data-hid]').forEach(inp => {
+        const hyp = hypotheses.find(h => h.id === inp.dataset.hid);
+        if (hyp) hyp.title = inp.value;
+      });
+    }
+
+    hypContainer.addEventListener('input', e => {
+      const hid = e.target.dataset.hid;
+      if (!hid) return;
+      const hyp = hypotheses.find(h => h.id === hid);
+      if (!hyp) return;
+      if (e.target.dataset.field === 'title') hyp.title = e.target.value;
+      else if (e.target.dataset.cell) hyp.cells[e.target.dataset.cell] = e.target.value;
+    });
+
+    hypContainer.addEventListener('click', e => {
+      const btn = e.target.closest('.btn-remove-hyp');
+      if (!btn) return;
+      syncHypState();
+      hypotheses = hypotheses.filter(h => h.id !== btn.dataset.hid);
+      renderHypotheses();
+    });
+
+    hypAddBtn.addEventListener('click', () => {
+      syncHypState();
+      hypotheses.push({ id: hypUID(), title: '', cells: { te: '', tc: '', fe: '', fc: '' } });
+      renderHypotheses();
+      setTimeout(() => hypContainer.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    });
+
+    function hypSetLoading(on, text) {
+      hypSubmitBtn.disabled = on;
+      hypAddBtn.disabled = on;
+      if (text) hypSpinnerText.textContent = text;
+      hypSpinner.classList.toggle('active', on);
+      hypErrorMsg.classList.remove('active');
+    }
+
+    hypSubmitBtn.addEventListener('click', async () => {
+      const datum = hypDatum.value.trim();
+      if (!datum) { hypDatum.focus(); return; }
+      if (hypotheses.length < 2) {
+        hypErrorMsg.textContent = 'Tilføj mindst 2 konkurrerende hypoteser.';
+        hypErrorMsg.classList.add('active');
+        return;
+      }
+
+      syncHypState();
+
+      const hasContent = hypotheses.some(h =>
+        h.cells.te.trim() || h.cells.tc.trim() || h.cells.fe.trim() || h.cells.fc.trim()
+      );
+      if (!hasContent) {
+        hypErrorMsg.textContent = 'Udfyld mindst ét felt i mindst én hypotese.';
+        hypErrorMsg.classList.add('active');
+        return;
+      }
+
+      hypSetLoading(true, 'Sammenligner hypoteser\u2026');
+      hypResult.style.display = 'none';
+
+      const hypList = hypotheses.map((h, i) => ({
+        nummer: i + 1,
+        titel: h.title || `Hypotese ${i + 1}`,
+        sandt_bevis_for: h.cells.te,
+        sandt_modbevis: h.cells.tc,
+        falsk_bevis_for: h.cells.fe,
+        falsk_modbevis: h.cells.fc
+      }));
+
+      const prompt = `Du er ekspert i Analysis of Competing Hypotheses (ACH) og Inference to the Best Explanation (IBE).
+
+FAKTUM/DATUM: "${datum}"
+
+Brugeren har opstillet ${hypotheses.length} konkurrerende hypoteser. For hver hypotese er der en 2x2 matrice med:
+- sandt_bevis_for: Sande observationer der understøtter hypotesen
+- sandt_modbevis: Sande observationer der modsiger hypotesen
+- falsk_bevis_for: Tilsyneladende bevis der ikke holder ved nærmere analyse
+- falsk_modbevis: Tilsyneladende modbevis der faktisk ikke afkræfter hypotesen
+
+Hypoteser:
+${JSON.stringify(hypList, null, 2)}
+
+Din opgave:
+1. Analyser alle hypoteser systematisk op mod faktumet
+2. Vurder hvert bevis/modbevis — vægter sandt modbevis negativt, sandt bevis positivt
+3. Giv en forklaringskraft-score 0-100 for hver hypotese
+4. Ranger dem fra bedst (rang 1) til dårligst forklarende
+5. Identificer styrker og svagheder ved hver
+6. Giv en samlet IBE-konklusion
+
+Svar KUN med valid JSON (ingen markdown):
+{
+  "hypoteser": [
+    {
+      "nummer": 1,
+      "titel": "...",
+      "forklaringskraft": 85,
+      "rang": 1,
+      "vurdering": "Detaljeret analyse (3-5 sætninger)",
+      "styrker": ["...", "..."],
+      "svagheder": ["...", "..."]
+    }
+  ],
+  "konklusion": "Samlet IBE-konklusion (3-5 sætninger) der forklarer hvilken hypotese der bedst forklarer faktumet og hvorfor de andre er svagere."
+}
+
+Skriv på dansk. Vær analytisk, præcis og konstruktiv.`;
+
+      try {
+        const parsed = await callGemini(prompt);
+        let html = '';
+
+        if (parsed.konklusion) {
+          html += `<div class="hyp-conclusion"><h3>&#128270; IBE-konklusion</h3><p>${escapeHTML(parsed.konklusion)}</p></div>`;
+        }
+
+        const sorted = (parsed.hypoteser || []).slice().sort((a, b) => (a.rang || 99) - (b.rang || 99));
+        sorted.forEach(h => {
+          const score = Math.min(100, Math.max(0, h.forklaringskraft || 0));
+          const styrker = Array.isArray(h.styrker) && h.styrker.length
+            ? '<ul style="margin:.3rem 0 0 1rem">' + h.styrker.map(s =>
+                `<li style="font-size:.82rem;margin:.15rem 0;color:var(--text)">${escapeHTML(s)}</li>`).join('') + '</ul>' : '';
+          const svagheder = Array.isArray(h.svagheder) && h.svagheder.length
+            ? '<ul style="margin:.3rem 0 0 1rem">' + h.svagheder.map(s =>
+                `<li style="font-size:.82rem;margin:.15rem 0;color:var(--text)">${escapeHTML(s)}</li>`).join('') + '</ul>' : '';
+          html += `<div class="hyp-result-card">
+            <h3>
+              <span class="rank-badge">#${h.rang}</span>
+              ${escapeHTML(h.titel || '')}
+              <span style="color:var(--text-muted);font-size:.85rem;font-weight:400">(${score}/100)</span>
+            </h3>
+            <div class="hyp-score-bar"><div class="hyp-score-fill" style="width:${score}%"></div></div>
+            <p class="hyp-verdict" style="margin-top:.75rem">${escapeHTML(h.vurdering || '')}</p>
+            ${styrker ? `<div style="margin-top:.5rem"><span style="font-size:.75rem;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:.05em">Styrker</span>${styrker}</div>` : ''}
+            ${svagheder ? `<div style="margin-top:.4rem"><span style="font-size:.75rem;font-weight:700;color:#fda4af;text-transform:uppercase;letter-spacing:.05em">Svagheder</span>${svagheder}</div>` : ''}
+          </div>`;
+        });
+
+        hypResult.innerHTML = html;
+        hypResult.style.display = '';
+        hypResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      } catch (err) {
+        hypErrorMsg.textContent = `Fejl: ${err.message}`;
+        hypErrorMsg.classList.add('active');
+      } finally {
+        hypSetLoading(false);
+      }
+    });
+
+    // Initial render
+    renderHypotheses();
+  </script>
+  <!-- AI Suite Assistant -->
+  <script src="../SMFI_Suite/bus.js?v=3"></script>
+  <script src="../SMFI_Suite/google-api.js?v=3"></script>
+  <script src="../SMFI_Suite/ai-assistant.js?v=5"></script>
+
+  <!-- Theme Listener + Global Save/Load -->
+  <script>
+    function applyGlobalTheme(theme) {
+      if (theme === 'light') { document.body.classList.add('theme-light'); }
+      else { document.body.classList.remove('theme-light'); }
+    }
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'THEME_CHANGE') { applyGlobalTheme(event.data.theme); }
+    });
+    const savedGlobalTheme = localStorage.getItem('smfi-theme');
+    if (savedGlobalTheme) { applyGlobalTheme(savedGlobalTheme); }
+
+    if (window.bus) {
+      window.bus.subscribe('request-state', () => {
+        try {
+          const state = {
+            propInput: document.getElementById('propInput').value,
+            kvInput: document.getElementById('kvInput').value,
+            hypDatum: document.getElementById('hypDatum').value,
+            activeTab: document.querySelector('.tab-btn.active')?.dataset.tab || 'prop-tab',
+            cells: {},
+            kvCells: {},
+            hypotheses: hypotheses
+          };
+          ['cell-te', 'cell-fe', 'cell-tc', 'cell-fc'].forEach(id => {
+            const ta = document.querySelector(`#${id} textarea`);
+            const fb = document.querySelector(`#${id} .ai-feedback`);
+            state.cells[id] = { text: ta ? ta.value : '', feedback: fb ? fb.innerHTML : '' };
+          });
+          ['cell-kk', 'cell-ku', 'cell-uk', 'cell-uu'].forEach(id => {
+            const ta = document.querySelector(`#${id} textarea`);
+            const fb = document.querySelector(`#${id} .ai-feedback`);
+            state.kvCells[id] = { text: ta ? ta.value : '', feedback: fb ? fb.innerHTML : '' };
+          });
+          window.bus.publish('state-response', { app: 'Proposition-tester', state });
+        } catch (e) {
+          console.error('PropTester Save Error:', e);
+        }
+      });
+
+      window.bus.subscribe('load-state', (data) => {
+        try {
+          if (data && data.apps && data.apps['Proposition-tester']) {
+            const s = data.apps['Proposition-tester'];
+            if (typeof s.propInput === 'string') document.getElementById('propInput').value = s.propInput;
+            if (typeof s.kvInput === 'string') document.getElementById('kvInput').value = s.kvInput;
+            if (s.cells) {
+              Object.keys(s.cells).forEach(id => {
+                const ta = document.querySelector(`#${id} textarea`);
+                const fb = document.querySelector(`#${id} .ai-feedback`);
+                if (ta) ta.value = s.cells[id].text || '';
+                if (fb) {
+                  fb.innerHTML = s.cells[id].feedback || '';
+                  fb.style.display = fb.innerHTML.trim() ? '' : 'none';
+                }
+              });
+            }
+            if (s.kvCells) {
+              Object.keys(s.kvCells).forEach(id => {
+                const ta = document.querySelector(`#${id} textarea`);
+                const fb = document.querySelector(`#${id} .ai-feedback`);
+                if (ta) ta.value = s.kvCells[id].text || '';
+                if (fb) {
+                  fb.innerHTML = s.kvCells[id].feedback || '';
+                  fb.style.display = fb.innerHTML.trim() ? '' : 'none';
+                }
+              });
+            }
+            if (typeof s.hypDatum === 'string') document.getElementById('hypDatum').value = s.hypDatum;
+            if (Array.isArray(s.hypotheses) && s.hypotheses.length) {
+              hypotheses = s.hypotheses;
+              renderHypotheses();
+            }
+            if (s.activeTab && document.querySelector(`.tab-btn[data-tab="${s.activeTab}"]`)) {
+              document.querySelector(`.tab-btn[data-tab="${s.activeTab}"]`).click();
+            }
+          }
+        } catch (e) {
+          console.error('PropTester Load Error:', e);
+        }
+      });
+    }
+  </script>
+</body>
+
+</html>

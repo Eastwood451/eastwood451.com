@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="da">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMFI Omnibus SUITE - Antigravity</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="suite-dashboard.css">
+    <link rel="stylesheet" href="ai-assistant.css">
+    <style>
+        body,
+        html {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #1e1e2f 0%, #151520 100%);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            transition: width 0.25s cubic-bezier(0.4,0,0.2,1);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .sidebar.collapsed {
+            width: 56px;
+        }
+
+        /* Hide text labels when collapsed */
+        .sidebar.collapsed .sidebar-label,
+        .sidebar.collapsed .suite-title-sidebar,
+        .sidebar.collapsed .sidebar-btn-text,
+        .sidebar.collapsed hr,
+        .sidebar.collapsed .text-muted.small.fw-bold,
+        .sidebar.collapsed #theme-toggle-btn,
+        .sidebar.collapsed .small.text-muted.text-center,
+        .sidebar.collapsed .d-flex.gap-2.px-2.mb-3 {
+            display: none !important;
+        }
+
+        .sidebar.collapsed .nav-link {
+            justify-content: center;
+            padding: 10px 0;
+            margin-bottom: 2px;
+        }
+
+        .sidebar.collapsed .nav-link i {
+            margin: 0 !important;
+            font-size: 1.25rem !important;
+        }
+
+        .sidebar.collapsed #app-nav {
+            padding: 0 6px;
+        }
+
+        .sidebar.collapsed .sidebar-header {
+            justify-content: center !important;
+            padding: 12px 0 !important;
+        }
+
+        /* Toggle button */
+        .sidebar-toggle-btn {
+            background: none;
+            border: none;
+            color: #b0b8c8;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 6px;
+            line-height: 1;
+            font-size: 1.1rem;
+            transition: background 0.15s, color 0.15s;
+            flex-shrink: 0;
+        }
+        .sidebar-toggle-btn:hover {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+        }
+        body.theme-light .sidebar-toggle-btn {
+            color: #495057;
+        }
+        body.theme-light .sidebar-toggle-btn:hover {
+            background: rgba(0,0,0,0.06);
+            color: #212529;
+        }
+
+        .suite-title-sidebar {
+            background: linear-gradient(135deg, #6ee7b7, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+            margin-bottom: 0;
+        }
+
+        .nav-link {
+            color: #b0b8c8;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            padding: 10px 16px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-link:hover {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.05);
+            transform: translateX(4px);
+        }
+
+        .nav-link.active {
+            background-color: rgba(99, 102, 241, 0.15);
+            color: #fff;
+            box-shadow: inset 3px 0 0 #6366f1;
+        }
+
+        .app-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background-color: #f1f5f9;
+            display: none;
+        }
+
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            background-color: #0f0f1a;
+        }
+
+        .welcome-screen.hidden {
+            display: none;
+        }
+
+        .welcome-card {
+            background: #1a1a2e;
+            border: 1px solid #2a2a4a;
+            border-radius: 16px;
+            padding: 3rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .welcome-card p {
+            color: #b0b8c8 !important;
+        }
+
+        /* Light Theme Overrides */
+        body.theme-light .sidebar {
+            background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        body.theme-light .nav-link {
+            color: #495057;
+        }
+
+        body.theme-light .nav-link:hover {
+            color: #212529;
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        body.theme-light .nav-link.active {
+            background-color: rgba(99, 102, 241, 0.1);
+            color: #4f46e5;
+        }
+
+        body.theme-light .welcome-screen {
+            background-color: #f8f9fa !important;
+        }
+
+        body.theme-light .welcome-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        body.theme-light .welcome-card p {
+            color: #6c757d !important;
+        }
+
+        body.theme-light main {
+            background-color: #f1f5f9 !important;
+        }
+
+        body.theme-light .text-white {
+            color: #212529 !important;
+        }
+
+        body.theme-light .border-secondary {
+            border-color: #dee2e6 !important;
+        }
+
+        body.theme-light .text-muted {
+            color: #6c757d !important;
+        }
+
+        body.theme-light #theme-toggle-btn {
+            color: #212529;
+            border-color: #ced4da;
+        }
+
+        body.theme-light #theme-toggle-btn:hover {
+            background-color: #e9ecef;
+        }
+    </style>
+</head>
+
+<body class="d-flex" ondragover="event.preventDefault();event.stopPropagation();" ondrop="event.preventDefault();event.stopPropagation();">
+
+    <!-- Navigation Menu (Sidebar) -->
+    <nav class="sidebar d-flex flex-column p-3 text-white" id="main-sidebar">
+        <!-- Header row: title + toggle button -->
+        <div class="sidebar-header d-flex align-items-center justify-content-between mb-4 mt-2 px-2">
+            <a href="#" class="text-white text-decoration-none" id="home-btn">
+                <span class="fs-4 fw-bold suite-title-sidebar sidebar-label">SMFI SUITE</span>
+            </a>
+            <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Skjul/vis sidebar">
+                <i class="bi bi-layout-sidebar" id="sidebar-toggle-icon"></i>
+            </button>
+        </div>
+
+        <!-- Global Save/Load Navigation -->
+        <div class="d-flex gap-2 px-2 mb-3">
+            <button id="btn-save-project"
+                class="btn btn-sm btn-outline-success flex-grow-1 d-flex align-items-center justify-content-center"
+                title="Gem hele suitens tilstand">
+                <i class="bi bi-floppy-fill me-2"></i> Gem
+            </button>
+            <button id="btn-load-project"
+                class="btn btn-sm btn-outline-primary flex-grow-1 d-flex align-items-center justify-content-center"
+                title="Åben et eksisterende projekt">
+                <i class="bi bi-folder2-open me-2"></i> Åben
+            </button>
+            <input type="file" id="project-file-input" accept=".json" style="display: none;">
+        </div>
+
+        <hr class="border-secondary mt-0">
+
+        <p class="text-uppercase text-muted small fw-bold mb-2 px-2" style="font-size: 0.75rem; letter-spacing: 1px;">
+            Apps</p>
+
+        <ul class="nav nav-pills flex-column mb-auto" id="app-nav">
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-src="../Dimensionsvisualisering - Antigravity/index.html" title="Dimensionsvisualisering">
+                    <i class="bi bi-bar-chart-fill me-3 fs-5" style="color: #3b82f6;"></i><span class="sidebar-label">Dimensionsvisualisering</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-src="../Mindmap - Antigravity/mindmap.html" title="Mindmap &amp; Braindump">
+                    <i class="bi bi-diagram-3-fill me-3 fs-5" style="color: #10b981;"></i><span class="sidebar-label">Mindmap &amp; Braindump</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-src="../Motivations-matrice - Antigravity/index.html" title="Motivations-matrice">
+                    <i class="bi bi-grid-1x2-fill me-3 fs-5" style="color: #f59e0b;"></i><span class="sidebar-label">Motivations-matrice</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-src="../Belief-map%20-%20Antigravity/Proposition-tester%20-%20Antigravity/index.html" title="Proposition-tester">
+                    <i class="bi bi-ui-checks-grid me-3 fs-5" style="color: #ef4444;"></i><span class="sidebar-label">Proposition-tester</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-src="../SMFI - Nested Actor - Antigravity/index.html?v=3" title="SMFI Nested Actor">
+                    <i class="bi bi-layers-fill me-3 fs-5" style="color: #8b5cf6;"></i><span class="sidebar-label">SMFI Nested Actor</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" data-src="../Belief-map%20-%20Antigravity/Argument-mapper%20-%20codex/index.html?v=19" title="Belief-map">
+                    <i class="bi bi-map-fill me-3 fs-5" style="color: #06b6d4;"></i><span class="sidebar-label">Belief-map</span>
+                </a>
+            </li>
+        </ul>
+
+        <hr class="border-secondary mt-auto mb-3">
+        <div class="px-3 pb-3">
+            <button id="theme-toggle-btn"
+                class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center text-light border-secondary">
+                <i class="bi bi-moon-fill me-2" id="theme-icon"></i> <span id="theme-text">Dark Mode</span>
+            </button>
+        </div>
+        <div class="small text-muted text-center pb-2">
+            Antigravity OS v4.0
+        </div>
+    </nav>
+
+    <!-- Main Content Area containing the iframe -->
+    <main class="flex-grow-1 position-relative h-100" style="background-color: #0f0f1a;">
+
+        <!-- Welcome Screen when no app is selected -->
+        <div id="welcome-screen" class="welcome-screen">
+            <div class="welcome-card">
+                <div class="mb-4" style="font-size: 4rem;">🚀</div>
+                <h2 class="fw-bold mb-3 suite-title-sidebar" style="font-size: 2.5rem;">Velkommen til Suiten</h2>
+                <p class="text-muted mb-4 lead">Vælg en applikation i menuen til venstre for at starte. AI-assistenten
+                    til højre er gennemgående og husker din samtale, selvom du skifter mellem apps.</p>
+                <button class="btn btn-primary px-4 py-2 fw-bold"
+                    onclick="document.querySelector('.nav-link').click()">Start første app</button>
+            </div>
+        </div>
+
+        <iframe class="app-iframe" src="../Dimensionsvisualisering - Antigravity/index.html"
+            data-app="Dimensionsvisualisering"></iframe>
+        <iframe class="app-iframe" src="../Mindmap - Antigravity/mindmap.html"
+            data-app="Mindmap &amp; Braindump"></iframe>
+        <iframe class="app-iframe" src="../Motivations-matrice - Antigravity/index.html"
+            data-app="Motivations-matrice"></iframe>
+        <iframe class="app-iframe" src="../Belief-map%20-%20Antigravity/Proposition-tester%20-%20Antigravity/index.html"
+            data-app="Proposition-tester"></iframe>
+        <iframe class="app-iframe" src="../SMFI - Nested Actor - Antigravity/index.html?v=3"
+            data-app="SMFI Nested Actor"></iframe>
+        <iframe class="app-iframe" src="../Belief-map%20-%20Antigravity/Argument-mapper%20-%20codex/index.html?v=19"
+            data-app="Belief-map"></iframe>
+    </main>
+
+    <!-- AI Assistant UI -->
+    <div id="ai-assistant-wrapper">
+        <aside class="chat-panel" id="ai-assistant">
+            <div class="chat-inner">
+                <div class="chat-header">
+                    <div>
+                        <h3 class="chat-title">SMFI AI Assistent</h3>
+                        <p class="chat-subtitle">Gennemgående Suite AI</p>
+                    </div>
+                    <button class="close-btn" id="ai-close-btn" title="Luk AI-assistent">✕</button>
+                </div>
+                <div class="chat-messages" id="ai-messages">
+                    <div class="chat-welcome">Hej! Jeg er din overordnede SMFI Suite assistent. Jeg kan ledsage dig på
+                        tværs af alle dine apps. Spørg løs!</div>
+                </div>
+                <div class="chat-input-area">
+                    <textarea id="ai-input-field" class="chat-input" placeholder="Skriv en besked..."
+                        rows="1"></textarea>
+                    <button class="chat-send-btn" id="ai-send-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M22 2L11 13" />
+                            <path d="M22 2l-7 20-4-9-9-4 20-7z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- The Persistent AI Assistant is injected by this script. Because this is the top window, it renders the UI. -->
+    <script src="bus.js?v=3"></script>
+    <script src="google-api.js?v=3"></script>
+    <script src="ai-assistant.js?v=5"></script>
+    <script src="project-manager.js?v=2"></script>
+
+    <script>
+        // Prevent browser from navigating to dropped files on the Suite page itself
+        window.addEventListener('dragover', e => e.preventDefault());
+        window.addEventListener('drop',     e => e.preventDefault());
+
+        // Also prevent iframes from navigating when a file is dragged over/dropped on them
+        document.querySelectorAll('.app-iframe').forEach(iframe => {
+            iframe.addEventListener('dragover', e => e.preventDefault());
+            iframe.addEventListener('drop',     e => e.preventDefault());
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // ── AI panel toggle ─────────────────────────────────
+            const aiWrapper = document.getElementById('ai-assistant-wrapper');
+            const aiCloseBtn = document.getElementById('ai-close-btn');
+
+            function setAiCollapsed(collapsed) {
+                aiWrapper.classList.toggle('collapsed', collapsed);
+                localStorage.setItem('aiPanelCollapsed', collapsed ? '1' : '0');
+            }
+
+            setAiCollapsed(localStorage.getItem('aiPanelCollapsed') === '1');
+
+            aiCloseBtn.addEventListener('click', (e) => { e.stopPropagation(); setAiCollapsed(true); });
+
+            // Re-open tab click
+            aiWrapper.addEventListener('click', (e) => {
+                if (aiWrapper.classList.contains('collapsed')) setAiCollapsed(false);
+            });
+            // ────────────────────────────────────────────────────
+
+            // ── Sidebar toggle ──────────────────────────────────
+            const sidebar = document.getElementById('main-sidebar');
+            const toggleBtn = document.getElementById('sidebar-toggle-btn');
+            const toggleIcon = document.getElementById('sidebar-toggle-icon');
+
+            function setSidebarCollapsed(collapsed) {
+                sidebar.classList.toggle('collapsed', collapsed);
+                toggleIcon.className = collapsed ? 'bi bi-layout-sidebar-reverse' : 'bi bi-layout-sidebar';
+                localStorage.setItem('sidebarCollapsed', collapsed ? '1' : '0');
+            }
+
+            // Restore saved state
+            setSidebarCollapsed(localStorage.getItem('sidebarCollapsed') === '1');
+
+            toggleBtn.addEventListener('click', () => {
+                setSidebarCollapsed(!sidebar.classList.contains('collapsed'));
+            });
+            // ────────────────────────────────────────────────────
+
+            const links = document.querySelectorAll('.nav-link');
+            const iframes = document.querySelectorAll('.app-iframe');
+            const welcomeScreen = document.getElementById('welcome-screen');
+            const homeBtn = document.getElementById('home-btn');
+
+            links.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+
+                    // Update active state
+                    links.forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+
+                    // Show the correct iframe, hide the welcome screen and others
+                    welcomeScreen.classList.add('hidden');
+                    const targetSrc = link.getAttribute('data-src');
+
+                    iframes.forEach(iframe => {
+                        const iframeSrc = iframe.getAttribute('src');
+                        if (iframeSrc === targetSrc) {
+                            iframe.style.display = 'block';
+                        } else {
+                            iframe.style.display = 'none';
+                        }
+                    });
+                });
+            });
+
+            // Home button goes back to welcome screen
+            homeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                links.forEach(l => l.classList.remove('active'));
+                iframes.forEach(iframe => iframe.style.display = 'none');
+                welcomeScreen.classList.remove('hidden');
+            });
+
+            // Theme Toggle Logic
+            const themeToggleBtn = document.getElementById('theme-toggle-btn');
+            const themeIcon = document.getElementById('theme-icon');
+            const themeText = document.getElementById('theme-text');
+
+            function setTheme(theme) {
+                if (theme === 'light') {
+                    document.body.classList.add('theme-light');
+                    themeIcon.className = 'bi bi-sun-fill me-2 text-dark';
+                    themeText.textContent = 'Light Mode';
+                } else {
+                    document.body.classList.remove('theme-light');
+                    themeIcon.className = 'bi bi-moon-fill me-2';
+                    themeText.textContent = 'Dark Mode';
+                }
+                localStorage.setItem('smfi-theme', theme);
+
+                // Send postMessage to all loaded iframes
+                iframes.forEach(iframe => {
+                    if (iframe.contentWindow) {
+                        iframe.contentWindow.postMessage({ type: 'THEME_CHANGE', theme: theme }, '*');
+                    }
+                });
+            }
+
+            // Init theme
+            const savedTheme = localStorage.getItem('smfi-theme') || 'dark';
+            setTheme(savedTheme);
+
+            themeToggleBtn.addEventListener('click', () => {
+                const currentTheme = document.body.classList.contains('theme-light') ? 'light' : 'dark';
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                setTheme(newTheme);
+            });
+
+            // Re-send theme when iframes load to ensure they are synced
+            iframes.forEach(iframe => {
+                iframe.addEventListener('load', () => {
+                    const currentTheme = document.body.classList.contains('theme-light') ? 'light' : 'dark';
+                    iframe.contentWindow.postMessage({ type: 'THEME_CHANGE', theme: currentTheme }, '*');
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,276 @@
+/* Canvas Styles */
+.canvas-container {
+    flex: 1;
+    background-color: #12121f;
+    position: relative;
+    overflow: hidden;
+}
+
+#canvas-svg {
+    width: 100%;
+    height: 100%;
+    cursor: default;
+}
+
+#canvas-svg.mode-select {
+    cursor: grab;
+}
+
+#canvas-svg.mode-add-dimension {
+    cursor: crosshair;
+}
+
+#canvas-svg.mode-add-marker {
+    cursor: crosshair;
+}
+
+#canvas-svg.mode-connect {
+    cursor: crosshair;
+}
+
+/* Dimension Styles */
+.dimension-line {
+    cursor: move;
+}
+
+.dimension-line:hover {
+    cursor: move;
+}
+
+.dimension-line-visible {
+    stroke: #b0b8c8;
+    stroke-width: 2;
+    fill: none;
+    pointer-events: none;
+}
+
+.dimension-group:hover .dimension-line-visible {
+    stroke: #e0e0e0;
+}
+
+.dimension-group.selected .dimension-line-visible {
+    stroke: #6366f1;
+    stroke-width: 3;
+}
+
+.dimension-endpoint {
+    fill: #b0b8c8;
+    cursor: grab;
+}
+
+.dimension-endpoint:hover {
+    fill: #6366f1;
+}
+
+.dimension-endpoint:active {
+    cursor: grabbing;
+}
+
+.dimension-label {
+    font-size: 12px;
+    fill: #e0e0e0;
+    user-select: none;
+    pointer-events: none;
+}
+
+.dimension-scale-text {
+    font-size: 10px;
+    fill: #b0b8c8;
+    user-select: none;
+    pointer-events: none;
+}
+
+/* Marker Styles */
+.marker {
+    cursor: move;
+}
+
+.marker:hover {
+    cursor: move;
+}
+
+.marker-visible {
+    pointer-events: none;
+}
+
+.marker-group:hover .marker-visible {
+    opacity: 0.8;
+}
+
+.marker-group.selected .marker-visible {
+    stroke: #6366f1 !important;
+    stroke-width: 3;
+}
+
+.marker-label {
+    font-size: 10px;
+    fill: #e0e0e0;
+    user-select: none;
+    pointer-events: none;
+}
+
+/* Connection Styles */
+.connection {
+    fill: none;
+    stroke-width: 2;
+}
+
+.connection.solid {
+    stroke-dasharray: none;
+}
+
+.connection.dashed {
+    stroke-dasharray: 5, 5;
+}
+
+.connection.selected {
+    stroke-width: 3;
+}
+
+.connection:hover {
+    stroke-width: 3;
+    cursor: pointer;
+}
+
+/* Polygon Styles */
+.polygon-fill {
+    opacity: 0.3;
+    cursor: pointer;
+}
+
+.polygon-fill.selected {
+    opacity: 0.5;
+    stroke: #6366f1;
+    stroke-width: 2;
+}
+
+.polygon-fill:hover {
+    opacity: 0.4;
+}
+
+/* Rotation Handle Styles */
+.rotation-handle {
+    fill: #6366f1;
+    stroke: #1a1a2e;
+    stroke-width: 2;
+    cursor: grab;
+}
+
+.rotation-handle:hover {
+    fill: #818cf8;
+}
+
+.rotation-handle:active {
+    cursor: grabbing;
+}
+
+.rotation-line {
+    stroke: #6366f1;
+    stroke-width: 1;
+    stroke-dasharray: 3, 3;
+    fill: none;
+    pointer-events: none;
+}
+
+/* Snap Indicator */
+.snap-indicator {
+    fill: none;
+    stroke: #10b981;
+    stroke-width: 2;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* Selection Box */
+.selection-box {
+    fill: rgba(99, 102, 241, 0.1);
+    stroke: #6366f1;
+    stroke-width: 1;
+    stroke-dasharray: 5, 5;
+}
+
+/* Drag Ghost */
+.drag-ghost {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Light Theme Overrides */
+body.theme-light .canvas-container {
+    background-color: #ffffff;
+}
+
+body.theme-light .dimension-line-visible {
+    stroke: #64748b;
+}
+
+body.theme-light .dimension-group:hover .dimension-line-visible {
+    stroke: #334155;
+}
+
+body.theme-light .dimension-group.selected .dimension-line-visible {
+    stroke: #3b82f6;
+}
+
+body.theme-light .dimension-endpoint {
+    fill: #64748b;
+}
+
+body.theme-light .dimension-endpoint:hover {
+    fill: #3b82f6;
+}
+
+body.theme-light .dimension-label {
+    fill: #334155;
+}
+
+body.theme-light .dimension-scale-text {
+    fill: #64748b;
+}
+
+body.theme-light .marker-group.selected .marker-visible {
+    stroke: #3b82f6 !important;
+}
+
+body.theme-light .marker-label-bg {
+    fill: #f8fafc;
+    stroke: #e2e8f0;
+}
+
+body.theme-light .marker-label-text {
+    fill: #334155;
+}
+
+body.theme-light .connection-line-visible {
+    stroke: #94a3b8;
+}
+
+body.theme-light .connection-group:hover .connection-line-visible {
+    stroke: #64748b;
+}
+
+body.theme-light .connection-group.selected .connection-line-visible {
+    stroke: #3b82f6;
+}
+
+body.theme-light .intersection-point {
+    fill: #eab308;
+    stroke: #ca8a04;
+}
+
+body.theme-light .intersection-point:hover {
+    fill: #ca8a04;
+}
+
+body.theme-light .intersection-group.selected .intersection-point {
+    stroke: #3b82f6;
+}
+
+body.theme-light .handle {
+    fill: #ffffff;
+    stroke: #3b82f6;
+}
+
+body.theme-light .handle:hover {
+    fill: #3b82f6;
+}
