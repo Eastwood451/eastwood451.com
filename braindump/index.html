@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="da">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Braindump Memo</title>
+    <script src="/auth.js"></script>
+    <style>
+      :root {
+        --bg: #0b0f14;
+        --panel: #111820;
+        --panel-2: #18222d;
+        --line: rgba(255, 255, 255, 0.16);
+        --text: #f4f7fb;
+        --muted: #98a8b9;
+        --accent: #74d7ff;
+        --accent-strong: #31bfff;
+        --mark: #9de4ff;
+        --danger: #ff645f;
+        --shadow: rgba(0, 0, 0, 0.36);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        overflow: hidden;
+        color: var(--text);
+        background:
+          linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+          #0b0f14;
+        background-size: 32px 32px;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .app {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        height: 100%;
+      }
+
+      .topbar {
+        z-index: 10;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 14px;
+        min-height: 64px;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(13, 18, 24, 0.92);
+        backdrop-filter: blur(16px);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .home {
+        display: inline-grid;
+        place-items: center;
+        width: 38px;
+        height: 38px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--text);
+        background: var(--panel);
+        text-decoration: none;
+      }
+
+      .home:focus-visible,
+      .home:hover {
+        outline: 0;
+        border-color: var(--accent);
+      }
+
+      .home svg {
+        width: 18px;
+        height: 18px;
+        stroke: currentColor;
+        stroke-width: 2;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.1;
+      }
+
+      .tools {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .tool-button,
+      .command-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-width: 42px;
+        height: 38px;
+        padding: 0 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--text);
+        background: var(--panel);
+        cursor: pointer;
+      }
+
+      .tool-button svg,
+      .command-button svg {
+        width: 18px;
+        height: 18px;
+        stroke: currentColor;
+        stroke-width: 2;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .tool-button:hover,
+      .tool-button:focus-visible,
+      .command-button:hover,
+      .command-button:focus-visible {
+        outline: 0;
+        border-color: var(--accent);
+      }
+
+      .tool-button.is-active {
+        border-color: var(--accent-strong);
+        background: #123140;
+        color: #eefdff;
+      }
+
+      .actions {
+        display: flex;
+        justify-content: end;
+        gap: 8px;
+      }
+
+      .command-button.is-danger {
+        color: #fff0ef;
+      }
+
+      .command-button.is-danger:hover,
+      .command-button.is-danger:focus-visible {
+        border-color: var(--danger);
+      }
+
+      #workspace {
+        position: relative;
+        overflow: hidden;
+        min-width: 0;
+        background:
+          radial-gradient(circle at 50% 50%, rgba(116, 215, 255, 0.06), transparent 38%),
+          transparent;
+      }
+
+      #pan {
+        position: absolute;
+        inset: 0;
+        transform-origin: 0 0;
+      }
+
+      .empty-state {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        color: rgba(244, 247, 251, 0.36);
+        font-size: clamp(2rem, 8vw, 5.8rem);
+        font-weight: 900;
+        letter-spacing: 0;
+        pointer-events: none;
+        user-select: none;
+      }
+
+      .image-node {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 320px;
+        height: 220px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 8px;
+        background: #06090d;
+        box-shadow: 0 22px 54px var(--shadow);
+        touch-action: none;
+        user-select: none;
+      }
+
+      .image-node.is-selected {
+        border-color: var(--accent);
+        box-shadow: 0 24px 62px rgba(49, 191, 255, 0.22);
+      }
+
+      .image-node img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: 7px;
+        object-fit: fill;
+        pointer-events: none;
+      }
+
+      .mark-layer {
+        position: absolute;
+        inset: 0;
+        overflow: visible;
+        border-radius: 7px;
+        pointer-events: auto;
+      }
+
+      .mark-layer rect,
+      .mark-layer path {
+        vector-effect: non-scaling-stroke;
+        cursor: pointer;
+        transition: fill 120ms ease;
+      }
+
+      .mark-layer .mark.is-empty {
+        fill: transparent;
+      }
+
+      .draw-preview {
+        pointer-events: none;
+        vector-effect: non-scaling-stroke;
+      }
+
+      .resize-handle {
+        position: absolute;
+        width: 15px;
+        height: 15px;
+        border: 2px solid #092431;
+        border-radius: 4px;
+        background: var(--accent);
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .image-node.is-selected .resize-handle {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .resize-handle[data-corner="nw"] {
+        left: -8px;
+        top: -8px;
+        cursor: nwse-resize;
+      }
+
+      .resize-handle[data-corner="ne"] {
+        right: -8px;
+        top: -8px;
+        cursor: nesw-resize;
+      }
+
+      .resize-handle[data-corner="sw"] {
+        left: -8px;
+        bottom: -8px;
+        cursor: nesw-resize;
+      }
+
+      .resize-handle[data-corner="se"] {
+        right: -8px;
+        bottom: -8px;
+        cursor: nwse-resize;
+      }
+
+      .status {
+        position: absolute;
+        left: 12px;
+        bottom: 12px;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--muted);
+        background: rgba(13, 18, 24, 0.82);
+        font-size: 0.78rem;
+        pointer-events: none;
+      }
+
+      @media (max-width: 720px) {
+        .topbar {
+          grid-template-columns: 1fr;
+          align-items: stretch;
+        }
+
+        .brand,
+        .actions {
+          justify-content: center;
+        }
+
+        .tools {
+          flex-wrap: wrap;
+        }
+
+        .tool-button,
+        .command-button {
+          flex: 1 1 112px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <header class="topbar">
+        <div class="brand">
+          <a class="home" href="../index.html" aria-label="Til start">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
+          </a>
+          <h1>Braindump Memo</h1>
+        </div>
+
+        <nav class="tools" aria-label="Værktøjer">
+          <button class="tool-button is-active" type="button" data-tool="move" aria-pressed="true" title="Flyt">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M2 12h20M5 9l-3 3 3 3M19 9l3 3-3 3M9 5l3-3 3 3M9 19l3 3 3-3" /></svg>
+            <span>Flyt</span>
+          </button>
+          <button class="tool-button" type="button" data-tool="rect" aria-pressed="false" title="Rektangel">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="1" /></svg>
+            <span>Rektangel</span>
+          </button>
+          <button class="tool-button" type="button" data-tool="free" aria-pressed="false" title="Frihånd">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17c2-8 5-10 7-7 2 4 3 7 9-3" /></svg>
+            <span>Frihånd</span>
+          </button>
+        </nav>
+
+        <div class="actions">
+          <button class="command-button" type="button" id="addDemo" title="Nyt felt">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+            <span>Memo</span>
+          </button>
+          <button class="command-button is-danger" type="button" id="clearBoard" title="Ryd">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15" /></svg>
+          </button>
+        </div>
+      </header>
+
+      <section id="workspace" aria-label="Braindump canvas">
+        <div id="pan"></div>
+        <div class="empty-state" id="emptyState">Braindump</div>
+        <div class="status" id="status">Klar</div>
+      </section>
+    </main>
+
+    <script>
+      const STORAGE_KEY = 'eastwood451-braindump-memo-v1';
+      const MARK_FILL = '#9de4ff';
+      const MARK_STROKE = '#31bfff';
+      const MIN_IMAGE_SIZE = 90;
+
+      const workspace = document.getElementById('workspace');
+      const pan = document.getElementById('pan');
+      const emptyState = document.getElementById('emptyState');
+      const statusEl = document.getElementById('status');
+      const toolButtons = Array.from(document.querySelectorAll('.tool-button'));
+
+      const state = {
+        tool: 'move',
+        images: [],
+        selectedId: null,
+      };
+
+      let dragSession = null;
+      let resizeSession = null;
+      let drawSession = null;
+      let saveTimer = 0;
+
+      function uid(prefix) {
+        return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      }
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      function setStatus(text) {
+        statusEl.textContent = text;
+      }
+
+      function scheduleSave() {
+        window.clearTimeout(saveTimer);
+        saveTimer = window.setTimeout(saveBoard, 180);
+      }
+
+      function saveBoard() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            images: state.images,
+            selectedId: state.selectedId,
+          }));
+          setStatus('Gemt');
+        } catch (error) {
+          setStatus('Kunne ikke gemme lokalt');
+        }
+      }
+
+      function loadBoard() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+          if (!saved || !Array.isArray(saved.images)) return;
+          state.images = saved.images;
+          state.selectedId = saved.selectedId || null;
+        } catch (error) {
+          state.images = [];
+        }
+      }
+
+      function setTool(tool) {
+        state.tool = tool;
+        toolButtons.forEach((button) => {
+          const isActive = button.dataset.tool === tool;
+          button.classList.toggle('is-active', isActive);
+          button.setAttribute('aria-pressed', String(isActive));
+        });
+        workspace.style.cursor = tool === 'move' ? 'default' : 'crosshair';
+      }
+
+      function selectImage(id) {
+        state.selectedId = id;
+        document.querySelectorAll('.image-node').forEach((node) => {
+          node.classList.toggle('is-selected', node.dataset.id === id);
+        });
+        scheduleSave();
+      }
+
+      function getImage(id) {
+        return state.images.find((image) => image.id === id);
+      }
+
+      function boardPointFromEvent(event) {
+        const rect = workspace.getBoundingClientRect();
+        return {
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top,
+        };
+      }
+
+      function localPointFromEvent(node, event) {
+        const rect = node.getBoundingClientRect();
+        return {
+          x: clamp(event.clientX - rect.left, 0, rect.width),
+          y: clamp(event.clientY - rect.top, 0, rect.height),
+        };
+      }
+
+      function toNormalized(point, image) {
+        return {
+          x: clamp(point.x / image.w, 0, 1),
+          y: clamp(point.y / image.h, 0, 1),
+        };
+      }
+
+      function svgPoint(point) {
+        return `${(point.x * 1000).toFixed(1)},${(point.y * 1000).toFixed(1)}`;
+      }
+
+      function freehandPath(points) {
+        if (!points.length) return '';
+        return `M ${points.map(svgPoint).join(' L ')}`;
+      }
+
+      function rectFromPoints(start, end) {
+        const x = Math.min(start.x, end.x);
+        const y = Math.min(start.y, end.y);
+        const w = Math.abs(end.x - start.x);
+        const h = Math.abs(end.y - start.y);
+        return { x, y, w, h };
+      }
+
+      function render() {
+        pan.innerHTML = '';
+        emptyState.hidden = state.images.length > 0;
+
+        state.images.forEach((image) => {
+          const node = document.createElement('article');
+          node.className = 'image-node';
+          node.dataset.id = image.id;
+          node.style.transform = `translate(${image.x}px, ${image.y}px)`;
+          node.style.width = `${image.w}px`;
+          node.style.height = `${image.h}px`;
+          node.classList.toggle('is-selected', image.id === state.selectedId);
+
+          const img = document.createElement('img');
+          img.src = image.src;
+          img.alt = '';
+          node.appendChild(img);
+
+          const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          svg.classList.add('mark-layer');
+          svg.setAttribute('viewBox', '0 0 1000 1000');
+          svg.setAttribute('preserveAspectRatio', 'none');
+          svg.dataset.imageId = image.id;
+
+          image.marks.forEach((mark) => {
+            const element = createMarkElement(mark);
+            svg.appendChild(element);
+          });
+
+          node.appendChild(svg);
+
+          ['nw', 'ne', 'sw', 'se'].forEach((corner) => {
+            const handle = document.createElement('span');
+            handle.className = 'resize-handle';
+            handle.dataset.corner = corner;
+            handle.setAttribute('aria-hidden', 'true');
+            node.appendChild(handle);
+          });
+
+          pan.appendChild(node);
+        });
+      }
+
+      function createMarkElement(mark) {
+        const element = document.createElementNS('http://www.w3.org/2000/svg', mark.type === 'rect' ? 'rect' : 'path');
+        element.classList.add('mark');
+        element.dataset.markId = mark.id;
+        element.setAttribute('fill', mark.filled ? MARK_FILL : 'transparent');
+        element.setAttribute('stroke', MARK_STROKE);
+        element.setAttribute('stroke-width', '4');
+        element.setAttribute('stroke-linejoin', 'round');
+        element.setAttribute('stroke-linecap', 'round');
+
+        if (mark.type === 'rect') {
+          element.setAttribute('x', String(mark.x * 1000));
+          element.setAttribute('y', String(mark.y * 1000));
+          element.setAttribute('width', String(mark.w * 1000));
+          element.setAttribute('height', String(mark.h * 1000));
+        } else {
+          element.setAttribute('d', freehandPath(mark.points));
+          element.setAttribute('stroke-width', '6');
+        }
+
+        return element;
+      }
+
+      function addImage(src, naturalWidth, naturalHeight) {
+        const bounds = workspace.getBoundingClientRect();
+        const maxW = Math.max(220, bounds.width * 0.42);
+        const maxH = Math.max(180, bounds.height * 0.48);
+        const ratio = Math.min(maxW / naturalWidth, maxH / naturalHeight, 1);
+        const width = Math.max(180, Math.round(naturalWidth * ratio));
+        const height = Math.max(120, Math.round(naturalHeight * ratio));
+        const count = state.images.length;
+
+        const image = {
+          id: uid('image'),
+          src,
+          x: Math.round(44 + count * 26),
+          y: Math.round(44 + count * 26),
+          w: width,
+          h: height,
+          aspect: naturalWidth / naturalHeight,
+          marks: [],
+        };
+
+        state.images.push(image);
+        state.selectedId = image.id;
+        render();
+        scheduleSave();
+        setStatus('Billede indsat');
+      }
+
+      function addMemoTile() {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="900" height="620" viewBox="0 0 900 620"><defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#f8fbff"/><stop offset="1" stop-color="#dceef7"/></linearGradient></defs><rect width="900" height="620" fill="url(#g)"/><path d="M90 112h720M90 205h720M90 298h720M90 391h720M90 484h720" stroke="#9bb9c8" stroke-width="5"/><text x="90" y="76" fill="#243746" font-size="42" font-family="Arial, sans-serif" font-weight="700">Memo</text></svg>`;
+        const src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+        addImage(src, 900, 620);
+      }
+
+      function readPastedImage(event) {
+        const items = Array.from(event.clipboardData?.items || []);
+        const imageItem = items.find((item) => item.type.startsWith('image/'));
+        if (!imageItem) return;
+
+        event.preventDefault();
+        const file = imageItem.getAsFile();
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => addImage(reader.result, img.naturalWidth || 640, img.naturalHeight || 480);
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function beginDrag(event, node, image) {
+        const start = boardPointFromEvent(event);
+        dragSession = {
+          id: image.id,
+          pointerId: event.pointerId,
+          startX: start.x,
+          startY: start.y,
+          imageX: image.x,
+          imageY: image.y,
+        };
+        node.setPointerCapture(event.pointerId);
+      }
+
+      function beginResize(event, node, image, corner) {
+        event.stopPropagation();
+        const start = boardPointFromEvent(event);
+        resizeSession = {
+          id: image.id,
+          pointerId: event.pointerId,
+          corner,
+          startX: start.x,
+          startY: start.y,
+          imageX: image.x,
+          imageY: image.y,
+          imageW: image.w,
+          imageH: image.h,
+        };
+        node.setPointerCapture(event.pointerId);
+      }
+
+      function beginDraw(event, node, image) {
+        const local = localPointFromEvent(node, event);
+        const point = toNormalized(local, image);
+        drawSession = {
+          id: image.id,
+          pointerId: event.pointerId,
+          tool: state.tool,
+          start: point,
+          points: [point],
+          preview: null,
+        };
+
+        const svg = node.querySelector('.mark-layer');
+        drawSession.preview = document.createElementNS('http://www.w3.org/2000/svg', state.tool === 'rect' ? 'rect' : 'path');
+        drawSession.preview.classList.add('draw-preview');
+        drawSession.preview.setAttribute('fill', MARK_FILL);
+        drawSession.preview.setAttribute('stroke', MARK_STROKE);
+        drawSession.preview.setAttribute('stroke-width', state.tool === 'rect' ? '4' : '6');
+        drawSession.preview.setAttribute('stroke-linejoin', 'round');
+        drawSession.preview.setAttribute('stroke-linecap', 'round');
+        svg.appendChild(drawSession.preview);
+        node.setPointerCapture(event.pointerId);
+      }
+
+      function updateDraw(event) {
+        if (!drawSession) return;
+        const image = getImage(drawSession.id);
+        const node = document.querySelector(`.image-node[data-id="${drawSession.id}"]`);
+        if (!image || !node) return;
+
+        const point = toNormalized(localPointFromEvent(node, event), image);
+        if (drawSession.tool === 'rect') {
+          const rect = rectFromPoints(drawSession.start, point);
+          drawSession.preview.setAttribute('x', String(rect.x * 1000));
+          drawSession.preview.setAttribute('y', String(rect.y * 1000));
+          drawSession.preview.setAttribute('width', String(rect.w * 1000));
+          drawSession.preview.setAttribute('height', String(rect.h * 1000));
+        } else {
+          const last = drawSession.points[drawSession.points.length - 1];
+          const distance = Math.hypot(point.x - last.x, point.y - last.y);
+          if (distance > 0.006) {
+            drawSession.points.push(point);
+            drawSession.preview.setAttribute('d', freehandPath(drawSession.points));
+          }
+        }
+      }
+
+      function finishDraw(event) {
+        if (!drawSession) return;
+        const image = getImage(drawSession.id);
+        const node = document.querySelector(`.image-node[data-id="${drawSession.id}"]`);
+        if (!image || !node) {
+          drawSession = null;
+          return;
+        }
+
+        const point = toNormalized(localPointFromEvent(node, event), image);
+        drawSession.preview.remove();
+
+        if (drawSession.tool === 'rect') {
+          const rect = rectFromPoints(drawSession.start, point);
+          if (rect.w > 0.012 && rect.h > 0.012) {
+            image.marks.push({ id: uid('mark'), type: 'rect', filled: true, ...rect });
+          }
+        } else if (drawSession.points.length > 2) {
+          image.marks.push({ id: uid('mark'), type: 'free', filled: true, points: drawSession.points });
+        }
+
+        drawSession = null;
+        render();
+        selectImage(image.id);
+        scheduleSave();
+      }
+
+      function toggleMark(imageId, markId) {
+        const image = getImage(imageId);
+        if (!image) return;
+        const mark = image.marks.find((item) => item.id === markId);
+        if (!mark) return;
+        mark.filled = !mark.filled;
+        render();
+        selectImage(imageId);
+        scheduleSave();
+      }
+
+      workspace.addEventListener('pointerdown', (event) => {
+        const markElement = event.target.closest?.('.mark');
+        if (markElement && !drawSession) {
+          const svg = markElement.closest('.mark-layer');
+          toggleMark(svg.dataset.imageId, markElement.dataset.markId);
+          event.stopPropagation();
+          return;
+        }
+
+        const node = event.target.closest?.('.image-node');
+        if (!node) {
+          selectImage(null);
+          return;
+        }
+
+        const image = getImage(node.dataset.id);
+        if (!image) return;
+        selectImage(image.id);
+
+        const handle = event.target.closest?.('.resize-handle');
+        if (handle) {
+          beginResize(event, node, image, handle.dataset.corner);
+          return;
+        }
+
+        if (state.tool === 'move') {
+          beginDrag(event, node, image);
+        } else {
+          beginDraw(event, node, image);
+        }
+      });
+
+      workspace.addEventListener('pointermove', (event) => {
+        if (dragSession) {
+          const image = getImage(dragSession.id);
+          const node = document.querySelector(`.image-node[data-id="${dragSession.id}"]`);
+          if (!image || !node) return;
+          const point = boardPointFromEvent(event);
+          image.x = Math.round(dragSession.imageX + point.x - dragSession.startX);
+          image.y = Math.round(dragSession.imageY + point.y - dragSession.startY);
+          node.style.transform = `translate(${image.x}px, ${image.y}px)`;
+          setStatus('Flytter');
+          return;
+        }
+
+        if (resizeSession) {
+          const image = getImage(resizeSession.id);
+          const node = document.querySelector(`.image-node[data-id="${resizeSession.id}"]`);
+          if (!image || !node) return;
+          const point = boardPointFromEvent(event);
+          const dx = point.x - resizeSession.startX;
+          const dy = point.y - resizeSession.startY;
+
+          let width = resizeSession.imageW;
+          let height = resizeSession.imageH;
+          let x = resizeSession.imageX;
+          let y = resizeSession.imageY;
+
+          if (resizeSession.corner.includes('e')) width = resizeSession.imageW + dx;
+          if (resizeSession.corner.includes('s')) height = resizeSession.imageH + dy;
+          if (resizeSession.corner.includes('w')) width = resizeSession.imageW - dx;
+          if (resizeSession.corner.includes('n')) height = resizeSession.imageH - dy;
+
+          if (event.shiftKey) {
+            const aspect = image.aspect || resizeSession.imageW / resizeSession.imageH;
+            if (Math.abs(dx) > Math.abs(dy)) {
+              height = width / aspect;
+            } else {
+              width = height * aspect;
+            }
+          }
+
+          width = Math.max(MIN_IMAGE_SIZE, width);
+          height = Math.max(MIN_IMAGE_SIZE, height);
+
+          if (resizeSession.corner.includes('w')) x = resizeSession.imageX + resizeSession.imageW - width;
+          if (resizeSession.corner.includes('n')) y = resizeSession.imageY + resizeSession.imageH - height;
+
+          image.x = Math.round(x);
+          image.y = Math.round(y);
+          image.w = Math.round(width);
+          image.h = Math.round(height);
+          node.style.transform = `translate(${image.x}px, ${image.y}px)`;
+          node.style.width = `${image.w}px`;
+          node.style.height = `${image.h}px`;
+          setStatus('Skalerer');
+          return;
+        }
+
+        updateDraw(event);
+      });
+
+      workspace.addEventListener('pointerup', (event) => {
+        if (drawSession) {
+          finishDraw(event);
+          return;
+        }
+
+        if (dragSession) {
+          dragSession = null;
+          scheduleSave();
+          setStatus('Gemt');
+        }
+
+        if (resizeSession) {
+          resizeSession = null;
+          scheduleSave();
+          setStatus('Gemt');
+        }
+      });
+
+      workspace.addEventListener('pointercancel', () => {
+        if (drawSession?.preview) drawSession.preview.remove();
+        drawSession = null;
+        dragSession = null;
+        resizeSession = null;
+      });
+
+      toolButtons.forEach((button) => {
+        button.addEventListener('click', () => setTool(button.dataset.tool));
+      });
+
+      document.getElementById('addDemo').addEventListener('click', addMemoTile);
+
+      document.getElementById('clearBoard').addEventListener('click', () => {
+        state.images = [];
+        state.selectedId = null;
+        localStorage.removeItem(STORAGE_KEY);
+        render();
+        setStatus('Ryddet');
+      });
+
+      document.addEventListener('paste', readPastedImage);
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Delete' || event.key === 'Backspace') {
+          if (!state.selectedId || ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+          state.images = state.images.filter((image) => image.id !== state.selectedId);
+          state.selectedId = null;
+          render();
+          scheduleSave();
+        }
+
+        if (event.key === '1') setTool('move');
+        if (event.key === '2') setTool('rect');
+        if (event.key === '3') setTool('free');
+      });
+
+      loadBoard();
+      render();
+      setTool(state.tool);
+      if (!state.images.length) setStatus('Klar');
+    </script>
+  </body>
+</html>
