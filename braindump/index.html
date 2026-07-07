@@ -211,10 +211,15 @@
         outline-offset: -8px;
       }
 
+      #workspace.is-panning {
+        cursor: grabbing !important;
+      }
+
       #pan {
         position: absolute;
         inset: 0;
         transform-origin: 0 0;
+        will-change: transform;
       }
 
       .empty-state {
@@ -513,9 +518,11 @@
         selectedId: null,
         selectedMarkId: null,
         contextMark: null,
+        pan: { x: 0, y: 0 },
       };
 
       let dragSession = null;
+      let canvasPanSession = null;
       let markDragSession = null;
       let markResizeSession = null;
       let resizeSession = null;
@@ -546,6 +553,7 @@
             selectedId: state.selectedId,
             selectedMarkId: state.selectedMarkId,
             theme: state.theme,
+            pan: state.pan,
           }));
           setStatus('Gemt');
         } catch (error) {
@@ -561,9 +569,22 @@
           state.selectedId = saved.selectedId || null;
           state.selectedMarkId = saved.selectedMarkId || null;
           state.theme = saved.theme === 'light' ? 'light' : 'dark';
+          if (saved.pan && Number.isFinite(saved.pan.x) && Number.isFinite(saved.pan.y)) {
+            state.pan = { x: saved.pan.x, y: saved.pan.y };
+          }
         } catch (error) {
           state.images = [];
         }
+      }
+
+      function applyPan() {
+        pan.style.transform = `translate(${state.pan.x}px, ${state.pan.y}px)`;
+      }
+
+      function panBy(dx, dy) {
+        state.pan.x += dx;
+        state.pan.y += dy;
+        applyPan();
       }
 
       function applyTheme() {
@@ -587,7 +608,7 @@
           button.classList.toggle('is-active', isActive);
           button.setAttribute('aria-pressed', String(isActive));
         });
-        workspace.style.cursor = tool === 'move' ? 'default' : 'crosshair';
+        workspace.style.cursor = tool === 'move' ? 'grab' : 'crosshair';
       }
 
       function selectImage(id) {
@@ -624,7 +645,7 @@
       function showContextMenu(event, imageId, markId) {
         event.preventDefault();
         event.stopPropagation();
-        const point = boardPointFromEvent(event);
+        const point = screenPointFromEvent(event);
         const menuWidth = 180;
         const menuHeight = 48;
         const x = clamp(point.x, 8, Math.max(8, workspace.clientWidth - menuWidth - 8));
@@ -663,11 +684,19 @@
         return state.images.find((image) => image.id === id);
       }
 
-      function boardPointFromEvent(event) {
+      function screenPointFromEvent(event) {
         const rect = workspace.getBoundingClientRect();
         return {
           x: event.clientX - rect.left,
           y: event.clientY - rect.top,
+        };
+      }
+
+      function canvasPointFromEvent(event) {
+        const point = screenPointFromEvent(event);
+        return {
+          x: point.x - state.pan.x,
+          y: point.y - state.pan.y,
         };
       }
 
@@ -746,7 +775,7 @@
         group.dataset.markId = mark.id;
 
         const bounds = markBounds(mark);
-        const handleSize = 34;
+        const handleSize = 17;
         const handles = [
           ['nw', bounds.minX, bounds.minY],
           ['ne', bounds.maxX, bounds.minY],
@@ -853,12 +882,16 @@
         const width = Math.max(180, Math.round(naturalWidth * ratio));
         const height = Math.max(120, Math.round(naturalHeight * ratio));
         const count = state.images.length;
+        const basePosition = position || {
+          x: bounds.width / 2 - state.pan.x + count * 26,
+          y: bounds.height / 2 - state.pan.y + count * 26,
+        };
 
         const image = {
           id: uid('image'),
           src,
-          x: Math.round(position ? position.x - width / 2 : 44 + count * 26),
-          y: Math.round(position ? position.y - height / 2 : 44 + count * 26),
+          x: Math.round(basePosition.x - width / 2),
+          y: Math.round(basePosition.y - height / 2),
           w: width,
           h: height,
           aspect: naturalWidth / naturalHeight,
@@ -901,7 +934,7 @@
       }
 
       function beginDrag(event, node, image) {
-        const start = boardPointFromEvent(event);
+        const start = canvasPointFromEvent(event);
         dragSession = {
           id: image.id,
           pointerId: event.pointerId,
@@ -931,6 +964,20 @@
         node.setPointerCapture(event.pointerId);
       }
 
+      function beginCanvasPan(event) {
+        const start = screenPointFromEvent(event);
+        canvasPanSession = {
+          pointerId: event.pointerId,
+          startX: start.x,
+          startY: start.y,
+          panX: state.pan.x,
+          panY: state.pan.y,
+          moved: false,
+        };
+        workspace.classList.add('is-panning');
+        workspace.setPointerCapture(event.pointerId);
+      }
+
       function beginMarkResize(event, node, image, handle) {
         event.stopPropagation();
         const mark = image.marks.find((item) => item.id === handle.dataset.markId);
@@ -951,7 +998,7 @@
 
       function beginResize(event, node, image, corner) {
         event.stopPropagation();
-        const start = boardPointFromEvent(event);
+        const start = canvasPointFromEvent(event);
         resizeSession = {
           id: image.id,
           pointerId: event.pointerId,
@@ -1055,6 +1102,7 @@
 
       workspace.addEventListener('pointerdown', (event) => {
         if (event.button !== 0) return;
+        if (event.target.closest?.('.context-menu')) return;
 
         if (!markContextMenu.hidden && !event.target.closest?.('.context-menu')) {
           hideContextMenu();
@@ -1065,6 +1113,10 @@
         const node = event.target.closest?.('.image-node');
         if (!node) {
           selectImage(null);
+          if (state.tool === 'move') {
+            hideContextMenu();
+            beginCanvasPan(event);
+          }
           return;
         }
 
@@ -1108,6 +1160,21 @@
       });
 
       workspace.addEventListener('pointermove', (event) => {
+        if (canvasPanSession) {
+          const point = screenPointFromEvent(event);
+          const dx = point.x - canvasPanSession.startX;
+          const dy = point.y - canvasPanSession.startY;
+          if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+            canvasPanSession.moved = true;
+          }
+
+          state.pan.x = Math.round(canvasPanSession.panX + dx);
+          state.pan.y = Math.round(canvasPanSession.panY + dy);
+          applyPan();
+          setStatus('Navigerer');
+          return;
+        }
+
         if (markResizeSession) {
           const image = getImage(markResizeSession.imageId);
           const node = document.querySelector(`.image-node[data-id="${markResizeSession.imageId}"]`);
@@ -1211,7 +1278,7 @@
           const image = getImage(dragSession.id);
           const node = document.querySelector(`.image-node[data-id="${dragSession.id}"]`);
           if (!image || !node) return;
-          const point = boardPointFromEvent(event);
+          const point = canvasPointFromEvent(event);
           image.x = Math.round(dragSession.imageX + point.x - dragSession.startX);
           image.y = Math.round(dragSession.imageY + point.y - dragSession.startY);
           node.style.transform = `translate(${image.x}px, ${image.y}px)`;
@@ -1223,7 +1290,7 @@
           const image = getImage(resizeSession.id);
           const node = document.querySelector(`.image-node[data-id="${resizeSession.id}"]`);
           if (!image || !node) return;
-          const point = boardPointFromEvent(event);
+          const point = canvasPointFromEvent(event);
           const dx = point.x - resizeSession.startX;
           const dy = point.y - resizeSession.startY;
           const aspect = image.aspect || resizeSession.imageW / resizeSession.imageH;
@@ -1276,6 +1343,17 @@
           return;
         }
 
+        if (canvasPanSession) {
+          const didMove = canvasPanSession.moved;
+          canvasPanSession = null;
+          workspace.classList.remove('is-panning');
+          if (didMove) {
+            scheduleSave();
+            setStatus('Gemt');
+          }
+          return;
+        }
+
         if (markResizeSession) {
           markResizeSession = null;
           scheduleSave();
@@ -1311,10 +1389,12 @@
       workspace.addEventListener('pointercancel', () => {
         if (drawSession?.preview) drawSession.preview.remove();
         drawSession = null;
+        canvasPanSession = null;
         dragSession = null;
         markDragSession = null;
         markResizeSession = null;
         resizeSession = null;
+        workspace.classList.remove('is-panning');
       });
 
       workspace.addEventListener('contextmenu', (event) => {
@@ -1341,6 +1421,8 @@
         state.images = [];
         state.selectedId = null;
         state.selectedMarkId = null;
+        state.pan = { x: 0, y: 0 };
+        applyPan();
         hideContextMenu();
         localStorage.removeItem(STORAGE_KEY);
         render();
@@ -1371,7 +1453,7 @@
         event.preventDefault();
         workspace.classList.remove('is-drop-target');
         const files = Array.from(event.dataTransfer?.files || []).filter((file) => file.type.startsWith('image/'));
-        const dropPoint = boardPointFromEvent(event);
+        const dropPoint = canvasPointFromEvent(event);
         files.forEach((file, index) => {
           readImageFile(file, { x: dropPoint.x + index * 24, y: dropPoint.y + index * 24 });
         });
@@ -1379,6 +1461,25 @@
       });
 
       document.addEventListener('keydown', (event) => {
+        const editingText = ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
+        if (!editingText && !event.ctrlKey && !event.metaKey && !event.altKey) {
+          const key = event.key.toLowerCase();
+          const step = event.shiftKey ? 180 : 72;
+          let handledPan = true;
+          if (key === 'w') panBy(0, step);
+          else if (key === 's') panBy(0, -step);
+          else if (key === 'a') panBy(step, 0);
+          else if (key === 'd') panBy(-step, 0);
+          else handledPan = false;
+
+          if (handledPan) {
+            event.preventDefault();
+            scheduleSave();
+            setStatus('Navigerer');
+            return;
+          }
+        }
+
         if (event.key === 'Escape') {
           hideContextMenu();
         }
@@ -1398,6 +1499,7 @@
 
       loadBoard();
       applyTheme();
+      applyPan();
       render();
       setTool(state.tool);
       if (!state.images.length) setStatus('Klar');
