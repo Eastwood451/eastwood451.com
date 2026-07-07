@@ -42,6 +42,23 @@
         font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
 
+      body.light-theme {
+        --bg: #eef4f8;
+        --panel: #ffffff;
+        --panel-2: #d9e8ef;
+        --line: rgba(34, 58, 74, 0.2);
+        --text: #152532;
+        --muted: #607486;
+        --accent: #0d8fbd;
+        --accent-strong: #007fba;
+        --shadow: rgba(32, 54, 68, 0.18);
+        background:
+          linear-gradient(rgba(20, 54, 76, 0.08) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(20, 54, 76, 0.08) 1px, transparent 1px),
+          #eef4f8;
+        background-size: 32px 32px;
+      }
+
       button {
         font: inherit;
       }
@@ -154,6 +171,11 @@
         color: #eefdff;
       }
 
+      body.light-theme .tool-button.is-active {
+        background: #d8f1fb;
+        color: #123140;
+      }
+
       .actions {
         display: flex;
         justify-content: end;
@@ -176,6 +198,17 @@
         background:
           radial-gradient(circle at 50% 50%, rgba(116, 215, 255, 0.06), transparent 38%),
           transparent;
+      }
+
+      body.light-theme #workspace {
+        background:
+          radial-gradient(circle at 50% 50%, rgba(13, 143, 189, 0.12), transparent 38%),
+          transparent;
+      }
+
+      #workspace.is-drop-target {
+        outline: 3px solid var(--accent);
+        outline-offset: -8px;
       }
 
       #pan {
@@ -211,6 +244,11 @@
         user-select: none;
       }
 
+      body.light-theme .image-node {
+        background: #f8fbfd;
+        border-color: rgba(34, 58, 74, 0.24);
+      }
+
       .image-node.is-selected {
         border-color: var(--accent);
         box-shadow: 0 24px 62px rgba(49, 191, 255, 0.22);
@@ -236,8 +274,13 @@
       .mark-layer rect,
       .mark-layer path {
         vector-effect: non-scaling-stroke;
-        cursor: pointer;
+        cursor: grab;
         transition: fill 120ms ease;
+      }
+
+      .mark-layer rect:active,
+      .mark-layer path:active {
+        cursor: grabbing;
       }
 
       .mark-layer .mark.is-empty {
@@ -258,6 +301,10 @@
         background: var(--accent);
         opacity: 0;
         pointer-events: none;
+      }
+
+      body.light-theme .resize-handle {
+        border-color: #e7f7fc;
       }
 
       .image-node.is-selected .resize-handle {
@@ -300,6 +347,10 @@
         background: rgba(13, 18, 24, 0.82);
         font-size: 0.78rem;
         pointer-events: none;
+      }
+
+      body.light-theme .status {
+        background: rgba(255, 255, 255, 0.86);
       }
 
       @media (max-width: 720px) {
@@ -350,6 +401,10 @@
         </nav>
 
         <div class="actions">
+          <button class="command-button" type="button" id="themeToggle" title="Lyst tema" aria-pressed="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19" /></svg>
+            <span>Lys</span>
+          </button>
           <button class="command-button" type="button" id="addDemo" title="Nyt felt">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
             <span>Memo</span>
@@ -377,15 +432,18 @@
       const pan = document.getElementById('pan');
       const emptyState = document.getElementById('emptyState');
       const statusEl = document.getElementById('status');
+      const themeToggle = document.getElementById('themeToggle');
       const toolButtons = Array.from(document.querySelectorAll('.tool-button'));
 
       const state = {
         tool: 'move',
+        theme: 'dark',
         images: [],
         selectedId: null,
       };
 
       let dragSession = null;
+      let markDragSession = null;
       let resizeSession = null;
       let drawSession = null;
       let saveTimer = 0;
@@ -412,6 +470,7 @@
           localStorage.setItem(STORAGE_KEY, JSON.stringify({
             images: state.images,
             selectedId: state.selectedId,
+            theme: state.theme,
           }));
           setStatus('Gemt');
         } catch (error) {
@@ -425,9 +484,24 @@
           if (!saved || !Array.isArray(saved.images)) return;
           state.images = saved.images;
           state.selectedId = saved.selectedId || null;
+          state.theme = saved.theme === 'light' ? 'light' : 'dark';
         } catch (error) {
           state.images = [];
         }
+      }
+
+      function applyTheme() {
+        const isLight = state.theme === 'light';
+        document.body.classList.toggle('light-theme', isLight);
+        themeToggle.setAttribute('aria-pressed', String(isLight));
+        themeToggle.title = isLight ? 'Morkt tema' : 'Lyst tema';
+        themeToggle.querySelector('span').textContent = isLight ? 'Mork' : 'Lys';
+      }
+
+      function toggleTheme() {
+        state.theme = state.theme === 'light' ? 'dark' : 'light';
+        applyTheme();
+        scheduleSave();
       }
 
       function setTool(tool) {
@@ -482,6 +556,37 @@
       function freehandPath(points) {
         if (!points.length) return '';
         return `M ${points.map(svgPoint).join(' L ')}`;
+      }
+
+      function markBounds(mark) {
+        if (mark.type === 'rect') {
+          return {
+            minX: mark.x,
+            maxX: mark.x + mark.w,
+            minY: mark.y,
+            maxY: mark.y + mark.h,
+          };
+        }
+
+        return mark.points.reduce((bounds, point) => ({
+          minX: Math.min(bounds.minX, point.x),
+          maxX: Math.max(bounds.maxX, point.x),
+          minY: Math.min(bounds.minY, point.y),
+          maxY: Math.max(bounds.maxY, point.y),
+        }), { minX: 1, maxX: 0, minY: 1, maxY: 0 });
+      }
+
+      function updateMarkElement(element, mark) {
+        element.setAttribute('fill', mark.filled ? MARK_FILL : 'transparent');
+
+        if (mark.type === 'rect') {
+          element.setAttribute('x', String(mark.x * 1000));
+          element.setAttribute('y', String(mark.y * 1000));
+          element.setAttribute('width', String(mark.w * 1000));
+          element.setAttribute('height', String(mark.h * 1000));
+        } else {
+          element.setAttribute('d', freehandPath(mark.points));
+        }
       }
 
       function rectFromPoints(start, end) {
@@ -539,26 +644,22 @@
         const element = document.createElementNS('http://www.w3.org/2000/svg', mark.type === 'rect' ? 'rect' : 'path');
         element.classList.add('mark');
         element.dataset.markId = mark.id;
-        element.setAttribute('fill', mark.filled ? MARK_FILL : 'transparent');
         element.setAttribute('stroke', MARK_STROKE);
         element.setAttribute('stroke-width', '4');
         element.setAttribute('stroke-linejoin', 'round');
         element.setAttribute('stroke-linecap', 'round');
 
         if (mark.type === 'rect') {
-          element.setAttribute('x', String(mark.x * 1000));
-          element.setAttribute('y', String(mark.y * 1000));
-          element.setAttribute('width', String(mark.w * 1000));
-          element.setAttribute('height', String(mark.h * 1000));
+          updateMarkElement(element, mark);
         } else {
-          element.setAttribute('d', freehandPath(mark.points));
           element.setAttribute('stroke-width', '6');
+          updateMarkElement(element, mark);
         }
 
         return element;
       }
 
-      function addImage(src, naturalWidth, naturalHeight) {
+      function addImage(src, naturalWidth, naturalHeight, position = null) {
         const bounds = workspace.getBoundingClientRect();
         const maxW = Math.max(220, bounds.width * 0.42);
         const maxH = Math.max(180, bounds.height * 0.48);
@@ -570,8 +671,8 @@
         const image = {
           id: uid('image'),
           src,
-          x: Math.round(44 + count * 26),
-          y: Math.round(44 + count * 26),
+          x: Math.round(position ? position.x - width / 2 : 44 + count * 26),
+          y: Math.round(position ? position.y - height / 2 : 44 + count * 26),
           w: width,
           h: height,
           aspect: naturalWidth / naturalHeight,
@@ -583,6 +684,18 @@
         render();
         scheduleSave();
         setStatus('Billede indsat');
+      }
+
+      function readImageFile(file, position = null) {
+        if (!file || !file.type.startsWith('image/')) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => addImage(reader.result, img.naturalWidth || 640, img.naturalHeight || 480, position);
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
       }
 
       function addMemoTile() {
@@ -598,15 +711,7 @@
 
         event.preventDefault();
         const file = imageItem.getAsFile();
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = () => {
-          const img = new Image();
-          img.onload = () => addImage(reader.result, img.naturalWidth || 640, img.naturalHeight || 480);
-          img.src = reader.result;
-        };
-        reader.readAsDataURL(file);
+        readImageFile(file);
       }
 
       function beginDrag(event, node, image) {
@@ -618,6 +723,23 @@
           startY: start.y,
           imageX: image.x,
           imageY: image.y,
+        };
+        node.setPointerCapture(event.pointerId);
+      }
+
+      function beginMarkDrag(event, node, image, markElement) {
+        const local = localPointFromEvent(node, event);
+        const mark = image.marks.find((item) => item.id === markElement.dataset.markId);
+        if (!mark) return;
+
+        markDragSession = {
+          imageId: image.id,
+          markId: mark.id,
+          pointerId: event.pointerId,
+          start: toNormalized(local, image),
+          moved: false,
+          rect: mark.type === 'rect' ? { x: mark.x, y: mark.y, w: mark.w, h: mark.h } : null,
+          points: mark.type === 'free' ? mark.points.map((point) => ({ ...point })) : null,
         };
         node.setPointerCapture(event.pointerId);
       }
@@ -726,13 +848,6 @@
 
       workspace.addEventListener('pointerdown', (event) => {
         const markElement = event.target.closest?.('.mark');
-        if (markElement && !drawSession) {
-          const svg = markElement.closest('.mark-layer');
-          toggleMark(svg.dataset.imageId, markElement.dataset.markId);
-          event.stopPropagation();
-          return;
-        }
-
         const node = event.target.closest?.('.image-node');
         if (!node) {
           selectImage(null);
@@ -742,6 +857,17 @@
         const image = getImage(node.dataset.id);
         if (!image) return;
         selectImage(image.id);
+
+        if (markElement && !drawSession) {
+          if (state.tool === 'move') {
+            beginMarkDrag(event, node, image, markElement);
+          } else {
+            const svg = markElement.closest('.mark-layer');
+            toggleMark(svg.dataset.imageId, markElement.dataset.markId);
+          }
+          event.stopPropagation();
+          return;
+        }
 
         const handle = event.target.closest?.('.resize-handle');
         if (handle) {
@@ -757,6 +883,48 @@
       });
 
       workspace.addEventListener('pointermove', (event) => {
+        if (markDragSession) {
+          const image = getImage(markDragSession.imageId);
+          const node = document.querySelector(`.image-node[data-id="${markDragSession.imageId}"]`);
+          const element = document.querySelector(`.image-node[data-id="${markDragSession.imageId}"] .mark[data-mark-id="${markDragSession.markId}"]`);
+          const mark = image?.marks.find((item) => item.id === markDragSession.markId);
+          if (!image || !node || !element || !mark) return;
+
+          const point = toNormalized(localPointFromEvent(node, event), image);
+          let dx = point.x - markDragSession.start.x;
+          let dy = point.y - markDragSession.start.y;
+
+          if (Math.abs(dx) > 0.003 || Math.abs(dy) > 0.003) {
+            markDragSession.moved = true;
+          }
+
+          const originBounds = markDragSession.rect
+            ? {
+                minX: markDragSession.rect.x,
+                maxX: markDragSession.rect.x + markDragSession.rect.w,
+                minY: markDragSession.rect.y,
+                maxY: markDragSession.rect.y + markDragSession.rect.h,
+              }
+            : markBounds({ type: 'free', points: markDragSession.points });
+
+          dx = clamp(dx, -originBounds.minX, 1 - originBounds.maxX);
+          dy = clamp(dy, -originBounds.minY, 1 - originBounds.maxY);
+
+          if (mark.type === 'rect') {
+            mark.x = markDragSession.rect.x + dx;
+            mark.y = markDragSession.rect.y + dy;
+          } else {
+            mark.points = markDragSession.points.map((item) => ({
+              x: item.x + dx,
+              y: item.y + dy,
+            }));
+          }
+
+          updateMarkElement(element, mark);
+          setStatus('Flytter markering');
+          return;
+        }
+
         if (dragSession) {
           const image = getImage(dragSession.id);
           const node = document.querySelector(`.image-node[data-id="${dragSession.id}"]`);
@@ -822,6 +990,18 @@
           return;
         }
 
+        if (markDragSession) {
+          const session = markDragSession;
+          markDragSession = null;
+          if (session.moved) {
+            scheduleSave();
+            setStatus('Gemt');
+          } else {
+            toggleMark(session.imageId, session.markId);
+          }
+          return;
+        }
+
         if (dragSession) {
           dragSession = null;
           scheduleSave();
@@ -839,6 +1019,7 @@
         if (drawSession?.preview) drawSession.preview.remove();
         drawSession = null;
         dragSession = null;
+        markDragSession = null;
         resizeSession = null;
       });
 
@@ -847,6 +1028,7 @@
       });
 
       document.getElementById('addDemo').addEventListener('click', addMemoTile);
+      themeToggle.addEventListener('click', toggleTheme);
 
       document.getElementById('clearBoard').addEventListener('click', () => {
         state.images = [];
@@ -857,6 +1039,35 @@
       });
 
       document.addEventListener('paste', readPastedImage);
+
+      workspace.addEventListener('dragenter', (event) => {
+        if (!Array.from(event.dataTransfer?.items || []).some((item) => item.type.startsWith('image/'))) return;
+        event.preventDefault();
+        workspace.classList.add('is-drop-target');
+        setStatus('Slip billede her');
+      });
+
+      workspace.addEventListener('dragover', (event) => {
+        if (!Array.from(event.dataTransfer?.items || []).some((item) => item.type.startsWith('image/'))) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'copy';
+      });
+
+      workspace.addEventListener('dragleave', (event) => {
+        if (workspace.contains(event.relatedTarget)) return;
+        workspace.classList.remove('is-drop-target');
+      });
+
+      workspace.addEventListener('drop', (event) => {
+        event.preventDefault();
+        workspace.classList.remove('is-drop-target');
+        const files = Array.from(event.dataTransfer?.files || []).filter((file) => file.type.startsWith('image/'));
+        const dropPoint = boardPointFromEvent(event);
+        files.forEach((file, index) => {
+          readImageFile(file, { x: dropPoint.x + index * 24, y: dropPoint.y + index * 24 });
+        });
+        if (files.length) setStatus('Indsaetter billede');
+      });
 
       document.addEventListener('keydown', (event) => {
         if (event.key === 'Delete' || event.key === 'Backspace') {
@@ -873,6 +1084,7 @@
       });
 
       loadBoard();
+      applyTheme();
       render();
       setTool(state.tool);
       if (!state.images.length) setStatus('Klar');
