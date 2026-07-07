@@ -292,6 +292,27 @@
         vector-effect: non-scaling-stroke;
       }
 
+      .mark-resize-handle {
+        fill: var(--accent);
+        stroke: #092431;
+        stroke-width: 2;
+        vector-effect: non-scaling-stroke;
+      }
+
+      .mark-resize-handle[data-corner="nw"],
+      .mark-resize-handle[data-corner="se"] {
+        cursor: nwse-resize;
+      }
+
+      .mark-resize-handle[data-corner="ne"],
+      .mark-resize-handle[data-corner="sw"] {
+        cursor: nesw-resize;
+      }
+
+      body.light-theme .mark-resize-handle {
+        stroke: #e7f7fc;
+      }
+
       .resize-handle {
         position: absolute;
         width: 15px;
@@ -426,6 +447,8 @@
       const STORAGE_KEY = 'eastwood451-braindump-memo-v1';
       const MARK_FILL = '#9de4ff';
       const MARK_STROKE = '#31bfff';
+      const MARK_RECT_STROKE_WIDTH = 2;
+      const MARK_FREE_STROKE_WIDTH = 3;
       const MIN_IMAGE_SIZE = 90;
 
       const workspace = document.getElementById('workspace');
@@ -440,10 +463,12 @@
         theme: 'dark',
         images: [],
         selectedId: null,
+        selectedMarkId: null,
       };
 
       let dragSession = null;
       let markDragSession = null;
+      let markResizeSession = null;
       let resizeSession = null;
       let drawSession = null;
       let saveTimer = 0;
@@ -470,6 +495,7 @@
           localStorage.setItem(STORAGE_KEY, JSON.stringify({
             images: state.images,
             selectedId: state.selectedId,
+            selectedMarkId: state.selectedMarkId,
             theme: state.theme,
           }));
           setStatus('Gemt');
@@ -484,6 +510,7 @@
           if (!saved || !Array.isArray(saved.images)) return;
           state.images = saved.images;
           state.selectedId = saved.selectedId || null;
+          state.selectedMarkId = saved.selectedMarkId || null;
           state.theme = saved.theme === 'light' ? 'light' : 'dark';
         } catch (error) {
           state.images = [];
@@ -516,10 +543,32 @@
 
       function selectImage(id) {
         state.selectedId = id;
+        if (!id) {
+          state.selectedMarkId = null;
+        } else {
+          const image = getImage(id);
+          if (!image?.marks.some((mark) => mark.id === state.selectedMarkId)) {
+            state.selectedMarkId = null;
+          }
+        }
+
         document.querySelectorAll('.image-node').forEach((node) => {
           node.classList.toggle('is-selected', node.dataset.id === id);
         });
         scheduleSave();
+      }
+
+      function selectMark(imageId, markId) {
+        state.selectedId = imageId;
+        state.selectedMarkId = markId;
+        document.querySelectorAll('.image-node').forEach((node) => {
+          node.classList.toggle('is-selected', node.dataset.id === imageId);
+        });
+        scheduleSave();
+      }
+
+      function removeMarkResizeHandles() {
+        document.querySelectorAll('.mark-resize-handles').forEach((group) => group.remove());
       }
 
       function getImage(id) {
@@ -535,17 +584,22 @@
       }
 
       function localPointFromEvent(node, event) {
-        const rect = node.getBoundingClientRect();
+        const target = node.querySelector('.mark-layer') || node;
+        const rect = target.getBoundingClientRect();
         return {
           x: clamp(event.clientX - rect.left, 0, rect.width),
           y: clamp(event.clientY - rect.top, 0, rect.height),
+          width: rect.width,
+          height: rect.height,
         };
       }
 
-      function toNormalized(point, image) {
+      function toNormalized(point) {
+        const width = Math.max(point.width || 1, 1);
+        const height = Math.max(point.height || 1, 1);
         return {
-          x: clamp(point.x / image.w, 0, 1),
-          y: clamp(point.y / image.h, 0, 1),
+          x: clamp(point.x / width, 0, 1),
+          y: clamp(point.y / height, 0, 1),
         };
       }
 
@@ -597,6 +651,45 @@
         return { x, y, w, h };
       }
 
+      function createMarkResizeHandles(image, mark) {
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        group.classList.add('mark-resize-handles');
+        group.dataset.imageId = image.id;
+        group.dataset.markId = mark.id;
+
+        const bounds = markBounds(mark);
+        const handleSize = 34;
+        const handles = [
+          ['nw', bounds.minX, bounds.minY],
+          ['ne', bounds.maxX, bounds.minY],
+          ['sw', bounds.minX, bounds.maxY],
+          ['se', bounds.maxX, bounds.maxY],
+        ];
+
+        handles.forEach(([corner, x, y]) => {
+          const handle = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          handle.classList.add('mark-resize-handle');
+          handle.dataset.corner = corner;
+          handle.dataset.imageId = image.id;
+          handle.dataset.markId = mark.id;
+          handle.setAttribute('x', String(x * 1000 - handleSize / 2));
+          handle.setAttribute('y', String(y * 1000 - handleSize / 2));
+          handle.setAttribute('width', String(handleSize));
+          handle.setAttribute('height', String(handleSize));
+          handle.setAttribute('rx', '6');
+          group.appendChild(handle);
+        });
+
+        return group;
+      }
+
+      function refreshMarkResizeHandles(image, mark) {
+        const svg = document.querySelector(`.image-node[data-id="${image.id}"] .mark-layer`);
+        if (!svg) return;
+        svg.querySelectorAll('.mark-resize-handles').forEach((group) => group.remove());
+        svg.appendChild(createMarkResizeHandles(image, mark));
+      }
+
       function render() {
         pan.innerHTML = '';
         emptyState.hidden = state.images.length > 0;
@@ -626,6 +719,11 @@
             svg.appendChild(element);
           });
 
+          if (image.id === state.selectedId && state.selectedMarkId) {
+            const mark = image.marks.find((item) => item.id === state.selectedMarkId);
+            if (mark) svg.appendChild(createMarkResizeHandles(image, mark));
+          }
+
           node.appendChild(svg);
 
           ['nw', 'ne', 'sw', 'se'].forEach((corner) => {
@@ -645,14 +743,14 @@
         element.classList.add('mark');
         element.dataset.markId = mark.id;
         element.setAttribute('stroke', MARK_STROKE);
-        element.setAttribute('stroke-width', '4');
+        element.setAttribute('stroke-width', String(MARK_RECT_STROKE_WIDTH));
         element.setAttribute('stroke-linejoin', 'round');
         element.setAttribute('stroke-linecap', 'round');
 
         if (mark.type === 'rect') {
           updateMarkElement(element, mark);
         } else {
-          element.setAttribute('stroke-width', '6');
+          element.setAttribute('stroke-width', String(MARK_FREE_STROKE_WIDTH));
           updateMarkElement(element, mark);
         }
 
@@ -732,12 +830,31 @@
         const mark = image.marks.find((item) => item.id === markElement.dataset.markId);
         if (!mark) return;
 
+        selectMark(image.id, mark.id);
         markDragSession = {
           imageId: image.id,
           markId: mark.id,
           pointerId: event.pointerId,
-          start: toNormalized(local, image),
+          start: toNormalized(local),
           moved: false,
+          rect: mark.type === 'rect' ? { x: mark.x, y: mark.y, w: mark.w, h: mark.h } : null,
+          points: mark.type === 'free' ? mark.points.map((point) => ({ ...point })) : null,
+        };
+        node.setPointerCapture(event.pointerId);
+      }
+
+      function beginMarkResize(event, node, image, handle) {
+        event.stopPropagation();
+        const mark = image.marks.find((item) => item.id === handle.dataset.markId);
+        if (!mark) return;
+
+        selectMark(image.id, mark.id);
+        markResizeSession = {
+          imageId: image.id,
+          markId: mark.id,
+          pointerId: event.pointerId,
+          corner: handle.dataset.corner,
+          bounds: markBounds(mark),
           rect: mark.type === 'rect' ? { x: mark.x, y: mark.y, w: mark.w, h: mark.h } : null,
           points: mark.type === 'free' ? mark.points.map((point) => ({ ...point })) : null,
         };
@@ -763,7 +880,7 @@
 
       function beginDraw(event, node, image) {
         const local = localPointFromEvent(node, event);
-        const point = toNormalized(local, image);
+        const point = toNormalized(local);
         drawSession = {
           id: image.id,
           pointerId: event.pointerId,
@@ -778,7 +895,7 @@
         drawSession.preview.classList.add('draw-preview');
         drawSession.preview.setAttribute('fill', MARK_FILL);
         drawSession.preview.setAttribute('stroke', MARK_STROKE);
-        drawSession.preview.setAttribute('stroke-width', state.tool === 'rect' ? '4' : '6');
+        drawSession.preview.setAttribute('stroke-width', state.tool === 'rect' ? String(MARK_RECT_STROKE_WIDTH) : String(MARK_FREE_STROKE_WIDTH));
         drawSession.preview.setAttribute('stroke-linejoin', 'round');
         drawSession.preview.setAttribute('stroke-linecap', 'round');
         svg.appendChild(drawSession.preview);
@@ -791,13 +908,10 @@
         const node = document.querySelector(`.image-node[data-id="${drawSession.id}"]`);
         if (!image || !node) return;
 
-        const point = toNormalized(localPointFromEvent(node, event), image);
+        const point = toNormalized(localPointFromEvent(node, event));
         if (drawSession.tool === 'rect') {
           const rect = rectFromPoints(drawSession.start, point);
-          drawSession.preview.setAttribute('x', String(rect.x * 1000));
-          drawSession.preview.setAttribute('y', String(rect.y * 1000));
-          drawSession.preview.setAttribute('width', String(rect.w * 1000));
-          drawSession.preview.setAttribute('height', String(rect.h * 1000));
+          updateMarkElement(drawSession.preview, { type: 'rect', filled: true, ...rect });
         } else {
           const last = drawSession.points[drawSession.points.length - 1];
           const distance = Math.hypot(point.x - last.x, point.y - last.y);
@@ -817,16 +931,20 @@
           return;
         }
 
-        const point = toNormalized(localPointFromEvent(node, event), image);
+        const point = toNormalized(localPointFromEvent(node, event));
         drawSession.preview.remove();
 
         if (drawSession.tool === 'rect') {
           const rect = rectFromPoints(drawSession.start, point);
           if (rect.w > 0.012 && rect.h > 0.012) {
-            image.marks.push({ id: uid('mark'), type: 'rect', filled: true, ...rect });
+            const mark = { id: uid('mark'), type: 'rect', filled: true, ...rect };
+            image.marks.push(mark);
+            state.selectedMarkId = mark.id;
           }
         } else if (drawSession.points.length > 2) {
-          image.marks.push({ id: uid('mark'), type: 'free', filled: true, points: drawSession.points });
+          const mark = { id: uid('mark'), type: 'free', filled: true, points: drawSession.points };
+          image.marks.push(mark);
+          state.selectedMarkId = mark.id;
         }
 
         drawSession = null;
@@ -841,12 +959,14 @@
         const mark = image.marks.find((item) => item.id === markId);
         if (!mark) return;
         mark.filled = !mark.filled;
+        state.selectedMarkId = markId;
         render();
         selectImage(imageId);
         scheduleSave();
       }
 
       workspace.addEventListener('pointerdown', (event) => {
+        const markResizeHandle = event.target.closest?.('.mark-resize-handle');
         const markElement = event.target.closest?.('.mark');
         const node = event.target.closest?.('.image-node');
         if (!node) {
@@ -857,6 +977,11 @@
         const image = getImage(node.dataset.id);
         if (!image) return;
         selectImage(image.id);
+
+        if (markResizeHandle) {
+          beginMarkResize(event, node, image, markResizeHandle);
+          return;
+        }
 
         if (markElement && !drawSession) {
           if (state.tool === 'move') {
@@ -871,18 +996,81 @@
 
         const handle = event.target.closest?.('.resize-handle');
         if (handle) {
+          state.selectedMarkId = null;
+          removeMarkResizeHandles();
           beginResize(event, node, image, handle.dataset.corner);
           return;
         }
 
         if (state.tool === 'move') {
+          state.selectedMarkId = null;
+          removeMarkResizeHandles();
           beginDrag(event, node, image);
         } else {
+          state.selectedMarkId = null;
+          removeMarkResizeHandles();
           beginDraw(event, node, image);
         }
       });
 
       workspace.addEventListener('pointermove', (event) => {
+        if (markResizeSession) {
+          const image = getImage(markResizeSession.imageId);
+          const node = document.querySelector(`.image-node[data-id="${markResizeSession.imageId}"]`);
+          const mark = image?.marks.find((item) => item.id === markResizeSession.markId);
+          if (!image || !node || !mark) return;
+
+          const point = toNormalized(localPointFromEvent(node, event));
+          const minSize = 0.012;
+          const bounds = markResizeSession.bounds;
+          const corner = markResizeSession.corner;
+          const anchorX = corner.includes('w') ? bounds.maxX : bounds.minX;
+          const anchorY = corner.includes('n') ? bounds.maxY : bounds.minY;
+          let movingX = point.x;
+          let movingY = point.y;
+
+          if (corner.includes('w')) {
+            movingX = clamp(movingX, 0, anchorX - minSize);
+          } else {
+            movingX = clamp(movingX, anchorX + minSize, 1);
+          }
+
+          if (corner.includes('n')) {
+            movingY = clamp(movingY, 0, anchorY - minSize);
+          } else {
+            movingY = clamp(movingY, anchorY + minSize, 1);
+          }
+
+          const newBounds = {
+            minX: Math.min(anchorX, movingX),
+            maxX: Math.max(anchorX, movingX),
+            minY: Math.min(anchorY, movingY),
+            maxY: Math.max(anchorY, movingY),
+          };
+          const newW = newBounds.maxX - newBounds.minX;
+          const newH = newBounds.maxY - newBounds.minY;
+
+          if (mark.type === 'rect') {
+            mark.x = newBounds.minX;
+            mark.y = newBounds.minY;
+            mark.w = newW;
+            mark.h = newH;
+          } else {
+            const originW = Math.max(bounds.maxX - bounds.minX, minSize);
+            const originH = Math.max(bounds.maxY - bounds.minY, minSize);
+            mark.points = markResizeSession.points.map((item) => ({
+              x: newBounds.minX + ((item.x - bounds.minX) / originW) * newW,
+              y: newBounds.minY + ((item.y - bounds.minY) / originH) * newH,
+            }));
+          }
+
+          const element = document.querySelector(`.image-node[data-id="${markResizeSession.imageId}"] .mark[data-mark-id="${markResizeSession.markId}"]`);
+          if (element) updateMarkElement(element, mark);
+          refreshMarkResizeHandles(image, mark);
+          setStatus('Skalerer markering');
+          return;
+        }
+
         if (markDragSession) {
           const image = getImage(markDragSession.imageId);
           const node = document.querySelector(`.image-node[data-id="${markDragSession.imageId}"]`);
@@ -890,7 +1078,7 @@
           const mark = image?.marks.find((item) => item.id === markDragSession.markId);
           if (!image || !node || !element || !mark) return;
 
-          const point = toNormalized(localPointFromEvent(node, event), image);
+          const point = toNormalized(localPointFromEvent(node, event));
           let dx = point.x - markDragSession.start.x;
           let dy = point.y - markDragSession.start.y;
 
@@ -990,6 +1178,13 @@
           return;
         }
 
+        if (markResizeSession) {
+          markResizeSession = null;
+          scheduleSave();
+          setStatus('Gemt');
+          return;
+        }
+
         if (markDragSession) {
           const session = markDragSession;
           markDragSession = null;
@@ -1020,6 +1215,7 @@
         drawSession = null;
         dragSession = null;
         markDragSession = null;
+        markResizeSession = null;
         resizeSession = null;
       });
 
