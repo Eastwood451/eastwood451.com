@@ -374,6 +374,49 @@
         background: rgba(255, 255, 255, 0.86);
       }
 
+      .context-menu {
+        position: absolute;
+        z-index: 30;
+        min-width: 170px;
+        padding: 6px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(13, 18, 24, 0.96);
+        box-shadow: 0 18px 44px var(--shadow);
+        backdrop-filter: blur(16px);
+      }
+
+      .context-menu[hidden] {
+        display: none;
+      }
+
+      .context-menu button {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        min-height: 34px;
+        border: 0;
+        border-radius: 6px;
+        padding: 0 10px;
+        color: #fff0ef;
+        background: transparent;
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.86rem;
+        font-weight: 800;
+        text-align: left;
+      }
+
+      .context-menu button:hover,
+      .context-menu button:focus-visible {
+        outline: 0;
+        background: rgba(255, 100, 95, 0.16);
+      }
+
+      body.light-theme .context-menu {
+        background: rgba(255, 255, 255, 0.96);
+      }
+
       @media (max-width: 720px) {
         .topbar {
           grid-template-columns: 1fr;
@@ -440,6 +483,9 @@
         <div id="pan"></div>
         <div class="empty-state" id="emptyState">Braindump</div>
         <div class="status" id="status">Klar</div>
+        <div class="context-menu" id="markContextMenu" hidden>
+          <button type="button" id="deleteMark">Slet markering</button>
+        </div>
       </section>
     </main>
 
@@ -456,6 +502,8 @@
       const emptyState = document.getElementById('emptyState');
       const statusEl = document.getElementById('status');
       const themeToggle = document.getElementById('themeToggle');
+      const markContextMenu = document.getElementById('markContextMenu');
+      const deleteMarkButton = document.getElementById('deleteMark');
       const toolButtons = Array.from(document.querySelectorAll('.tool-button'));
 
       const state = {
@@ -464,6 +512,7 @@
         images: [],
         selectedId: null,
         selectedMarkId: null,
+        contextMark: null,
       };
 
       let dragSession = null;
@@ -565,6 +614,45 @@
           node.classList.toggle('is-selected', node.dataset.id === imageId);
         });
         scheduleSave();
+      }
+
+      function hideContextMenu() {
+        markContextMenu.hidden = true;
+        state.contextMark = null;
+      }
+
+      function showContextMenu(event, imageId, markId) {
+        event.preventDefault();
+        event.stopPropagation();
+        const point = boardPointFromEvent(event);
+        const menuWidth = 180;
+        const menuHeight = 48;
+        const x = clamp(point.x, 8, Math.max(8, workspace.clientWidth - menuWidth - 8));
+        const y = clamp(point.y, 8, Math.max(8, workspace.clientHeight - menuHeight - 8));
+
+        state.contextMark = { imageId, markId };
+        selectMark(imageId, markId);
+        render();
+        markContextMenu.style.left = `${x}px`;
+        markContextMenu.style.top = `${y}px`;
+        markContextMenu.hidden = false;
+      }
+
+      function deleteSelectedMark() {
+        const target = state.contextMark || (state.selectedId && state.selectedMarkId
+          ? { imageId: state.selectedId, markId: state.selectedMarkId }
+          : null);
+        if (!target) return;
+
+        const image = getImage(target.imageId);
+        if (!image) return;
+        image.marks = image.marks.filter((mark) => mark.id !== target.markId);
+        state.selectedId = image.id;
+        state.selectedMarkId = null;
+        hideContextMenu();
+        render();
+        scheduleSave();
+        setStatus('Markering slettet');
       }
 
       function removeMarkResizeHandles() {
@@ -966,6 +1054,12 @@
       }
 
       workspace.addEventListener('pointerdown', (event) => {
+        if (event.button !== 0) return;
+
+        if (!markContextMenu.hidden && !event.target.closest?.('.context-menu')) {
+          hideContextMenu();
+        }
+
         const markResizeHandle = event.target.closest?.('.mark-resize-handle');
         const markElement = event.target.closest?.('.mark');
         const node = event.target.closest?.('.image-node');
@@ -1132,28 +1226,32 @@
           const point = boardPointFromEvent(event);
           const dx = point.x - resizeSession.startX;
           const dy = point.y - resizeSession.startY;
+          const aspect = image.aspect || resizeSession.imageW / resizeSession.imageH;
 
-          let width = resizeSession.imageW;
-          let height = resizeSession.imageH;
+          const widthDelta = resizeSession.corner.includes('e') ? dx : -dx;
+          const heightDelta = resizeSession.corner.includes('s') ? dy : -dy;
+          let width;
+          let height;
           let x = resizeSession.imageX;
           let y = resizeSession.imageY;
 
-          if (resizeSession.corner.includes('e')) width = resizeSession.imageW + dx;
-          if (resizeSession.corner.includes('s')) height = resizeSession.imageH + dy;
-          if (resizeSession.corner.includes('w')) width = resizeSession.imageW - dx;
-          if (resizeSession.corner.includes('n')) height = resizeSession.imageH - dy;
-
-          if (event.shiftKey) {
-            const aspect = image.aspect || resizeSession.imageW / resizeSession.imageH;
-            if (Math.abs(dx) > Math.abs(dy)) {
-              height = width / aspect;
-            } else {
-              width = height * aspect;
-            }
+          if (Math.abs(widthDelta) >= Math.abs(heightDelta)) {
+            width = resizeSession.imageW + widthDelta;
+            height = width / aspect;
+          } else {
+            height = resizeSession.imageH + heightDelta;
+            width = height * aspect;
           }
 
-          width = Math.max(MIN_IMAGE_SIZE, width);
-          height = Math.max(MIN_IMAGE_SIZE, height);
+          if (width < MIN_IMAGE_SIZE) {
+            width = MIN_IMAGE_SIZE;
+            height = width / aspect;
+          }
+
+          if (height < MIN_IMAGE_SIZE) {
+            height = MIN_IMAGE_SIZE;
+            width = height * aspect;
+          }
 
           if (resizeSession.corner.includes('w')) x = resizeSession.imageX + resizeSession.imageW - width;
           if (resizeSession.corner.includes('n')) y = resizeSession.imageY + resizeSession.imageH - height;
@@ -1219,16 +1317,31 @@
         resizeSession = null;
       });
 
+      workspace.addEventListener('contextmenu', (event) => {
+        const markElement = event.target.closest?.('.mark');
+        if (!markElement) {
+          hideContextMenu();
+          return;
+        }
+
+        const svg = markElement.closest('.mark-layer');
+        if (!svg) return;
+        showContextMenu(event, svg.dataset.imageId, markElement.dataset.markId);
+      });
+
       toolButtons.forEach((button) => {
         button.addEventListener('click', () => setTool(button.dataset.tool));
       });
 
       document.getElementById('addDemo').addEventListener('click', addMemoTile);
       themeToggle.addEventListener('click', toggleTheme);
+      deleteMarkButton.addEventListener('click', deleteSelectedMark);
 
       document.getElementById('clearBoard').addEventListener('click', () => {
         state.images = [];
         state.selectedId = null;
+        state.selectedMarkId = null;
+        hideContextMenu();
         localStorage.removeItem(STORAGE_KEY);
         render();
         setStatus('Ryddet');
@@ -1266,6 +1379,10 @@
       });
 
       document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          hideContextMenu();
+        }
+
         if (event.key === 'Delete' || event.key === 'Backspace') {
           if (!state.selectedId || ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
           state.images = state.images.filter((image) => image.id !== state.selectedId);
