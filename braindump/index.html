@@ -501,6 +501,8 @@
       const MARK_RECT_STROKE_WIDTH = 2;
       const MARK_FREE_STROKE_WIDTH = 3;
       const MIN_IMAGE_SIZE = 90;
+      const MIN_ZOOM = 0.2;
+      const MAX_ZOOM = 4;
 
       const workspace = document.getElementById('workspace');
       const pan = document.getElementById('pan');
@@ -519,6 +521,7 @@
         selectedMarkId: null,
         contextMark: null,
         pan: { x: 0, y: 0 },
+        zoom: 1,
       };
 
       let dragSession = null;
@@ -554,6 +557,7 @@
             selectedMarkId: state.selectedMarkId,
             theme: state.theme,
             pan: state.pan,
+            zoom: state.zoom,
           }));
           setStatus('Gemt');
         } catch (error) {
@@ -572,19 +576,37 @@
           if (saved.pan && Number.isFinite(saved.pan.x) && Number.isFinite(saved.pan.y)) {
             state.pan = { x: saved.pan.x, y: saved.pan.y };
           }
+          if (Number.isFinite(saved.zoom)) {
+            state.zoom = clamp(saved.zoom, MIN_ZOOM, MAX_ZOOM);
+          }
         } catch (error) {
           state.images = [];
         }
       }
 
       function applyPan() {
-        pan.style.transform = `translate(${state.pan.x}px, ${state.pan.y}px)`;
+        pan.style.transform = `matrix(${state.zoom}, 0, 0, ${state.zoom}, ${state.pan.x}, ${state.pan.y})`;
       }
 
       function panBy(dx, dy) {
         state.pan.x += dx;
         state.pan.y += dy;
         applyPan();
+      }
+
+      function zoomAt(screenPoint, deltaY) {
+        const oldZoom = state.zoom;
+        const zoomFactor = Math.exp(-deltaY * 0.0015);
+        const nextZoom = clamp(oldZoom * zoomFactor, MIN_ZOOM, MAX_ZOOM);
+        if (Math.abs(nextZoom - oldZoom) < 0.0001) return;
+
+        const canvasX = (screenPoint.x - state.pan.x) / oldZoom;
+        const canvasY = (screenPoint.y - state.pan.y) / oldZoom;
+        state.zoom = nextZoom;
+        state.pan.x = Math.round(screenPoint.x - canvasX * nextZoom);
+        state.pan.y = Math.round(screenPoint.y - canvasY * nextZoom);
+        applyPan();
+        setStatus(`${Math.round(state.zoom * 100)}%`);
       }
 
       function applyTheme() {
@@ -695,8 +717,8 @@
       function canvasPointFromEvent(event) {
         const point = screenPointFromEvent(event);
         return {
-          x: point.x - state.pan.x,
-          y: point.y - state.pan.y,
+          x: (point.x - state.pan.x) / state.zoom,
+          y: (point.y - state.pan.y) / state.zoom,
         };
       }
 
@@ -883,8 +905,8 @@
         const height = Math.max(120, Math.round(naturalHeight * ratio));
         const count = state.images.length;
         const basePosition = position || {
-          x: bounds.width / 2 - state.pan.x + count * 26,
-          y: bounds.height / 2 - state.pan.y + count * 26,
+          x: (bounds.width / 2 - state.pan.x) / state.zoom + count * 26,
+          y: (bounds.height / 2 - state.pan.y) / state.zoom + count * 26,
         };
 
         const image = {
@@ -1422,6 +1444,7 @@
         state.selectedId = null;
         state.selectedMarkId = null;
         state.pan = { x: 0, y: 0 };
+        state.zoom = 1;
         applyPan();
         hideContextMenu();
         localStorage.removeItem(STORAGE_KEY);
@@ -1459,6 +1482,14 @@
         });
         if (files.length) setStatus('Indsaetter billede');
       });
+
+      workspace.addEventListener('wheel', (event) => {
+        if (event.target.closest?.('.context-menu')) return;
+        event.preventDefault();
+        hideContextMenu();
+        zoomAt(screenPointFromEvent(event), event.deltaY);
+        scheduleSave();
+      }, { passive: false });
 
       document.addEventListener('keydown', (event) => {
         const editingText = ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
