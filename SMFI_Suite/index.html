@@ -155,6 +155,229 @@
             color: #b0b8c8 !important;
         }
 
+.welcome-screen {
+            display: block;
+            height: 100%;
+            overflow-y: auto;
+            padding: clamp(24px, 4vw, 64px);
+            background-color: #0f0f1a;
+        }
+
+        .suite-home {
+            width: min(1120px, 100%);
+            margin: 0 auto;
+        }
+
+        .suite-home-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        .suite-home-kicker {
+            margin: 0 0 8px;
+            color: #60a5fa;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .suite-home-title {
+            margin: 0 0 10px;
+            color: #f8fafc;
+            font-size: clamp(1.8rem, 3vw, 2.75rem);
+            letter-spacing: -0.04em;
+        }
+
+        .suite-home-subtitle {
+            max-width: 620px;
+            margin: 0;
+            color: #94a3b8;
+            font-size: 1rem;
+            line-height: 1.55;
+        }
+
+        .suite-home-count {
+            flex: 0 0 auto;
+            padding: 8px 12px;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 999px;
+            color: #cbd5e1;
+            background: rgba(15, 23, 42, 0.5);
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .app-thumbnail-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .app-thumbnail-card {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            padding: 0;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 18px;
+            overflow: hidden;
+            color: #f8fafc;
+            background: rgba(26, 26, 46, 0.92);
+            box-shadow: 0 16px 35px rgba(0, 0, 0, 0.24);
+            cursor: pointer;
+            font: inherit;
+            text-align: left;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .app-thumbnail-card:hover,
+        .app-thumbnail-card:focus-visible {
+            border-color: var(--thumb-accent);
+            box-shadow: 0 22px 44px rgba(0, 0, 0, 0.34);
+            outline: none;
+            transform: translateY(-4px);
+        }
+
+        .app-thumbnail-card:focus-visible {
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.45), 0 22px 44px rgba(0, 0, 0, 0.34);
+        }
+
+        .app-thumbnail-visual {
+            position: relative;
+            display: grid;
+            min-height: 150px;
+            place-items: center;
+            isolation: isolate;
+            overflow: hidden;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        .app-thumbnail-visual::before {
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 50%;
+            content: "";
+            transform: rotate(20deg);
+        }
+
+        .app-thumbnail-visual::after {
+            position: absolute;
+            width: 72%;
+            height: 72%;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            content: "";
+            transform: rotate(-7deg);
+        }
+
+        .app-thumbnail-visual i {
+            position: relative;
+            z-index: 1;
+            color: var(--thumb-accent);
+            filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.35));
+            font-size: 3.4rem;
+        }
+
+        .app-thumbnail-overline {
+            position: absolute;
+            top: 15px;
+            left: 17px;
+            z-index: 1;
+            color: rgba(255, 255, 255, 0.78);
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+        }
+
+        .thumbnail-belief-map { background-color: #155e75; background-image: linear-gradient(135deg, rgba(8, 145, 178, 0.9), rgba(23, 37, 84, 0.96)), linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px); --thumb-accent: #67e8f9; }
+        .thumbnail-dimensions { background-color: #1d4ed8; background-image: linear-gradient(135deg, rgba(37, 99, 235, 0.94), rgba(30, 41, 59, 0.96)), linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px); --thumb-accent: #93c5fd; }
+        .thumbnail-mindmap { background-color: #047857; background-image: linear-gradient(135deg, rgba(5, 150, 105, 0.94), rgba(6, 78, 59, 0.96)), linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px); --thumb-accent: #6ee7b7; }
+        .thumbnail-motivations { background-color: #b45309; background-image: linear-gradient(135deg, rgba(217, 119, 6, 0.94), rgba(69, 26, 3, 0.96)), linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px); --thumb-accent: #fcd34d; }
+        .thumbnail-proposition { background-color: #b91c1c; background-image: linear-gradient(135deg, rgba(220, 38, 38, 0.94), rgba(69, 10, 10, 0.96)), linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px); --thumb-accent: #fca5a5; }
+        .thumbnail-nested-actor { background-color: #6d28d9; background-image: linear-gradient(135deg, rgba(124, 58, 237, 0.94), rgba(46, 16, 101, 0.96)), linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px); --thumb-accent: #c4b5fd; }
+
+        .app-thumbnail-card-body {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-height: 68px;
+            padding: 14px 16px;
+            border-top: 1px solid rgba(148, 163, 184, 0.16);
+        }
+
+        .app-thumbnail-card-name {
+            min-width: 0;
+            overflow: hidden;
+            font-size: 0.98rem;
+            font-weight: 750;
+            line-height: 1.25;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .app-thumbnail-card-action {
+            flex: 0 0 auto;
+            color: var(--thumb-accent);
+            font-size: 0.78rem;
+            font-weight: 750;
+            white-space: nowrap;
+        }
+
+        body.theme-light .suite-home-title {
+            color: #0f172a;
+        }
+
+        body.theme-light .suite-home-subtitle {
+            color: #64748b;
+        }
+
+        body.theme-light .suite-home-count {
+            border-color: #cbd5e1;
+            color: #475569;
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        body.theme-light .app-thumbnail-card {
+            border-color: #e2e8f0;
+            color: #0f172a;
+            background: #ffffff;
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.1);
+        }
+
+        body.theme-light .app-thumbnail-card-body {
+            border-top-color: #e2e8f0;
+        }
+
+        @media (max-width: 980px) {
+            .app-thumbnail-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 640px) {
+            .welcome-screen {
+                padding: 24px 16px;
+            }
+
+            .suite-home-header {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .app-thumbnail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* Light Theme Overrides */
         body.theme-light .sidebar {
             background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
@@ -298,15 +521,85 @@
     <main class="flex-grow-1 position-relative h-100" style="background-color: #0f0f1a;">
 
         <!-- Welcome Screen when no app is selected -->
-        <div id="welcome-screen" class="welcome-screen">
-            <div class="welcome-card">
-                <div class="mb-4" style="font-size: 4rem;">🚀</div>
-                <h2 class="fw-bold mb-3 suite-title-sidebar" style="font-size: 2.5rem;">Velkommen til Suiten</h2>
-                <p class="text-muted mb-4 lead">Vælg en applikation i menuen til venstre for at starte. AI-assistenten
-                    til højre er gennemgående og husker din samtale, selvom du skifter mellem apps.</p>
-                <button class="btn btn-primary px-4 py-2 fw-bold"
-                    onclick="document.querySelector('.nav-link').click()">Start første app</button>
-            </div>
+<div id="welcome-screen" class="welcome-screen">
+            <section class="suite-home" aria-labelledby="suite-home-title">
+                <div class="suite-home-header">
+                    <div>
+                        <p class="suite-home-kicker">SMFI SUITE</p>
+                        <h1 id="suite-home-title" class="suite-home-title">Vælg en applikation</h1>
+                        <p class="suite-home-subtitle">Start direkte fra suitens apps. Vælg et kort nedenfor, eller brug menuen til venstre.</p>
+                    </div>
+                    <span class="suite-home-count">6 apps</span>
+                </div>
+
+                <div class="app-thumbnail-grid" aria-label="SMFI Suite apps">
+                    <button class="app-thumbnail-card card-belief-map" type="button" data-app="Belief-map" aria-label="Åbn Belief-map">
+                        <span class="app-thumbnail-visual thumbnail-belief-map">
+                            <span class="app-thumbnail-overline">ARGUMENT MAP</span>
+                            <i class="bi bi-map-fill" aria-hidden="true"></i>
+                        </span>
+                        <span class="app-thumbnail-card-body">
+                            <span class="app-thumbnail-card-name">Belief-map</span>
+                            <span class="app-thumbnail-card-action">Åbn <i class="bi bi-arrow-up-right" aria-hidden="true"></i></span>
+                        </span>
+                    </button>
+
+                    <button class="app-thumbnail-card card-dimensions" type="button" data-app="Dimensionsvisualisering" aria-label="Åbn Dimensionsvisualisering">
+                        <span class="app-thumbnail-visual thumbnail-dimensions">
+                            <span class="app-thumbnail-overline">DIMENSIONS</span>
+                            <i class="bi bi-bar-chart-fill" aria-hidden="true"></i>
+                        </span>
+                        <span class="app-thumbnail-card-body">
+                            <span class="app-thumbnail-card-name">Dimensionsvisualisering</span>
+                            <span class="app-thumbnail-card-action">Åbn <i class="bi bi-arrow-up-right" aria-hidden="true"></i></span>
+                        </span>
+                    </button>
+
+                    <button class="app-thumbnail-card card-mindmap" type="button" data-app="Mindmap &amp; Braindump" aria-label="Åbn Mindmap &amp; Braindump">
+                        <span class="app-thumbnail-visual thumbnail-mindmap">
+                            <span class="app-thumbnail-overline">MINDMAP</span>
+                            <i class="bi bi-diagram-3-fill" aria-hidden="true"></i>
+                        </span>
+                        <span class="app-thumbnail-card-body">
+                            <span class="app-thumbnail-card-name">Mindmap &amp; Braindump</span>
+                            <span class="app-thumbnail-card-action">Åbn <i class="bi bi-arrow-up-right" aria-hidden="true"></i></span>
+                        </span>
+                    </button>
+
+                    <button class="app-thumbnail-card card-motivations" type="button" data-app="Motivations-matrice" aria-label="Åbn Motivations-matrice">
+                        <span class="app-thumbnail-visual thumbnail-motivations">
+                            <span class="app-thumbnail-overline">MOTIVATIONS</span>
+                            <i class="bi bi-grid-1x2-fill" aria-hidden="true"></i>
+                        </span>
+                        <span class="app-thumbnail-card-body">
+                            <span class="app-thumbnail-card-name">Motivations-matrice</span>
+                            <span class="app-thumbnail-card-action">Åbn <i class="bi bi-arrow-up-right" aria-hidden="true"></i></span>
+                        </span>
+                    </button>
+
+                    <button class="app-thumbnail-card card-proposition" type="button" data-app="Proposition-tester" aria-label="Åbn Proposition-tester">
+                        <span class="app-thumbnail-visual thumbnail-proposition">
+                            <span class="app-thumbnail-overline">PROPOSITION TESTER</span>
+                            <i class="bi bi-ui-checks-grid" aria-hidden="true"></i>
+                        </span>
+                        <span class="app-thumbnail-card-body">
+                            <span class="app-thumbnail-card-name">Proposition-tester</span>
+                            <span class="app-thumbnail-card-action">Åbn <i class="bi bi-arrow-up-right" aria-hidden="true"></i></span>
+                        </span>
+                    </button>
+
+                    <button class="app-thumbnail-card card-nested-actor" type="button" data-app="SMFI Nested Actor" aria-label="Åbn SMFI Nested Actor">
+                        <span class="app-thumbnail-visual thumbnail-nested-actor">
+                            <span class="app-thumbnail-overline">NESTED ACTOR</span>
+                            <i class="bi bi-layers-fill" aria-hidden="true"></i>
+                        </span>
+                        <span class="app-thumbnail-card-body">
+                            <span class="app-thumbnail-card-name">SMFI Nested Actor</span>
+                            <span class="app-thumbnail-card-action">Åbn <i class="bi bi-arrow-up-right" aria-hidden="true"></i></span>
+                        </span>
+                    </button>
+                </div>
+            </section>
         </div>
 
         <iframe class="app-iframe" src="../Belief-map%20-%20Antigravity/Argument-mapper%20-%20codex/index.html?v=19"
@@ -434,6 +727,14 @@
                             iframe.style.display = 'none';
                         }
                     });
+                });
+            });
+
+            document.querySelectorAll('.app-thumbnail-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const appName = card.dataset.app;
+                    const targetLink = Array.from(links).find(link => link.getAttribute('title') === appName);
+                    if (targetLink) targetLink.click();
                 });
             });
 
