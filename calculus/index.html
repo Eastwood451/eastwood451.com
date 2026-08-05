@@ -68,8 +68,18 @@
                 <div class="menu-card-body">
                     <div class="menu-card-title">Regelbygger</div>
                     <div class="menu-card-desc">V&aelig;lg et skelet og byg k&aelig;dereglen, produktreglen, kvotientreglen eller substitution med brikker</div>
+                    <div class="menu-card-toggles">
+                        <div class="toggle-group">
+                            <span class="toggle-label">Tilstand</span>
+                            <div class="toggle-container" id="rule-builder-toggle-container">
+                                <button class="toggle-btn" data-filter="integration">Integration</button>
+                                <button class="toggle-btn" data-filter="differentiation">Differentiering</button>
+                                <button class="toggle-btn active" data-filter="both">Begge</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="menu-card-badge">5 opgaver</div>
+                <div class="menu-card-badge" id="rule-builder-badge">5 opgaver</div>
             </div>
         </div>
         <button id="menu-formula-ref-btn" class="overlay-secondary-btn" style="margin-top: 24px;">
@@ -165,6 +175,7 @@
     <script src="app.js"></script>
     <script src="rule-builder.js"></script>
     <script src="hints.js"></script>
+    <script src="../eastwood-home-link.js"></script>
 </body>
 
 </html>
