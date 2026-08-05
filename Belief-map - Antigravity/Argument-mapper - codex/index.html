@@ -93,6 +93,9 @@ const NODE_W  = COL_W - COL_PAD * 2;   // ≈ 274
 const NODE_H  = 128;
 const JUNC_R  = 36;
 const HDR_H   = 52;    // header strip height (canvas units above y=0)
+const CLUSTER_PAD = 28;
+const CLUSTER_HEADER_H = 68;
+const CLUSTER_COLLISION_GAP = 24;
 
 const TYPES = {
   premise:     { label:"Præmis",          color:"#10b981", dim:"#0a2318" },
@@ -123,7 +126,7 @@ const TYPES = {
   desiredstate:{ label:"Ønsket state (S2)",color:"#86efac", dim:"#0a2318" },
   deltaS:      { label:"Delta S",         color:"#fb7185", dim:"#2d0812" },
   question:    { label:"Spørgsmål",       color:"#38bdf8", dim:"#0c1f2e" },
-  cluster:     { label:"Cluster",         color:"#f97316", dim:"#33180a" },
+  cluster:     { label:"Cluster",         color:"#2563eb", dim:"#0b1d4d" },
 };
 const TYPE_OPTIONS = Object.entries(TYPES).sort(([,a],[,b]) => a.label.localeCompare(b.label, "da", { sensitivity: "base" }));
 
@@ -317,8 +320,11 @@ function getNodeBounds(n, allNodes=[]) {
   if (n.type === "junction") return { x: nx, y: ny, w: JUNC_R * 2, h: JUNC_R * 2 };
   if (n.type === "image") return { x: nx, y: ny, w: (n.width ?? 200), h: (n.height ?? 150) };
   if (n.type === "cluster") {
-    const members = allNodes.filter(m => (n.memberIds ?? []).includes(m.id));
-    if (members.length === 0) return { x: nx, y: ny, w: 200, h: 120 };
+    if (Number.isFinite(n.width) && n.width > 0 && Number.isFinite(n.height) && n.height > 0) {
+      return { x: nx, y: ny, w: n.width, h: n.height };
+    }
+    const members = allNodes.filter(m => m.type !== "cluster" && (n.memberIds ?? []).includes(m.id));
+    if (members.length === 0) return { x: nx, y: ny, w: n.width ?? 240, h: n.height ?? 140 };
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     members.forEach(m => {
       const b = getNodeBounds(m, allNodes);
@@ -327,9 +333,12 @@ function getNodeBounds(n, allNodes=[]) {
       maxX = Math.max(maxX, b.x + b.w);
       maxY = Math.max(maxY, b.y + b.h);
     });
-    const pad = 24;
-    const hdr = 34;
-    return { x: minX - pad, y: minY - pad - hdr, w: (maxX - minX) + pad * 2, h: (maxY - minY) + pad * 2 + hdr };
+    return {
+      x: minX - CLUSTER_PAD,
+      y: minY - CLUSTER_PAD - CLUSTER_HEADER_H,
+      w: (maxX - minX) + CLUSTER_PAD * 2,
+      h: (maxY - minY) + CLUSTER_PAD * 2 + CLUSTER_HEADER_H,
+    };
   }
   return { x: nx, y: ny, w: NODE_W, h: getNodeHeight(n) };
 }
@@ -353,6 +362,117 @@ function slotFromAbsX(ax){ return Math.max(0, Math.floor((ax) / COL_W)); }
 
 const PORTS=["right","left","bottom","top"];
 function dist2(a,b){const dx=a.x-b.x,dy=a.y-b.y;return dx*dx+dy*dy;}
+function pointInPolygon(point, polygon){
+  let inside=false;
+  for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){
+    const a=polygon[i],b=polygon[j];
+    const crosses=((a.y>point.y)!==(b.y>point.y)) &&
+      point.x < ((b.x-a.x)*(point.y-a.y))/((b.y-a.y)||Number.EPSILON)+a.x;
+    if(crosses)inside=!inside;
+  }
+  return inside;
+}
+function rectsOverlap(a,b){
+  return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
+}
+function unionBounds(items){
+  if(!items.length)return null;
+  const minX=Math.min(...items.map(b=>b.x)),minY=Math.min(...items.map(b=>b.y));
+  const maxX=Math.max(...items.map(b=>b.x+b.w)),maxY=Math.max(...items.map(b=>b.y+b.h));
+  return{x:minX,y:minY,w:maxX-minX,h:maxY-minY};
+}
+function expandClusterForMember(cluster,member,nodes,slotCount,baseBounds=null){
+  const frame=baseBounds??getNodeBounds(cluster,nodes);
+  const memberBounds=getNodeBounds(member,nodes);
+  let left=frame.x,top=frame.y,right=frame.x+frame.w,bottom=frame.y+frame.h;
+  const innerLeft=frame.x+CLUSTER_PAD;
+  const innerTop=frame.y+CLUSTER_HEADER_H+CLUSTER_PAD;
+  const innerRight=frame.x+frame.w-CLUSTER_PAD;
+  const innerBottom=frame.y+frame.h-CLUSTER_PAD;
+
+  if(memberBounds.x<innerLeft)left=Math.min(left,memberBounds.x-CLUSTER_PAD);
+  if(memberBounds.y<innerTop)top=Math.min(top,memberBounds.y-CLUSTER_HEADER_H-CLUSTER_PAD);
+  if(memberBounds.x+memberBounds.w>innerRight)right=Math.max(right,memberBounds.x+memberBounds.w+CLUSTER_PAD);
+  if(memberBounds.y+memberBounds.h>innerBottom)bottom=Math.max(bottom,memberBounds.y+memberBounds.h+CLUSTER_PAD);
+
+  left=Math.max(0,left);
+  top=Math.max(0,top);
+  const width=Math.max(240,right-left);
+  const height=Math.max(140,bottom-top);
+  const slot=Math.min(Math.max(0,slotFromAbsX(left)),Math.max(0,slotCount-1));
+  return{
+    ...cluster,
+    slot,
+    localX:left-colX(slot),
+    y:top,
+    width,
+    height,
+  };
+}
+function rigidComponent(seedId,nodes,edges,blocked,parentId){
+  const available=new Set(nodes.filter(n=>n.parentId===parentId&&!blocked.has(n.id)).map(n=>n.id));
+  if(!available.has(seedId))return new Set();
+  const links=new Map(Array.from(available,id=>[id,new Set()]));
+  const link=(a,b)=>{if(available.has(a)&&available.has(b)){links.get(a).add(b);links.get(b).add(a);}};
+  edges.filter(e=>e.parentId===parentId).forEach(e=>link(e.from,e.to));
+  nodes.filter(n=>n.parentId===parentId&&n.type==="cluster"&&!blocked.has(n.id)).forEach(cluster=>{
+    (cluster.memberIds??[]).forEach(id=>link(cluster.id,id));
+  });
+  const result=new Set(),queue=[seedId];
+  while(queue.length){
+    const id=queue.shift();
+    if(result.has(id)||!available.has(id))continue;
+    result.add(id);
+    links.get(id)?.forEach(next=>{if(!result.has(next))queue.push(next);});
+  }
+  return result;
+}
+function translateRigidNodes(nodes,ids,dx,dy,slotCount){
+  const physical=nodes.filter(n=>ids.has(n.id)&&n.type!=="cluster").map(n=>getNodeBounds(n,nodes));
+  const groupBounds=unionBounds(physical);
+  if(groupBounds){
+    if(groupBounds.x+dx<0)dx=-groupBounds.x;
+    if(groupBounds.y+dy<0)dy=-groupBounds.y;
+  }
+  return nodes.map(n=>{
+    if(!ids.has(n.id))return n;
+    const ax=colX(n.slot)+(n.localX??COL_PAD)+dx;
+    const slot=Math.min(Math.max(0,slotFromAbsX(ax)),Math.max(0,slotCount-1));
+    return{...n,slot,localX:ax-colX(slot),y:n.y+dy};
+  });
+}
+function resolveClusterCollisions(nodes,edges,clusterId,slotCount){
+  let next=nodes;
+  const movedIds=new Set();
+  for(let pass=0;pass<24;pass++){
+    const cluster=next.find(n=>n.id===clusterId&&n.type==="cluster");
+    if(!cluster)break;
+    const members=new Set((cluster.memberIds??[]).filter(id=>next.some(n=>n.id===id)));
+    const blocked=new Set([clusterId,...members]);
+    const clusterBounds=getNodeBounds(cluster,next);
+    const collision=next.find(n=>
+      n.parentId===cluster.parentId && n.type!=="cluster" && !members.has(n.id) &&
+      rectsOverlap(clusterBounds,getNodeBounds(n,next))
+    );
+    if(!collision)break;
+    const rigid=rigidComponent(collision.id,next,edges,blocked,cluster.parentId);
+    if(!rigid.size)break;
+    const componentBounds=unionBounds(next.filter(n=>rigid.has(n.id)&&n.type!=="cluster").map(n=>getNodeBounds(n,next)));
+    if(!componentBounds)break;
+    const gap=CLUSTER_COLLISION_GAP;
+    const choices=[
+      {dx:clusterBounds.x-gap-(componentBounds.x+componentBounds.w),dy:0},
+      {dx:clusterBounds.x+clusterBounds.w+gap-componentBounds.x,dy:0},
+      {dx:0,dy:clusterBounds.y-gap-(componentBounds.y+componentBounds.h)},
+      {dx:0,dy:clusterBounds.y+clusterBounds.h+gap-componentBounds.y},
+    ].filter(v=>componentBounds.x+v.dx>=0&&componentBounds.y+v.dy>=0)
+      .sort((a,b)=>Math.hypot(a.dx,a.dy)-Math.hypot(b.dx,b.dy));
+    const shift=choices[0]??{dx:clusterBounds.x+clusterBounds.w+gap-componentBounds.x,dy:0};
+    next=translateRigidNodes(next,rigid,shift.dx,shift.dy,slotCount);
+    rigid.forEach(id=>movedIds.add(id));
+  }
+  return{nodes:next,movedIds};
+}
 /* Return {fromPort, toPort} that minimise handle-to-handle distance */
 function bestPorts(fn,tn,allNodes=[]){
   let best=null,bestD=Infinity;
@@ -390,6 +510,8 @@ function normalizeMapState(state){
     temporalStatus: node?.temporalStatus ?? null,
     isQuestion: node?.isQuestion ?? false,
     customColor: node?.customColor ?? null,
+    memberIds: Array.isArray(node?.memberIds) ? node.memberIds : [],
+    attributes: typeof node?.attributes === "string" ? node.attributes : "",
   })) : [];
   let slots;
   if (Array.isArray(state?.slots) && state.slots.length) {
@@ -455,6 +577,8 @@ function makeNode(p={},slotCount=1){
     imgSrc:p.imgSrc??null,
     width:p.width??null,
     height:p.height??null,
+    memberIds:Array.isArray(p.memberIds)?p.memberIds:[],
+    attributes:p.attributes??"",
   };
 }
 function makeEdge(p={}){
@@ -763,21 +887,6 @@ function App(){
     return n;
   })),[]);
 
-  const clusterSelected = useCallback(() => {
-    if (multiSel.size < 2) return;
-    const ids = Array.from(multiSel);
-    const cl = makeNode({
-      slot: activeSlot,
-      localX: 100,
-      y: 100,
-      type: "cluster",
-      title: "Nyt Cluster",
-      memberIds: ids
-    }, slots.length);
-    setNodes(prev => [...prev, cl]);
-    setMultiSel(new Set());
-    setSelNodeId(cl.id);
-  }, [multiSel, activeSlot, slots.length]);
   const delNode=useCallback((id)=>{
     const d=getDesc(id,nodes);
     setNodes(prev=>prev
@@ -913,18 +1022,59 @@ function App(){
     }));
   },[setEdges]);
 
+  const clusterSelected=useCallback((lassoIds=null)=>{
+    const requested=Array.isArray(lassoIds)?lassoIds:Array.from(multiSel);
+    const alreadyClustered=new Set(nodes.filter(n=>n.type==="cluster").flatMap(n=>n.memberIds??[]));
+    const ids=requested.filter(id=>{
+      const node=nodes.find(n=>n.id===id);
+      return node&&node.parentId===focusId&&node.type!=="cluster"&&!alreadyClustered.has(id);
+    });
+    if(ids.length<2)return false;
+    const memberBounds=unionBounds(ids.map(id=>getNodeBounds(nodes.find(n=>n.id===id),nodes)));
+    const left=Math.max(0,memberBounds.x-CLUSTER_PAD);
+    const top=Math.max(0,memberBounds.y-CLUSTER_HEADER_H-CLUSTER_PAD);
+    const right=memberBounds.x+memberBounds.w+CLUSTER_PAD;
+    const bottom=memberBounds.y+memberBounds.h+CLUSTER_PAD;
+    const slot=Math.min(slots.length-1,Math.max(0,slotFromAbsX(left)));
+    const cl=makeNode({
+      parentId:focusId,
+      slot,
+      localX:left-colX(slot),
+      y:top,
+      width:right-left,
+      height:bottom-top,
+      type:"cluster",
+      title:`Cluster ${nodes.filter(n=>n.type==="cluster"&&n.parentId===focusId).length+1}`,
+      attributes:"",
+      memberIds:ids,
+    },slots.length);
+    setNodes(prev=>{
+      const resolved=resolveClusterCollisions([...prev,cl],edges,cl.id,slots.length);
+      setTimeout(()=>rerouteEdgesForNodes(resolved.nodes,Array.from(resolved.movedIds)),0);
+      return resolved.nodes;
+    });
+    setMultiSel(new Set());
+    setSelEdgeId(null);
+    setSelNodeId(cl.id);
+    setRightOpen(true);
+    setMode("select");
+    return true;
+  },[multiSel,nodes,focusId,slots.length,edges,rerouteEdgesForNodes]);
+
   const onMoveNode=useCallback((id,absX,y)=>{
     setNodes(prev=>{
       const node = prev.find(n=>n.id===id);
       if(!node)return prev;
       
       const b = getNodeBounds(node, prev);
-      const dx = absX - b.x, dy = y - b.y;
+      let dx = absX - b.x, dy = y - b.y;
       
       // If movement is negligible, avoid unnecessary state updates
       if(Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01) return prev;
 
       const movedIds = new Set();
+      const ownerCluster=prev.find(n=>n.type==="cluster"&&(n.memberIds??[]).includes(id));
+      const ownerClusterBounds=ownerCluster?getNodeBounds(ownerCluster,prev):null;
       if(node.type==="cluster"){
         movedIds.add(id);
         (node.memberIds??[]).forEach(mid=>movedIds.add(mid));
@@ -934,14 +1084,34 @@ function App(){
         movedIds.add(id);
       }
 
-      const next = prev.map(n=>{
+      const movedBounds=unionBounds(prev.filter(n=>movedIds.has(n.id)).map(n=>getNodeBounds(n,prev)));
+      if(movedBounds){
+        if(movedBounds.x+dx<0)dx=-movedBounds.x;
+        if(movedBounds.y+dy<0)dy=-movedBounds.y;
+      }
+
+      let next = prev.map(n=>{
         if(!movedIds.has(n.id))return n;
         const nAX = (colX(n.slot)+(n.localX??COL_PAD)) + dx;
-        const nAY = Math.max(0, n.y + dy);
+        const nAY = n.y + dy;
         const slot = Math.min(slots.length-1, Math.max(0, slotFromAbsX(nAX)));
-        const localX = Math.max(0, nAX - colX(slot));
+        const localX = nAX - colX(slot);
         return {...n, slot, localX, y:nAY};
       });
+
+      if(ownerCluster&&node.type!=="cluster"){
+        const movedMember=next.find(n=>n.id===id);
+        const resizedCluster=expandClusterForMember(ownerCluster,movedMember,next,slots.length,ownerClusterBounds);
+        next=next.map(n=>n.id===ownerCluster.id?resizedCluster:n);
+        movedIds.add(ownerCluster.id);
+      }
+
+      const movedClusterId=node.type==="cluster"?node.id:ownerCluster?.id;
+      if(movedClusterId){
+        const resolved=resolveClusterCollisions(next,edges,movedClusterId,slots.length);
+        next=resolved.nodes;
+        resolved.movedIds.forEach(mid=>movedIds.add(mid));
+      }
       
       // Note: rerouteEdgesForNodes triggers a setEdges update which is technically a side effect
       // but keeping it here for immediate visual feedback during drag as it was before.
@@ -953,7 +1123,7 @@ function App(){
     
     const s = Math.min(slots.length-1, Math.max(0, slotFromAbsX(absX)));
     if(s !== activeSlot) setActiveSlot(s);
-  },[multiSel,slots.length,activeSlot,rerouteEdgesForNodes]);
+  },[multiSel,slots.length,activeSlot,rerouteEdgesForNodes,edges]);
 
   const onResizeNode=useCallback((id,w,h,absX,absY)=>{
     const slot=Math.min(slots.length-1,Math.max(0,slotFromAbsX(absX)));
@@ -1512,7 +1682,7 @@ function Toolbar({mode,setMode,zoom,setZoom,setPan,focusNode,crumbs,onNav,connFr
           {showEdgeLabels?"⌖ Labels":"⌖ Labels"}
         </button>
         <span style={{width:1,height:14,background:"var(--panel-border)",margin:"0 1px"}}/>
-        {TYPE_OPTIONS.filter(([k])=>!["junction","image","operator"].includes(k)).map(([type,meta])=>(
+        {TYPE_OPTIONS.filter(([k])=>!["junction","image","operator","cluster"].includes(k)).map(([type,meta])=>(
           <button key={type} style={{padding:"2px 7px",borderRadius:6,cursor:"pointer",fontSize:10,fontWeight:600,background:chipBg(meta.color),border:`1px solid ${meta.color}44`,color:meta.color}}
             onClick={()=>onAddNode({type,title:meta.label,text:""})}>+{meta.label}</button>
         ))}
@@ -1546,6 +1716,7 @@ function Toolbar({mode,setMode,zoom,setZoom,setPan,focusNode,crumbs,onNav,connFr
             </span>
           </React.Fragment>);
         })}
+        <span style={{fontSize:9,color:"var(--text-soft)",marginLeft:4}}>Ctrl + træk rundt om holoner → cluster</span>
         <span style={{fontSize:9,color:"var(--panel-border)",marginLeft:4}}>Dbl-klik canvas → ny node</span>
       </div>
     </div>
@@ -1704,6 +1875,8 @@ function Canvas({nodes,edges,strengths,slots,activeSlot,setActiveSlot,selNodeId,
   const ref=useRef(null);
   const panR=useRef(null);
   const [selRect,setSelRect]=useState(null);
+  const [lasso,setLasso]=useState(null);
+  const lassoRef=useRef(null);
   const toCanvas=(cx,cy)=>{const r=ref.current.getBoundingClientRect();return{x:(cx-r.left-pan.x)/zoom,y:(cy-r.top-pan.y)/zoom};};
   const handleDragOver=(e)=>{if(e.dataTransfer.types.includes("Files"))e.preventDefault();};
   const handleDrop=(e)=>{
@@ -1719,19 +1892,16 @@ function Canvas({nodes,edges,strengths,slots,activeSlot,setActiveSlot,selNodeId,
     let bestId=null,bestPort=null,bestDist=28;
     nodes.forEach(n=>{
       if(n.id===dragState?.fromId)return;
-      const nx=colX(n.slot)+(n.localX??COL_PAD),ny=n.y;
-      const nW=n.type==="image"?(n.width??200):NODE_W, nH=n.type==="image"?(n.height??150):NODE_H;
-      const pts=n.type==="junction"
-        ?[{hx:nx+JUNC_R,hy:ny,p:"top"},{hx:nx+JUNC_R*2,hy:ny+JUNC_R,p:"right"},{hx:nx+JUNC_R,hy:ny+JUNC_R*2,p:"bottom"},{hx:nx,hy:ny+JUNC_R,p:"left"}]
-        :[{hx:nx+nW/2,hy:ny,p:"top"},{hx:nx+nW,hy:ny+nH/2,p:"right"},{hx:nx+nW/2,hy:ny+nH,p:"bottom"},{hx:nx,hy:ny+nH/2,p:"left"}];
+      const b=getNodeBounds(n,nodes),nx=b.x,ny=b.y,nW=b.w,nH=b.h;
+      const pts=[{hx:nx+nW/2,hy:ny,p:"top"},{hx:nx+nW,hy:ny+nH/2,p:"right"},{hx:nx+nW/2,hy:ny+nH,p:"bottom"},{hx:nx,hy:ny+nH/2,p:"left"}];
       pts.forEach(pt=>{const d=Math.hypot(x-pt.hx,y-pt.hy);if(d<bestDist){bestDist=d;bestId=n.id;bestPort=pt.p;}});
     });
     let bestChipEdgeId=null,bestChipX=null,bestChipY=null,bestChipDist=22;
     edges.forEach(edge=>{
       const fn=nodes.find(n=>n.id===edge.from),tn=nodes.find(n=>n.id===edge.to);
       if(!fn||!tn)return;
-      const ap=edge.fromPort?handlePos(fn,edge.fromPort):nodeCenter(fn);
-      const bp=edge.toPort?handlePos(tn,edge.toPort):nodeCenter(tn);
+      const ap=edge.fromPort?handlePos(fn,edge.fromPort,nodes):nodeCenter(fn,nodes);
+      const bp=edge.toPort?handlePos(tn,edge.toPort,nodes):nodeCenter(tn,nodes);
       const fPort=edge.fromPort||"right",tPort=edge.toPort||"left";
       const dx2=bp.x-ap.x,dy2=bp.y-ap.y;
       const off=Math.max(60,Math.abs(dx2)*0.45,Math.abs(dy2)*0.45);
@@ -1751,10 +1921,50 @@ function Canvas({nodes,edges,strengths,slots,activeSlot,setActiveSlot,selNodeId,
     return{targetId:bestId,targetPort:bestPort,chipEdgeId:null,chipX:null,chipY:null};
   },[nodes,edges]);
   const onBgDown=(e)=>{
+    if(e.button!==0)return;
     const isBg=e.target===ref.current||!!e.target.dataset.bg;
     if(!isBg)return;
     if(chipPickerId){onChipClose();return;}
     if(mode==="connect"||dragConn)return;
+    if(e.ctrlKey){
+      e.preventDefault();
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+      const point=toCanvas(e.clientX,e.clientY);
+      const next={points:[point]};
+      lassoRef.current=next;
+      setLasso(next);
+      onMultiSelect?.([]);
+      const move=(me)=>{
+        const current=lassoRef.current;
+        if(!current)return;
+        const p=toCanvas(me.clientX,me.clientY);
+        const last=current.points[current.points.length-1];
+        if(last&&Math.hypot(p.x-last.x,p.y-last.y)<4)return;
+        const updated={points:[...current.points,p]};
+        lassoRef.current=updated;
+        setLasso(updated);
+      };
+      const finish=()=>{
+        const path=lassoRef.current?.points??[];
+        if(path.length>=3){
+          const ids=nodes.filter(n=>{
+            if(n.type==="cluster")return false;
+            const b=getNodeBounds(n,nodes);
+            return pointInPolygon({x:b.x+b.w/2,y:b.y+b.h/2},path);
+          }).map(n=>n.id);
+          onCluster?.(ids);
+        }
+        lassoRef.current=null;
+        setLasso(null);
+        window.removeEventListener("pointermove",move);
+        window.removeEventListener("pointerup",finish);
+        window.removeEventListener("pointercancel",finish);
+      };
+      window.addEventListener("pointermove",move);
+      window.addEventListener("pointerup",finish);
+      window.addEventListener("pointercancel",finish);
+      return;
+    }
     if(e.shiftKey){
       const{x,y}=toCanvas(e.clientX,e.clientY);
       setSelRect({x1:x,y1:y,x2:x,y2:y});
@@ -1767,18 +1977,19 @@ function Canvas({nodes,edges,strengths,slots,activeSlot,setActiveSlot,selNodeId,
     e.currentTarget.setPointerCapture(e.pointerId);
   };
   const onBgMove=(e)=>{
+    if(lassoRef.current)return;
     if(selRect){const{x,y}=toCanvas(e.clientX,e.clientY);setSelRect(r=>({...r,x2:x,y2:y}));return;}
     if(!panR.current)return;
     setPan({x:panR.current.px+e.clientX-panR.current.sx,y:panR.current.py+e.clientY-panR.current.sy});
   };
   const onBgUp=(e)=>{
+    if(lassoRef.current)return;
     if(selRect){
       const minX=Math.min(selRect.x1,selRect.x2),maxX=Math.max(selRect.x1,selRect.x2);
       const minY=Math.min(selRect.y1,selRect.y2),maxY=Math.max(selRect.y1,selRect.y2);
       const ids=nodes.filter(n=>{
-        const nx=colX(n.slot)+(n.localX??COL_PAD),ny=n.y;
-        const nW=n.type==="image"?(n.width??200):NODE_W,nH=n.type==="image"?(n.height??150):NODE_H;
-        return nx+nW/2>=minX&&nx+nW/2<=maxX&&ny+nH/2>=minY&&ny+nH/2<=maxY;
+        const b=getNodeBounds(n,nodes);
+        return b.x+b.w/2>=minX&&b.x+b.w/2<=maxX&&b.y+b.h/2>=minY&&b.y+b.h/2<=maxY;
       }).map(n=>n.id);
       onMultiSelect?.(ids);
       setSelRect(null);
@@ -1787,7 +1998,7 @@ function Canvas({nodes,edges,strengths,slots,activeSlot,setActiveSlot,selNodeId,
     panR.current=null;
     if(ref.current)ref.current.style.cursor=mode==="connect"?"crosshair":"grab";
   };
-  const onDbl=(e)=>{if(e.target!==ref.current&&!e.target.dataset.bg)return;const{x,y}=toCanvas(e.clientX,e.clientY);onDblCanvas(x,y);};
+  const onDbl=(e)=>{if(e.ctrlKey||(e.target!==ref.current&&!e.target.dataset.bg))return;const{x,y}=toCanvas(e.clientX,e.clientY);onDblCanvas(x,y);};
   useEffect(()=>{
     const el=ref.current;
     const h=(e)=>{e.preventDefault();const r=el.getBoundingClientRect();const cx=e.clientX-r.left,cy=e.clientY-r.top;const f=e.deltaY<0?1.1:0.9;const nz=Math.max(0.2,Math.min(2.5,zoom*f));const vx=(cx-pan.x)/zoom,vy=(cy-pan.y)/zoom;setPan({x:cx-vx*nz,y:cy-vy*nz});setZoom(nz);};
@@ -1814,7 +2025,7 @@ function Canvas({nodes,edges,strengths,slots,activeSlot,setActiveSlot,selNodeId,
   const totalH = 1800;
 
   return(
-    <div ref={ref} style={{flex:1,minHeight:0,background:"var(--canvas-bg)",borderRadius:10,border:"1px solid var(--panel-border)",position:"relative",overflow:"hidden",cursor:mode==="connect"?"crosshair":"grab"}}
+    <div ref={ref} style={{flex:1,minHeight:0,background:"var(--canvas-bg)",borderRadius:10,border:"1px solid var(--panel-border)",position:"relative",overflow:"hidden",cursor:mode==="connect"||lasso?"crosshair":"grab",touchAction:"none"}}
       onPointerDown={onBgDown} onPointerMove={onBgMove} onPointerUp={onBgUp} onDoubleClick={onDbl}
       onDragOver={handleDragOver} onDrop={handleDrop}
       onContextMenu={e=>{if(e.target.closest('.ndrag'))return;e.preventDefault();setCtxMenu({nodeId:null,x:e.clientX,y:e.clientY,canvasX:(e.clientX-(ref.current?.getBoundingClientRect().left??0)-pan.x)/zoom,canvasY:(e.clientY-(ref.current?.getBoundingClientRect().top??0)-pan.y)/zoom});}}>
@@ -1861,6 +2072,13 @@ function Canvas({nodes,edges,strengths,slots,activeSlot,setActiveSlot,selNodeId,
         })}
 
         {/* ── SELECTION RECT ──────────────────────────── */}
+        {lasso&&lasso.points.length>1&&(
+          <svg style={{position:"absolute",left:0,top:0,width:totalW,height:totalH,overflow:"visible",pointerEvents:"none",zIndex:520}}>
+            <polygon points={lasso.points.map(p=>`${p.x},${p.y}`).join(" ")}
+              fill="rgba(37,99,235,0.09)" stroke="#2563eb" strokeWidth="3"
+              strokeLinecap="round" strokeLinejoin="round" strokeDasharray="7 5"/>
+          </svg>
+        )}
         {selRect&&<div style={{position:"absolute",
           left:Math.min(selRect.x1,selRect.x2),top:Math.min(selRect.y1,selRect.y2),
           width:Math.abs(selRect.x2-selRect.x1),height:Math.abs(selRect.y2-selRect.y1),
@@ -1888,10 +2106,11 @@ function Canvas({nodes,edges,strengths,slots,activeSlot,setActiveSlot,selNodeId,
             isMultiSelected={multiSel?.has(node.id)}
             onMultiDragStart={()=>onMultiDragStart?.(node.id)}
             onUpNode={(p)=>onUpNode?.(node.id,p)}
+            onDelete={()=>onDelNode?.(node.id)}
           />
         ))}
 
-        {nodes.map(node=>node.type==="image"?(
+        {nodes.filter(node=>node.type!=="cluster").map(node=>node.type==="image"?(
           <ImageNodeCard key={node.id} node={node}
             selected={node.id===selNodeId} zoom={zoom}
             onClick={(e)=>onNodeClick(node.id,e?.shiftKey)}
@@ -2841,6 +3060,26 @@ function RightPanel({node,edge,visNodes,cc,strength,slots,activeSlot,onUpNode,on
       {node&&!edge&&(()=>{
         const meta=TYPES[node.type]||TYPES.premise;
         const isJunc=node.type==="junction";
+        if(node.type==="cluster"){
+          const members=visNodes.filter(n=>(node.memberIds??[]).includes(n.id));
+          return(<>
+            <div style={{padding:"9px 10px",background:"rgba(37,99,235,0.08)",border:"1px solid #2563eb55",borderRadius:9,marginBottom:10}}>
+              <div style={{fontSize:11,fontWeight:800,color:"#2563eb",marginBottom:3}}>Cluster · {members.length} holoner</div>
+              <div style={{fontSize:9,color:"var(--text-muted)",lineHeight:1.45}}>Holoner kan flyttes frit indeni. Rammen udvider sig ved vægkontakt, mens grupper udenfor bevarer deres indbyrdes placering.</div>
+            </div>
+            <label style={S.lbl}>Titel</label>
+            <input style={S.inp} value={node.title??""} onChange={e=>onUpNode({title:e.target.value})}/>
+            <label style={{...S.lbl,marginTop:10}}>Attributter for hele clusteren</label>
+            <textarea style={{...S.inp,minHeight:150,resize:"vertical",lineHeight:1.45,fontSize:11}}
+              value={node.attributes??""} placeholder="Beskriv clusterens fælles egenskaber, tema eller funktion…"
+              onChange={e=>onUpNode({attributes:e.target.value})}/>
+            <label style={{...S.lbl,marginTop:10}}>Holoner i clusteren</label>
+            <div style={{display:"flex",flexDirection:"column",gap:4,maxHeight:170,overflow:"auto",padding:"6px",background:"var(--input-bg)",border:"1px solid var(--input-border)",borderRadius:8}}>
+              {members.map(member=><div key={member.id} style={{fontSize:10,color:(TYPES[member.type]||TYPES.premise).color,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>• {member.title}</div>)}
+            </div>
+            <button style={{...S.btnAlt,color:"#f87171",borderColor:"#7f1d1d",width:"100%",marginTop:12}} onClick={onDelNode}>🗑 Slet cluster</button>
+          </>);
+        }
         return(<>
           {/* Strength */}
           <div style={{padding:"7px 10px",background:"var(--panel-bg-alt)",border:`1px solid ${sc}44`,borderRadius:9,marginBottom:9}}>
@@ -3571,13 +3810,14 @@ function AIChatPanel({open,onToggle,msgs,input,setInput,onSend,loading}){
     </>
   );
 }
-function ClusterCard({node, nodes, selected, zoom, onClick, onMove, onConnStart, dragConnActive, isHoverTarget, onMultiDragStart, isMultiSelected, onUpNode}){
+function ClusterCard({node, nodes, selected, zoom, onClick, onMove, onConnStart, dragConnActive, isHoverTarget, onMultiDragStart, isMultiSelected, onUpNode, onDelete}){
   const b = getNodeBounds(node, nodes);
   const {x, y, w, h} = b, absX = x, absY = y;
-  const nodeColor = TYPES.cluster.color;
+  const nodeColor = node.customColor||TYPES.cluster.color;
   
   const onPD=(e)=>{
-    if(e.button!==0)return; e.stopPropagation();
+    if(e.button!==0||e.target.closest?.('[data-handle],[data-cluster-input],[data-cluster-delete]'))return;
+    e.stopPropagation();
     const sx=e.clientX, sy=e.clientY;
     const initialPos = {x:absX, y:absY};
     let moved=false;
@@ -3612,17 +3852,26 @@ function ClusterCard({node, nodes, selected, zoom, onClick, onMove, onConnStart,
   ];
 
   return(
-    <div onPointerDown={onPD}
+    <div className="ndrag" onPointerDown={onPD}
       style={{position:"absolute",left:absX,top:absY,width:w,height:h,
-        background:"rgba(249, 115, 22, 0.04)",
-        border:`2px ${selected?"dashed":"solid"} ${selected?"#f97316":isHoverTarget?"#10b981":isMultiSelected?"#3b82f6":"#f9731633"}`,
-        borderRadius:22,cursor:"grab",zIndex:1,
-        backdropFilter:"blur(2px)",
-        boxShadow:selected?"0 0 0 4px #f9731622":isHoverTarget?"0 0 0 4px #10b98122":"0 4px 24px rgba(0,0,0,0.3)"}}>
-      <div style={{height:34,background:"rgba(249, 115, 22, 0.08)",borderBottom:"1px solid #f9731633",borderRadius:"20px 20px 0 0",display:"flex",alignItems:"center",padding:"0 18px"}}>
-        <span style={{fontSize:11,fontWeight:900,color:"#f97316",letterSpacing:"0.08em",textTransform:"uppercase"}}>{node.title}</span>
-        <button onClick={e=>{e.stopPropagation();if(confirm("Slet cluster? (Noderne slettes ikke)"))onUpNode({deleted:true});}}
-          style={{marginLeft:"auto",background:"transparent",border:"none",color:"#f9731666",cursor:"pointer",fontSize:13}}>✕</button>
+        background:"rgba(37,99,235,0.035)",
+        border:`2.5px ${selected?"dashed":"solid"} ${isHoverTarget?"#10b981":isMultiSelected?"#3b82f6":selected?nodeColor:nodeColor+"aa"}`,
+        borderRadius:26,cursor:"grab",zIndex:0,userSelect:"none",
+        boxShadow:selected?`0 0 0 4px ${nodeColor}22`:isHoverTarget?"0 0 0 4px #10b98122":"0 4px 24px rgba(15,23,42,0.16)"}}>
+      <div style={{height:CLUSTER_HEADER_H,background:"rgba(37,99,235,0.07)",borderBottom:`1px solid ${nodeColor}55`,borderRadius:"23px 23px 0 0",display:"flex",alignItems:"center",gap:12,padding:"8px 14px 8px 18px"}}>
+        <span style={{fontSize:11,fontWeight:900,color:nodeColor,letterSpacing:"0.08em",textTransform:"uppercase",maxWidth:150,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{node.title}</span>
+        <div style={{display:"flex",alignItems:"center",gap:6,flex:1,minWidth:130}}>
+          <label style={{fontSize:8,fontWeight:900,color:nodeColor,letterSpacing:"0.08em"}}>ATTR.</label>
+          <textarea data-cluster-input="1" value={node.attributes??""}
+            placeholder="Attributter for hele clusteren…"
+            onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}
+            onChange={e=>onUpNode?.({attributes:e.target.value})}
+            style={{flex:1,height:44,resize:"none",padding:"5px 7px",border:`1px solid ${nodeColor}55`,borderRadius:8,background:"var(--card-bg)",color:"var(--text-main)",fontSize:10,lineHeight:1.35,fontFamily:"inherit",outline:"none"}}/>
+        </div>
+        <button data-cluster-delete="1" title="Slet cluster (holonerne bevares)"
+          onPointerDown={e=>e.stopPropagation()}
+          onClick={e=>{e.stopPropagation();if(confirm("Slet cluster? Holonerne bevares."))onDelete?.();}}
+          style={{background:"transparent",border:"none",color:nodeColor+"99",cursor:"pointer",fontSize:14,padding:4}}>✕</button>
       </div>
       {nHandles.map((h,i)=>(
         <div key={i} data-handle="1" style={{...hStyle(isHoverTarget && dragConnActive),left:h.lx,top:h.ly}}
