@@ -102,6 +102,10 @@ const TYPES = {
   conclusion:  { label:"Konklusion",      color:"#6366f1", dim:"#15163a" },
   claim:       { label:"Påstand",         color:"#3b82f6", dim:"#0d2240" },
   ytring:      { label:"Ytring",          color:"#f59e0b", dim:"#271a04" },
+  doubt:       { label:"Tvivl",           color:"#facc15", dim:"#2a2104" },
+  conflict:    { label:"Konflikt",        color:"#ef4444", dim:"#2d0808" },
+  incoherence: { label:"Inkokærens",      color:"#fb7185", dim:"#2d0812" },
+  paradox:     { label:"Paradoks",        color:"#14b8a6", dim:"#052522" },
   computation: { label:"Computation",     color:"#f472b6", dim:"#2a0a1a" },
   operator:    { label:"Operator",        color:"#94a3b8", dim:"#0f1822" },
   junction:    { label:"Junction",        color:"#e2e8f0", dim:"#ffffff"  },
@@ -209,7 +213,7 @@ function computeStrengths(nodes, edges) {
   const ds = computeDeltaS(nodes, edges);
   const memo = {};
   const visiting = new Set();
-  const defaults = { premise:0.70,evidence:0.80,assumption:0.50,hypothesis:0.40,conclusion:0.0,claim:0.50,ytring:0.65,computation:0.70,operator:1.0,junction:1.0,feeling:0.70,schema:0.60,belief:0.65,pro:0.80,con:0.80,fact:0.90,datum:0.85,object:0.80,person:0.80,choice:0.60,desiredstate:0.70,deltaS:0.50,question:0.50 };
+  const defaults = { premise:0.70,evidence:0.80,assumption:0.50,hypothesis:0.40,conclusion:0.0,claim:0.50,ytring:0.65,doubt:0.35,conflict:0.30,incoherence:0.30,paradox:0.40,computation:0.70,operator:1.0,junction:1.0,feeling:0.70,schema:0.60,belief:0.65,pro:0.80,con:0.80,fact:0.90,datum:0.85,object:0.80,person:0.80,choice:0.60,desiredstate:0.70,deltaS:0.50,question:0.50 };
   const nonConflict = edges.filter(e=>!["conflict","contradict"].includes(e.operator));
   function compute(id) {
     if (memo[id] !== undefined) return memo[id];
@@ -432,7 +436,7 @@ function isDefaultEmptyMap(state){
 
 function makeNode(p={},slotCount=1){
   const slot = p.slot ?? Math.max(0, slotCount-1);
-  const dflt = {premise:1.0,evidence:1.0,assumption:1.0,hypothesis:1.0,conclusion:1.0,claim:1.0,ytring:1.0,computation:1.0,operator:1.0,junction:1.0,feeling:1.0,schema:1.0,belief:1.0,pro:1.0,con:1.0,fact:1.0,datum:1.0,object:1.0,person:1.0,choice:1.0,desiredstate:1.0,deltaS:1.0,question:1.0};
+  const dflt = {premise:1.0,evidence:1.0,assumption:1.0,hypothesis:1.0,conclusion:1.0,claim:1.0,ytring:1.0,doubt:1.0,conflict:1.0,incoherence:1.0,paradox:1.0,computation:1.0,operator:1.0,junction:1.0,feeling:1.0,schema:1.0,belief:1.0,pro:1.0,con:1.0,fact:1.0,datum:1.0,object:1.0,person:1.0,choice:1.0,desiredstate:1.0,deltaS:1.0,question:1.0};
   return {
     id:uid(), parentId:p.parentId??null,
     slot, localX:p.localX??COL_PAD, y:p.y??(100+Math.random()*280),
