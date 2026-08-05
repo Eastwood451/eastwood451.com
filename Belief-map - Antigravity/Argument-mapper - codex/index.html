@@ -125,6 +125,7 @@ const TYPES = {
   question:    { label:"Spørgsmål",       color:"#38bdf8", dim:"#0c1f2e" },
   cluster:     { label:"Cluster",         color:"#f97316", dim:"#33180a" },
 };
+const TYPE_OPTIONS = Object.entries(TYPES).sort(([,a],[,b]) => a.label.localeCompare(b.label, "da", { sensitivity: "base" }));
 
 const OPS = [
   // Logiske
@@ -854,14 +855,26 @@ function App(){
   const delEdge=useCallback(id=>setEdges(prev=>prev.filter(e=>e.id!==id&&e.from!=='chip:'+id&&e.to!=='chip:'+id)),[]);
 
   /* ── Interactions ─────────────────────────────── */
-  const onNodeClick=useCallback((nodeId)=>{
-    setSelEdgeId(null);setSelNodeId(nodeId);
+  const onNodeClick=useCallback((nodeId, additive=false)=>{
+    setSelEdgeId(null);
+    if(additive && mode!=="connect"){
+      setMultiSel(prev=>{
+        const next=new Set(prev);
+        if(next.size===0 && selNodeId && selNodeId!==nodeId)next.add(selNodeId);
+        if(next.has(nodeId))next.delete(nodeId);
+        else next.add(nodeId);
+        return next;
+      });
+      setSelNodeId(null);
+      return;
+    }
+    setSelNodeId(nodeId);
     if(!multiSel.has(nodeId))setMultiSel(new Set());
     if(mode==="connect"){
       if(!connFrom)setConnFrom(nodeId);
       else if(connFrom!==nodeId){setPending({from:connFrom,to:nodeId});setConnFrom(null);}
     }
-  },[mode,connFrom,multiSel]);
+  },[mode,connFrom,multiSel,selNodeId]);
   const onEdgeClick=useCallback(id=>{setSelEdgeId(id);setSelNodeId(null);},[]);
   const onDblCanvas=useCallback((ax,ay)=>{
     const slot=Math.min(slots.length-1,slotFromAbsX(ax));
@@ -1499,7 +1512,7 @@ function Toolbar({mode,setMode,zoom,setZoom,setPan,focusNode,crumbs,onNav,connFr
           {showEdgeLabels?"⌖ Labels":"⌖ Labels"}
         </button>
         <span style={{width:1,height:14,background:"var(--panel-border)",margin:"0 1px"}}/>
-        {Object.entries(TYPES).filter(([k])=>!["junction","image","operator"].includes(k)).map(([type,meta])=>(
+        {TYPE_OPTIONS.filter(([k])=>!["junction","image","operator"].includes(k)).map(([type,meta])=>(
           <button key={type} style={{padding:"2px 7px",borderRadius:6,cursor:"pointer",fontSize:10,fontWeight:600,background:chipBg(meta.color),border:`1px solid ${meta.color}44`,color:meta.color}}
             onClick={()=>onAddNode({type,title:meta.label,text:""})}>+{meta.label}</button>
         ))}
@@ -1621,7 +1634,7 @@ function ImageNodeCard({node,selected,zoom,onClick,onMove,onConnStart,dragConnAc
     e.stopPropagation();
     if(resizeDrag.current){resizeDrag.current=null;return;}
     if(e.target.closest?.('[data-handle]')||e.target.closest?.('[data-resize]')){drag.current=null;return;}
-    if(!drag.current?.moved)onClick();
+    if(!drag.current?.moved)onClick(e);
     drag.current=null;
   };
 
@@ -1867,7 +1880,7 @@ function Canvas({nodes,edges,strengths,slots,activeSlot,setActiveSlot,selNodeId,
         {nodes.map(node=>node.type==="cluster" && (
           <ClusterCard key={node.id} node={node} nodes={nodes}
             selected={node.id===selNodeId} zoom={zoom}
-            onClick={()=>onNodeClick(node.id)}
+            onClick={(e)=>onNodeClick(node.id,e?.shiftKey)}
             onMove={(absX,y)=>onMoveNode(node.id,absX,y)}
             onConnStart={onConnStart}
             dragConnActive={!!dragConn}
@@ -1881,7 +1894,7 @@ function Canvas({nodes,edges,strengths,slots,activeSlot,setActiveSlot,selNodeId,
         {nodes.map(node=>node.type==="image"?(
           <ImageNodeCard key={node.id} node={node}
             selected={node.id===selNodeId} zoom={zoom}
-            onClick={()=>onNodeClick(node.id)}
+            onClick={(e)=>onNodeClick(node.id,e?.shiftKey)}
             onMove={(absX,y)=>onMoveNode(node.id,absX,y)}
             onConnStart={onConnStart}
             dragConnActive={!!dragConn}
@@ -1896,7 +1909,7 @@ function Canvas({nodes,edges,strengths,slots,activeSlot,setActiveSlot,selNodeId,
             isMultiSelected={multiSel?.has(node.id)}
             onMultiDragStart={()=>onMultiDragStart?.(node.id)}
             childCount={cc(node.id)} zoom={zoom} strength={strengths[node.id]??0}
-            onClick={()=>onNodeClick(node.id)}
+            onClick={(e)=>onNodeClick(node.id,e?.shiftKey)}
             onOpenNested={()=>onOpenNested(node.id)}
             onCreateChild={(id)=>addChildNode(id??node.id)}
             onMove={(absX,y)=>onMoveNode(node.id,absX,y)}
@@ -1905,8 +1918,9 @@ function Canvas({nodes,edges,strengths,slots,activeSlot,setActiveSlot,selNodeId,
             isHoverTarget={dragConn?.hoverTargetId===node.id}
             onOpenPropTester={onOpenPropTester}
             selNodeId={selNodeId}
-            onSubNodeClick={(id)=>onNodeClick(id)}
+            onSubNodeClick={(id,e)=>onNodeClick(id,e?.shiftKey)}
             onOpenSubNested={(id)=>onOpenNested(id)}
+            multiSel={multiSel}
             onUpNode={(p)=>onUpNode?.(node.id,p)}
             onCtxMenu={(e)=>{e.preventDefault();e.stopPropagation();setCtxMenu({nodeId:node.id,x:e.clientX,y:e.clientY});}}
           />
@@ -2282,15 +2296,15 @@ function LockUI({edges,nodes,onToggleLock}){
 /* ══════════════════════════════════════════════════════════
    NODE CARD
 ══════════════════════════════════════════════════════════ */
-function SubNodeCard({child, selected, strength, topOffset, onSelect, onCreateChild, onOpenNested}) {
+function SubNodeCard({child, selected, isMultiSelected, strength, topOffset, onSelect, onCreateChild, onOpenNested}) {
   const meta = TYPES[child.type] || TYPES.premise;
   const sc = sCol(strength);
   return (
-    <div onPointerDown={e=>{e.stopPropagation();onSelect();}} onPointerUp={e=>e.stopPropagation()}
+    <div onPointerDown={e=>{e.stopPropagation();onSelect(e);}} onPointerUp={e=>e.stopPropagation()}
       style={{position:"absolute",left:10,right:10,top:topOffset,minHeight:82,borderRadius:9,
-        border:`1.5px solid ${selected?meta.color:meta.color+'44'}`,
-        background:selected?"rgba(240,255,248,0.96)":"rgba(255,255,255,0.88)",
-        boxShadow:selected?`0 0 0 2px ${meta.color}55,0 2px 8px rgba(0,0,0,0.15)`:"0 1px 6px rgba(15,23,42,0.13)",
+        border:`1.5px solid ${selected?meta.color:isMultiSelected?"#3b82f6":meta.color+'44'}`,
+        background:selected?"rgba(240,255,248,0.96)":isMultiSelected?"rgba(219,234,254,0.96)":"rgba(255,255,255,0.88)",
+        boxShadow:selected?`0 0 0 2px ${meta.color}55,0 2px 8px rgba(0,0,0,0.15)`:isMultiSelected?"0 0 0 2px #3b82f655,0 2px 8px rgba(15,23,42,0.13)":"0 1px 6px rgba(15,23,42,0.13)",
         padding:"8px 10px 7px",cursor:"pointer",userSelect:"none",
       }}>
       <div style={{position:"absolute",top:0,left:0,right:0,height:2.5,background:meta.color,borderRadius:"9px 9px 0 0",opacity:0.85}}/>
@@ -2325,7 +2339,7 @@ function SubNodeCard({child, selected, strength, topOffset, onSelect, onCreateCh
   );
 }
 
-function NodeCard({node,selected,connecting,childCount,zoom,strength,onClick,onOpenNested,onCreateChild,onMove,onConnStart,dragConnActive,isHoverTarget,onOpenPropTester,selNodeId,onSubNodeClick,onOpenSubNested,isMultiSelected,onMultiDragStart,onUpNode,onCtxMenu}){
+function NodeCard({node,selected,connecting,childCount,zoom,strength,onClick,onOpenNested,onCreateChild,onMove,onConnStart,dragConnActive,isHoverTarget,onOpenPropTester,selNodeId,onSubNodeClick,onOpenSubNested,isMultiSelected,multiSel,onMultiDragStart,onUpNode,onCtxMenu}){
   const drag=useRef(null);
   // Absolute canvas position
   const absX = colX(node.slot) + (node.localX??COL_PAD);
@@ -2348,7 +2362,7 @@ function NodeCard({node,selected,connecting,childCount,zoom,strength,onClick,onO
   const onPU=(e)=>{
     e.stopPropagation();
     if(e.target.closest?.('[data-handle]')){drag.current=null;return;}
-    if(!drag.current?.moved)onClick();
+    if(!drag.current?.moved)onClick(e);
     drag.current=null;
   };
   const sc=sCol(strength);
@@ -2475,9 +2489,10 @@ function NodeCard({node,selected,connecting,childCount,zoom,strength,onClick,onO
             <SubNodeCard key={child.id}
               child={child}
               selected={selNodeId===child.id}
+              isMultiSelected={multiSel?.has(child.id)}
               strength={strength*0.85}
               topOffset={12+idx*92}
-              onSelect={()=>onSubNodeClick&&onSubNodeClick(child.id)}
+              onSelect={(e)=>onSubNodeClick&&onSubNodeClick(child.id,e)}
               onCreateChild={()=>onCreateChild&&onCreateChild(child.id)}
               onOpenNested={()=>onOpenSubNested&&onOpenSubNested(child.id)}
             />
@@ -2917,7 +2932,7 @@ function RightPanel({node,edge,visNodes,cc,strength,slots,activeSlot,onUpNode,on
                 <div>
                   <label style={S.lbl}>Type</label>
                   <select style={S.inp} value={node.type} onChange={e=>onUpNode({type:e.target.value})}>
-                    {Object.entries(TYPES).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+                    {TYPE_OPTIONS.map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
                   </select>
                 </div>
                 <div>
@@ -3560,7 +3575,6 @@ function ClusterCard({node, nodes, selected, zoom, onClick, onMove, onConnStart,
   
   const onPD=(e)=>{
     if(e.button!==0)return; e.stopPropagation();
-    if(e.shiftKey){ onMultiDragStart?.(); return; }
     const sx=e.clientX, sy=e.clientY;
     const initialPos = {x:absX, y:absY};
     let moved=false;
@@ -3569,10 +3583,10 @@ function ClusterCard({node, nodes, selected, zoom, onClick, onMove, onConnStart,
       if(Math.abs(dx)>2||Math.abs(dy)>2)moved=true;
       onMove(initialPos.x+dx, initialPos.y+dy);
     };
-    const up=()=>{
+    const up=(ue)=>{
       window.removeEventListener("pointermove",move);
       window.removeEventListener("pointerup",up);
-      if(!moved)onClick();
+      if(!moved)onClick(ue);
     };
     window.addEventListener("pointermove",move);
     window.addEventListener("pointerup",up);
