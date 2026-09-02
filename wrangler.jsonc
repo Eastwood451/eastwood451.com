@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json.schemastore.org/wrangler.json",
+  "name": "eastwood451-com",
+  "compatibility_date": "2026-09-02",
+  "pages_build_output_dir": ".",
+  "vars": {
+    "SUPABASE_URL": "",
+    "SUPABASE_ANON_KEY": ""
+  }
+}
