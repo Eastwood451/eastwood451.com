@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f7f9fc">
+  <title>Fortællerværkstedet</title>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-C2P8VD70GG"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-C2P8VD70GG', {
+      allow_google_signals: false,
+      allow_ad_personalization_signals: false,
+      anonymize_ip: true
+    });
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600;6..72,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">F</div>
+        <div><strong>Fortæller&shy;værkstedet</strong><span>Fra tom side til levende historie</span></div>
+      </div>
+      <button class="project-switcher" id="project-switcher" type="button">
+        <span class="project-icon">✦</span>
+        <span><small>Din historie</small><b id="sidebar-title">Uden titel</b></span>
+        <span class="chevron">⌄</span>
+      </button>
+      <nav class="main-nav" id="main-nav" aria-label="Skriveforløb"></nav>
+      <div class="sidebar-bottom">
+        <button class="quiet-button" data-nav="academy" type="button"><span>◈</span> Håndværksbibliotek</button>
+        <button class="quiet-button" id="open-api-key" type="button"><span>⌑</span> API-nøgle</button>
+        <button class="quiet-button" id="export-button" type="button"><span>⇩</span> Eksportér historieplan</button>
+        <div class="save-state"><span class="save-dot"></span><span id="save-status">Gemt lokalt</span></div>
+      </div>
+    </aside>
+
+    <div class="workspace">
+      <header class="topbar">
+        <button class="icon-button menu-button" id="menu-button" aria-label="Åbn menu" type="button">☰</button>
+        <div class="breadcrumb"><span>Arbejdsbog</span><i>/</i><strong id="breadcrumb">Kom i gang</strong></div>
+        <div class="top-actions">
+          <button class="save-story-button" id="save-story-button" type="button" title="Gem hele historien">💾 Gem historie</button>
+          <button class="save-story-button obsidian-sync-button" id="sync-obsidian-button" type="button" title="Eksportér historien til din Obsidian-vault">◈ Obsidian</button>
+          <button class="text-button" id="load-example" type="button">Se et eksempel</button>
+          <button class="ai-chat-trigger" id="open-ai-chat" type="button" title="Vis eller skjul AI-sparringspartneren · C / F2"><span class="ai-orb">✦</span><span>AI-sparringspartner</span><i id="ai-status-dot"></i></button>
+          <div class="progress-pill" title="Din samlede fremdrift"><span id="top-progress">0%</span><i><b id="top-progress-bar"></b></i></div>
+        </div>
+      </header>
+      <main id="app" tabindex="-1"></main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <dialog id="scene-dialog" class="dialog">
+    <form method="dialog" id="scene-form">
+      <div class="dialog-head"><div><span class="eyebrow">Ny brik i fortællingen</span><h2 id="scene-dialog-title">Tilføj scene</h2></div><div style="display:flex;gap:7px"><button type="button" class="button ghost" id="ai-complete-scene">✦ Foreslå hel scene</button><button type="button" class="icon-button close-dialog" aria-label="Luk">×</button></div></div>
+      <input type="hidden" name="sceneId">
+      <div class="form-grid two">
+        <label class="field"><span><span>Scenens titel</span><button class="ai-field-button" type="button" data-ai-form="scene" data-ai-name="title" data-ai-label="Scenens titel">✦ Giv AI-forslag</button></span><input name="title" required placeholder="Fx Nøglen under gulvbrættet"></label>
+        <label class="field"><span>Akt</span><select name="act"><option value="1">1 · Den kendte verden</option><option value="2">2 · Ind i det ukendte</option><option value="3">3 · Midtpunktet</option><option value="4">4 · Prisen stiger</option><option value="5">5 · Opgøret</option></select></label>
+        <label class="field"><span>Vejr og mood</span><select name="mood"><option value="clear">☀ Solskin</option><option value="golden">◐ Gylden time</option><option value="overcast">☁ Gråvejr</option><option value="fog">≋ Tåge</option><option value="storm">ϟ Storm</option><option value="night">☾ Nat</option><option value="bleak">◆ Dyster</option></select></label>
+      </div>
+      <section class="scene-anatomy"><div class="anatomy-heading"><span>1</span><div><strong>Aktører</strong><small>Hvem handler, reagerer eller påvirkes i scenen?</small></div><div class="anatomy-actions"><button type="button" id="create-scene-character">＋ Opret</button><button type="button" id="ai-scene-links">✦ Foreslå</button></div></div><div class="actor-picker" id="scene-actor-options"></div></section>
+      <section class="scene-anatomy"><div class="anatomy-heading"><span>2</span><div><strong>Handling / Begivenhed</strong><small>Hvad sker synligt, og hvad forandrer situationen?</small></div></div><label class="field"><span><span>Begivenheden</span><button class="ai-field-button" type="button" data-ai-form="scene" data-ai-name="summary" data-ai-label="Scenens handling eller begivenhed">✦ Giv AI-forslag</button></span><textarea name="summary" rows="3" placeholder="Beskriv den synlige handling kort og konkret"></textarea></label></section>
+      <section class="scene-anatomy"><div class="anatomy-heading"><span>3</span><div><strong>Lokation</strong><small>Vælg et eksisterende miljøkort, så dets regler følger scenen.</small></div></div><div class="form-grid two"><label class="field"><span><span>Miljø</span></span><select name="locationId" id="scene-location-select"><option value="">Vælg lokation…</option></select></label><label class="field"><span><span>Tid eller præcist sted</span><button class="ai-field-button" type="button" data-ai-form="scene" data-ai-name="setting" data-ai-label="Scenens tidspunkt eller præcise sted">✦ AI</button></span><input name="setting" placeholder="Fx broen · under nattevagten"></label></div></section>
+      <section class="scene-anatomy emotional-intent"><div class="anatomy-heading"><span>4</span><div><strong>Publikums følelse</strong><small>Scenens følelsesmæssige intention styrer valg af handling, tempo og detaljer.</small></div></div><label class="field"><span><span>Hvad ønsker du, publikum skal <b>FØLE</b>, når de ser den her scene? <small>(valgfrit)</small></span><button class="ai-field-button" type="button" data-ai-form="scene" data-ai-name="audienceFeeling" data-ai-label="Den følelse scenen skal fremkalde hos publikum">✦ Giv AI-forslag</button></span><textarea name="audienceFeeling" rows="3" placeholder="Fx: Først tryghed, derefter en snigende fornemmelse af, at noget er helt forkert."></textarea></label><p class="emotion-guidance">Vælg ikke kun en etiket som “spænding”. Beskriv gerne bevægelsen: Hvad føler publikum først — og hvad skal de føle, når scenen slutter?</p></section>
+      <details class="scene-depth"><summary>Uddyb scenens dramaturgi <span>Synsvinkel · mål · modstand · vendepunkt</span></summary><div class="scene-depth-body"><div class="form-grid two">
+        <label class="field"><span><span>Synsvinkel</span><button class="ai-field-button" type="button" data-ai-form="scene" data-ai-name="pov" data-ai-label="Synsvinkel">✦ AI</button></span><input name="pov" placeholder="Hvem oplever scenen?"></label>
+      </div>
+      <div class="form-grid three">
+        <label class="field"><span><span>Mål</span><button class="ai-field-button" type="button" data-ai-form="scene" data-ai-name="goal" data-ai-label="Scenens mål">✦ AI</button></span><input name="goal" placeholder="Hvad vil personen nu?"></label>
+        <label class="field"><span><span>Modstand</span><button class="ai-field-button" type="button" data-ai-form="scene" data-ai-name="conflict" data-ai-label="Scenens modstand">✦ AI</button></span><input name="conflict" placeholder="Hvad står i vejen?"></label>
+        <label class="field"><span><span>Vendepunkt</span><button class="ai-field-button" type="button" data-ai-form="scene" data-ai-name="turn" data-ai-label="Scenens vendepunkt">✦ AI</button></span><input name="turn" placeholder="Hvad ændrer sig?"></label>
+      </div>
+      <label class="field"><span>Scenens funktion</span><select name="purpose"><option>Fremdriver plottet</option><option>Afslører karakter</option><option>Bygger verden</option><option>Planter eller indfrier noget</option><option>Skaber relationel forandring</option></select></label></div></details>
+      <section class="ai-scene-writer">
+        <div class="ai-scene-writer-head">
+          <div><span class="eyebrow">Fra sceneplan til manuskript</span><h3>Skriv scenen med AI</h3><p>AI’en bruger alle felterne ovenfor samt personer, miljøer og historiens backend. Din sceneplan bliver ikke overskrevet.</p></div>
+          <button type="button" class="button primary" id="ai-write-scene">✦ Skriv hele scenen</button>
+        </div>
+        <div class="ai-scene-draft" id="ai-scene-draft" hidden>
+          <div class="ai-scene-draft-toolbar"><strong>AI-udkast</strong><span id="ai-scene-draft-status">Klar til redigering og kopiering</span><button type="button" class="button secondary" id="copy-ai-scene">Kopiér teksten</button></div>
+          <textarea id="ai-scene-draft-text" rows="18" aria-label="AI-genereret sceneudkast" placeholder="Det fulde sceneudkast vises her…"></textarea>
+          <p>Udkastet er et råmateriale. Ret stemme, rytme og detaljer, så scenen bliver din.</p>
+        </div>
+      </section>
+      <div class="dialog-actions"><button type="button" class="danger-link" id="delete-scene" hidden style="margin-right:auto">Slet scene</button><button type="button" class="button secondary close-dialog">Annullér</button><button type="submit" class="button primary" id="save-scene">Gem scene</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="separator-dialog" class="dialog separator-dialog">
+    <form method="dialog" id="separator-form">
+      <div class="dialog-head"><div><span class="eyebrow">Gruppe i sceneforløbet</span><h2 id="separator-dialog-title">Opret kapitel</h2></div><button type="button" class="icon-button close-separator" aria-label="Luk kapitel">×</button></div>
+      <input type="hidden" name="separatorId">
+      <div class="form-grid two">
+        <label class="field"><span>Type</span><select name="type"><option>Kapitel</option><option>Akt</option><option>Del</option><option>Tidsspring</option><option>Skift i synsvinkel</option></select></label>
+        <div class="field"><span>Omslutter scener</span><div id="chapter-scene-summary" class="chapter-scene-summary"></div></div>
+      </div>
+      <label class="field"><span>Titel</span><input name="title" required placeholder="Fx Kapitel 3 · Sandheden kommer frem"></label>
+      <div class="dialog-actions"><button type="button" class="danger-link" id="delete-separator" hidden style="margin-right:auto">Slet kapitel</button><button type="button" class="button secondary close-separator">Annullér</button><button type="submit" class="button primary">Gem kapitel</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="lesson-dialog" class="dialog lesson-dialog">
+    <article>
+      <header class="lesson-reader-head">
+        <div><span class="eyebrow" id="lesson-kicker">Lektion</span><h2 id="lesson-title"></h2></div>
+        <button type="button" class="icon-button close-lesson" aria-label="Luk lektionen">×</button>
+      </header>
+      <div class="lesson-reader-body" id="lesson-content"></div>
+      <footer class="lesson-reader-nav">
+        <button type="button" class="button secondary" id="previous-lesson">← Forrige</button>
+        <span id="lesson-position"></span>
+        <button type="button" class="button primary" id="next-lesson">Næste →</button>
+      </footer>
+    </article>
+  </dialog>
+
+  <dialog id="suggestion-dialog" class="dialog suggestion-dialog">
+    <article>
+      <header class="lesson-reader-head"><div><span class="eyebrow">Kreativ mulighed</span><h2>AI-forslag</h2></div><button type="button" class="icon-button close-suggestion" aria-label="Luk">×</button></header>
+      <div class="suggestion-body"><div class="ai-thinking" id="suggestion-loading"><span></span><span></span><span></span> Tænker med din historie…</div><div id="suggestion-text"></div></div>
+      <footer class="dialog-actions suggestion-actions"><button type="button" class="button secondary" id="another-suggestion">Prøv en anden</button><button type="button" class="button primary" id="use-suggestion">Brug forslaget</button></footer>
+    </article>
+  </dialog>
+
+  <dialog id="project-dialog" class="dialog project-dialog">
+    <article>
+      <header class="project-dialog-head">
+        <div><span class="eyebrow">Projektbibliotek</span><h2>Dine historier</h2><p>Hver historie gemmes automatisk og har sit eget persongalleri, sine scener og sin AI-samtale.</p></div>
+        <button type="button" class="icon-button" id="close-project-dialog" aria-label="Luk projektvælger">×</button>
+      </header>
+      <div class="project-dialog-toolbar">
+        <button type="button" class="button primary" id="new-project">＋ Ny historie</button>
+        <div>
+          <button type="button" class="button secondary" id="restore-stories-from-disk">↻ Gendan fra Stories</button>
+          <button type="button" class="button secondary" id="export-project-backup">⇩ Fuld sikkerhedskopi</button>
+          <button type="button" class="button secondary" id="import-project-backup">⇧ Importér</button>
+          <input id="project-backup-file" type="file" accept="application/json,.json" hidden>
+        </div>
+      </div>
+      <div class="project-list" id="project-list"></div>
+    </article>
+  </dialog>
+
+  <dialog id="project-name-dialog" class="dialog project-name-dialog">
+    <form id="project-name-form">
+      <header>
+        <div><span class="eyebrow" id="project-name-eyebrow">Ny historie</span><h2 id="project-name-heading">Hvad skal historien hedde?</h2><p>Navnet kan altid ændres senere.</p></div>
+        <button type="button" class="icon-button" id="close-project-name" aria-label="Luk navngivning">×</button>
+      </header>
+      <label class="field project-name-field"><span>Historiens navn</span><input type="text" id="project-name-input" maxlength="120" autocomplete="off" required></label>
+      <footer class="dialog-actions"><button type="button" class="button secondary" id="cancel-project-name">Annullér</button><button type="submit" class="button primary" id="submit-project-name">Opret historie</button></footer>
+    </form>
+  </dialog>
+
+  <dialog id="full-story-dialog" class="dialog full-story-dialog">
+    <article>
+      <header class="full-story-head">
+        <div><span class="eyebrow">Fra historieplan til fortælling</span><h2>Den samlede historie</h2><p>En sammenhængende, redigerbar fortælling bygget af hele projektet og scenernes rækkefølge.</p></div>
+        <button type="button" class="icon-button" id="close-full-story" aria-label="Luk den samlede historie">×</button>
+      </header>
+      <div class="full-story-toolbar">
+        <button type="button" class="button primary" id="generate-full-story">✦ Generér hele historien</button>
+        <span id="full-story-status">Ikke genereret endnu</span>
+        <button type="button" class="button secondary" id="copy-full-story">Kopiér</button>
+        <button type="button" class="button secondary" id="export-full-story-pdf">PDF</button>
+        <button type="button" class="button secondary" id="export-full-story-doc">Word (.doc)</button>
+        <button type="button" class="button secondary comic-launch" id="open-comic">▦ Generér tegneserie i baggrunden</button>
+      </div>
+      <textarea id="full-story-text" aria-label="Den samlede historie" placeholder="Når du genererer historien, vises den her som én sammenhængende tekst…"></textarea>
+      <footer>Du kan redigere teksten direkte. Ændringer gemmes automatisk i den aktuelle historie.</footer>
+    </article>
+  </dialog>
+
+  <dialog id="comic-dialog" class="dialog comic-dialog">
+    <article>
+      <header class="comic-head">
+        <div><span class="eyebrow">Fra fortælling til billedfortælling</span><h2>Den samlede tegneserie</h2><p>Hele historien omsat til fortløbende tegneseriesider med gennemgående personer og visuel stil.</p></div>
+        <button type="button" class="icon-button" id="close-comic" aria-label="Luk tegneserien">×</button>
+      </header>
+      <div class="comic-toolbar">
+        <button type="button" class="button primary" id="generate-comic">✦ Generér tegneserie</button>
+        <span id="comic-status">Ikke genereret endnu</span>
+        <button type="button" class="button secondary" id="export-comic-pdf">Print / PDF</button>
+      </div>
+      <div class="comic-pages" id="comic-pages"></div>
+      <footer>Hver side gemmes automatisk i den aktuelle historie. En side kan genereres igen uden at ændre resten.</footer>
+    </article>
+  </dialog>
+
+  <aside class="comic-job" id="comic-job" hidden aria-live="polite">
+    <span class="comic-job-icon" id="comic-job-icon">◌</span>
+    <div><strong id="comic-job-title">Tegneserien genereres</strong><small id="comic-job-status">Forbereder siderne…</small><i><b id="comic-job-progress"></b></i></div>
+    <button type="button" id="comic-job-open" hidden>Se sider</button>
+    <button type="button" id="comic-job-cancel" hidden>Annullér generering</button>
+    <button type="button" id="comic-job-save" hidden>Gem PDF</button>
+  </aside>
+
+  <aside class="ai-drawer" id="ai-drawer" aria-hidden="true">
+    <header class="ai-drawer-head"><div class="ai-coach-title"><span class="ai-orb large">✦</span><div><strong>Fortællecoachen</strong><small>Din kreative sparringspartner</small></div></div><button type="button" class="icon-button" id="close-ai-chat" aria-label="Luk chat">×</button></header>
+    <div class="ai-setup" id="ai-setup" hidden>
+      <span class="eyebrow">Forbind AI</span><h3 id="api-key-heading">Giv coachen en nøgle</h3><p>Din API-nøgle sendes kun til den lokale værkstedsserver og gemmes lokalt i den ignorerede fil <code>.env.local</code>—aldrig i historien eller browseren.</p><label class="field"><span>OpenAI API-nøgle</span><input type="password" id="api-key-input" placeholder="sk-…" autocomplete="off"></label><button class="button primary" id="save-api-key" type="button">Gem og forbind</button><p class="setup-note"><a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer">Opret eller find en API-nøgle</a> · Den gemte nøgle indlæses automatisk næste gang værkstedet starter.</p>
+    </div>
+    <div class="chat-context"><span class="context-dot"></span><span id="chat-context-label">Ser hele din historie</span><button type="button" id="clear-chat">Ryd samtale</button></div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chat-starters" id="chat-starters"><button type="button">Hvad mangler min historie?</button><button type="button">Udfordr min hovedperson</button><button type="button">Er mine scener i den rigtige rækkefølge?</button></div>
+    <form class="chat-compose" id="chat-form"><textarea id="chat-input" rows="2" placeholder="Drøft din historie…"></textarea><button type="submit" aria-label="Send">↑</button></form>
+  </aside>
+  <div class="drawer-backdrop" id="drawer-backdrop"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

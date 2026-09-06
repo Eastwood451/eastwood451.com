@@ -1,0 +1,15 @@
+.env
+.env.local
+node_modules/
+.wrangler/
+.wrangler-config/
+.wrangler-dry-run/
+public/
+
+# Lokale historier, billeder og research må aldrig ende i GitHub.
+Stories/
+generated-projects/
+generated-scenes/
+recovery/
+*.pdf
+fortaellervaerkstedet-backup-*.json
