@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 864" role="img" aria-labelledby="title desc">
+  <title id="title">Fortællerværkstedet</title>
+  <desc id="desc">Et mørkt digitalt værksted med scener forbundet i en fortælling.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#08111b"/>
+      <stop offset="0.56" stop-color="#13283a"/>
+      <stop offset="1" stop-color="#241633"/>
+    </linearGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#1eb7ff"/>
+      <stop offset="1" stop-color="#ff8c1a"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="14" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="864" fill="url(#bg)"/>
+  <g opacity=".13" stroke="#fff">
+    <path d="M0 144h1200M0 288h1200M0 432h1200M0 576h1200M0 720h1200"/>
+    <path d="M200 0v864M400 0v864M600 0v864M800 0v864M1000 0v864"/>
+  </g>
+  <path d="M178 564C324 476 384 328 533 382s188 186 343 80 123-210 198-226" fill="none" stroke="url(#line)" stroke-width="12" stroke-linecap="round" filter="url(#glow)"/>
+  <g stroke-width="6">
+    <rect x="116" y="494" width="230" height="150" rx="22" fill="#0c1722" stroke="#1eb7ff"/>
+    <rect x="424" y="300" width="230" height="150" rx="22" fill="#0c1722" stroke="#79cdf4"/>
+    <rect x="735" y="385" width="230" height="150" rx="22" fill="#171425" stroke="#b891ff"/>
+    <rect x="930" y="160" width="170" height="118" rx="22" fill="#20151a" stroke="#ff8c1a"/>
+  </g>
+  <g fill="#eef7ff">
+    <circle cx="174" cy="548" r="14" fill="#1eb7ff"/><rect x="204" y="532" width="92" height="14" rx="7" opacity=".88"/><rect x="154" y="582" width="142" height="10" rx="5" opacity=".38"/>
+    <circle cx="483" cy="354" r="14" fill="#79cdf4"/><rect x="513" y="338" width="92" height="14" rx="7" opacity=".88"/><rect x="463" y="388" width="142" height="10" rx="5" opacity=".38"/>
+    <circle cx="794" cy="439" r="14" fill="#b891ff"/><rect x="824" y="423" width="92" height="14" rx="7" opacity=".88"/><rect x="774" y="473" width="142" height="10" rx="5" opacity=".38"/>
+    <circle cx="978" cy="211" r="12" fill="#ff8c1a"/><rect x="1004" y="198" width="58" height="12" rx="6" opacity=".88"/><rect x="962" y="238" width="100" height="9" rx="5" opacity=".38"/>
+  </g>
+  <text x="92" y="118" fill="#f5f8fc" font-family="Inter,system-ui,sans-serif" font-size="58" font-weight="800" letter-spacing="2">FORTÆLLER</text>
+  <text x="92" y="177" fill="#79cdf4" font-family="Inter,system-ui,sans-serif" font-size="44" font-weight="650" letter-spacing="8">VÆRKSTEDET</text>
+</svg>
