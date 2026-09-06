@@ -14,6 +14,10 @@ Disse værdier skal ligge som krypterede Cloudflare Worker-secrets og må aldrig
 
 - `OPENAI_API_KEY`
 - `SUPABASE_SECRET_KEY`
+- `AUTH_PASSWORD_HASH`
+- `SESSION_SECRET`
+
+Login håndteres i Worker-koden med Eastwood451-adgangskoden og en signeret, `HttpOnly`, `Secure`, `SameSite=Lax` cookie. Cloudflare Access blev fravalgt, fordi Free-onboardingen krævede betalingskort og tilladelse til automatisk overforbrugsbetaling.
 
 ## Lokal drift
 
@@ -25,4 +29,4 @@ Kør migrationen i `supabase/migrations/20260905110000_create_story_projects.sql
 
 ## Mediefiler
 
-Worker-bindingen `STORY_ASSETS` peger på den private R2-bucket `fortaellervaerksted-assets`. Filerne er ikke offentligt eksponeret fra R2; de udleveres kun gennem den Access-beskyttede Worker.
+Worker-bindingen `STORY_ASSETS` peger på den private R2-bucket `fortaellervaerksted-assets`. Filerne er ikke offentligt eksponeret fra R2; de udleveres kun gennem den login-beskyttede Worker.
