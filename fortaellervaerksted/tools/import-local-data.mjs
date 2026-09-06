@@ -1,12 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
+import { execFile } from "node:child_process";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { extname, join, relative, resolve, sep } from "node:path";
+import { promisify } from "node:util";
 
 const root = resolve(import.meta.dirname, "..");
 const execute = process.argv.includes("--execute");
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseSecret = process.env.SUPABASE_SECRET_KEY;
 const ownerEmail = process.env.OWNER_EMAIL;
+const r2Bucket = process.env.R2_BUCKET || "fortaellervaerksted-assets";
+const run = promisify(execFile);
 
 if (!execute) {
   throw new Error("Importen er låst. Kør med --execute, når cloud-lageret er klar.");
@@ -66,14 +70,22 @@ let uploadedBytes = 0;
 for (const assetPath of assetFiles) {
   const body = await readFile(assetPath);
   const cloudPath = `generated-projects/${relative(assetRoot, assetPath).split(sep).join("/")}`;
-  const { error } = await supabase.storage.from("story-assets").upload(cloudPath, body, {
-    contentType: mimeFor(assetPath),
-    cacheControl: "31536000",
-    upsert: true,
+  await run(process.execPath, [
+    join(root, "node_modules", "wrangler", "bin", "wrangler.js"),
+    "r2", "object", "put", `${r2Bucket}/${cloudPath}`,
+    "--file", assetPath,
+    "--content-type", mimeFor(assetPath),
+    "--cache-control", "private, max-age=31536000",
+    "--remote",
+    "--force",
+  ], {
+    cwd: root,
+    env: process.env,
+    windowsHide: true,
+    maxBuffer: 4 * 1024 * 1024,
   });
-  if (error) throw new Error(`Kunne ikke uploade ${cloudPath}: ${error.message}`);
   uploadedBytes += body.byteLength;
-  console.log(`Fil uploadet: ${cloudPath}`);
+  console.log(`R2-fil uploadet: ${cloudPath}`);
 }
 
-console.log(`Import færdig: ${storyFiles.length} historier og ${assetFiles.length} filer (${(uploadedBytes / 1024 / 1024).toFixed(1)} MB).`);
+console.log(`Import færdig: ${storyFiles.length} historier i Supabase og ${assetFiles.length} filer i R2 (${(uploadedBytes / 1024 / 1024).toFixed(1)} MB).`);

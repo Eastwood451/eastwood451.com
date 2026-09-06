@@ -1,6 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
 
-const STORY_BUCKET = "story-assets";
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" };
 const coachInstructions = `Du er Fortællecoachen, en varm, præcis og udfordrende dansk sparringspartner for en forfatter.
 Du er ekspert i karakterbaseret dramaturgi, femaktsstruktur, Snowflake-planlægning, scene-design, synsvinkel, dialog, fortælleverdener og revision.
@@ -97,22 +96,24 @@ function storagePathFromUrl(value) {
   } catch { return ""; }
 }
 
-async function uploadAsset(client, path, data, contentType) {
-  const { error } = await client.storage.from(STORY_BUCKET).upload(path, data, { contentType, cacheControl:"31536000", upsert:true });
-  if (error) throw new HttpError(502, `Cloudlageret kunne ikke gemme filen: ${error.message}`);
+async function uploadAsset(bucket, path, data, contentType) {
+  const stored = await bucket.put(path, data, {
+    httpMetadata:{ contentType, cacheControl:"private, max-age=31536000" }
+  });
+  if (!stored) throw new HttpError(502, "Cloudflare R2 kunne ikke gemme filen.");
   return `/${path}?v=${Date.now()}`;
 }
 
-async function referenceBlob(client, value) {
+async function referenceBlob(bucket, value) {
   const path = storagePathFromUrl(value);
   if (!path) return null;
-  const { data, error } = await client.storage.from(STORY_BUCKET).download(path);
-  return error || !data ? null : data;
+  const object = await bucket.get(path);
+  return object ? object.blob() : null;
 }
 
-async function createImage(env, client, { prompt, size, quality = "low", referenceUrls = [], signal }) {
+async function createImage(env, { prompt, size, quality = "low", referenceUrls = [], signal }) {
   if (!env.OPENAI_API_KEY) throw new HttpError(503, "AI er ikke konfigureret i Cloudflare endnu.");
-  const references = (await Promise.all(referenceUrls.map(value => referenceBlob(client, value)))).filter(Boolean);
+  const references = (await Promise.all(referenceUrls.map(value => referenceBlob(env.STORY_ASSETS, value)))).filter(Boolean);
   let response;
   if (references.length) {
     const form = new FormData();
@@ -132,7 +133,7 @@ async function createImage(env, client, { prompt, size, quality = "low", referen
   return bytesFromBase64(base64);
 }
 
-async function createCharacterImage(env, client, character, project) {
+async function createCharacterImage(env, character, project) {
   if (!String(character?.appearance || "").trim()) throw new HttpError(400, "Beskriv personens udseende først.");
   const prompt = `Create a canonical cinematic character reference portrait for a recurring fictional character.
 Character: ${character.name || "Unnamed character"}. Age: ${character.age || "unspecified"}.
@@ -140,12 +141,12 @@ Physical appearance: ${character.appearance}.
 Traits and bearing: ${character.traits || character.role || "natural, specific human presence"}.
 Story genre and tone: ${project?.foundation?.genre || "fiction"}; ${project?.foundation?.tone || "cinematic realism"}.
 Show one person only, waist-up, facing mostly toward camera, neutral readable pose and expression, coherent natural lighting, simple unobtrusive background. No text, lettering, collage, frame, duplicate person, or interface elements. This image is the canonical identity reference for all later storyboard scenes, so make facial structure, hair, skin, body type, age markers, clothing silhouette, and distinctive features precise and memorable.`;
-  const bytes = await createImage(env, client, { prompt, size:"1024x1024", quality:"low" });
+  const bytes = await createImage(env, { prompt, size:"1024x1024", quality:"low" });
   const path = `generated-projects/${safePart(project?.projectId,"legacy")}/characters/${safePart(character.id,"character")}.png`;
-  return { url:await uploadAsset(client, path, bytes, "image/png"), prompt };
+  return { url:await uploadAsset(env.STORY_ASSETS, path, bytes, "image/png"), prompt };
 }
 
-async function createSceneImage(env, client, scene, project) {
+async function createSceneImage(env, scene, project) {
   const actors = (project?.characters || []).filter(character => (scene.actorIds || []).includes(character.id));
   const environment = (project?.environments || []).find(item => item.id === scene.locationId);
   const referenceActors = actors.filter(actor => storagePathFromUrl(actor.portraitUrl));
@@ -162,12 +163,12 @@ Audience emotion: ${scene.audienceFeeling || "Create a clear emotional progressi
 Point of view: ${scene.pov || "observational cinematic framing"}.
 Depict every named character at their stated age. ${referenceInstruction}
 Make the composition readable as a single story beat, grounded in specific physical action, with coherent lighting and production design.`;
-  const bytes = await createImage(env, client, { prompt, size:"1536x1024", quality:"low", referenceUrls:referenceActors.map(actor => actor.portraitUrl) });
+  const bytes = await createImage(env, { prompt, size:"1536x1024", quality:"low", referenceUrls:referenceActors.map(actor => actor.portraitUrl) });
   const path = `generated-projects/${safePart(project?.projectId,"legacy")}/scenes/${safePart(scene.id,"scene")}.png`;
-  return { url:await uploadAsset(client, path, bytes, "image/png"), prompt };
+  return { url:await uploadAsset(env.STORY_ASSETS, path, bytes, "image/png"), prompt };
 }
 
-async function createComicPage(env, client, page, pageIndex, project, signal) {
+async function createComicPage(env, page, pageIndex, project, signal) {
   const actorIds = new Set(Array.isArray(page.actorIds) ? page.actorIds : []);
   const pageMeaning = JSON.stringify({ panels:page.panels, mustShow:page.mustShow, visualDirection:page.visualDirection }).toLocaleLowerCase("da");
   const actors = (project?.characters || []).filter(character => actorIds.has(character.id) || (character.name && pageMeaning.includes(String(character.name).toLocaleLowerCase("da"))));
@@ -178,12 +179,12 @@ async function createComicPage(env, client, page, pageIndex, project, signal) {
   const visualDirection = String(page.visualDirection || page.mustShow || "").trim();
   const storyCanon = JSON.stringify({ brainDump:project?.backend?.brainDump || "", scenes:(project?.scenes || []).map(scene => ({ title:scene.title, summary:scene.summary, turn:scene.turn, actors:scene.actorIds })) }).slice(0,14_000);
   const prompt = [`Create ONE complete portrait-format comic-book page, not a single illustration.`,`Page ${Number(pageIndex)+1}: ${page.title || "Untitled page"}.`,`STORY CANON — never contradict it: ${storyCanon}`,`Visual style bible: ${page.styleBible || "cinematic European graphic novel, expressive ink, controlled color palette, realistic anatomy"}.`,`Genre and tone: ${project?.foundation?.genre || "fiction"}; ${project?.foundation?.tone || "dramatic and emotionally precise"}.`,`Characters: ${characterDetails || "only characters named in the panel directions"}.`,references,visualDirection ? `NON-NEGOTIABLE VISUAL FACT: ${visualDirection}` : "Follow every visible action literally.",`LAY OUT EXACTLY ${Math.max(1,(page.panels || []).length)} DISTINCT PANELS with clear gutters and continuity.`,panelDirections,`Render Danish captions and dialogue exactly as supplied. Add no title, page number, logo, watermark, extra dialogue, gibberish, interface elements or text outside the specified captions and balloons.`].join("\n\n");
-  const bytes = await createImage(env, client, { prompt, size:"1024x1536", quality:"medium", referenceUrls:referenceActors.map(actor => actor.portraitUrl), signal });
+  const bytes = await createImage(env, { prompt, size:"1024x1536", quality:"medium", referenceUrls:referenceActors.map(actor => actor.portraitUrl), signal });
   const path = `generated-projects/${safePart(project?.projectId,"legacy")}/comic/page-${String(Math.max(1,Number(pageIndex)+1)).padStart(2,"0")}.png`;
-  return { url:await uploadAsset(client, path, bytes, "image/png"), prompt };
+  return { url:await uploadAsset(env.STORY_ASSETS, path, bytes, "image/png"), prompt };
 }
 
-async function saveProject(client, email, data, complete = false) {
+async function saveProject(client, bucket, email, data, complete = false) {
   const project = data.project || {}, projectId = String(data.projectId || project.projectId || "").trim();
   if (!projectId || !project.title) throw new HttpError(400, "Historien mangler projektnavn eller projekt-id.");
   const savedAt = new Date().toISOString(), archived = Boolean(data.archived);
@@ -194,7 +195,7 @@ async function saveProject(client, email, data, complete = false) {
   if (complete && data.comicPdfBase64) {
     const bytes = bytesFromBase64(String(data.comicPdfBase64));
     if (bytes.length && bytes.length <= 55_000_000) {
-      await uploadAsset(client, `generated-projects/${safePart(projectId,"project")}/exports/comic.pdf`, bytes, "application/pdf"); comicPdfSaved = true;
+      await uploadAsset(bucket, `generated-projects/${safePart(projectId,"project")}/exports/comic.pdf`, bytes, "application/pdf"); comicPdfSaved = true;
     }
   }
   const imageCounts = {
@@ -205,21 +206,17 @@ async function saveProject(client, email, data, complete = false) {
   return { saved:true, autosaved:!complete, folderName:project.title, savedAt, imageCounts, comicPdfSaved, cloud:true };
 }
 
-async function removeProjectAssets(client, projectId) {
+async function removeProjectAssets(bucket, projectId) {
   const root = `generated-projects/${safePart(projectId,"project")}`;
   const paths = [];
-  async function walk(prefix) {
-    const { data, error } = await client.storage.from(STORY_BUCKET).list(prefix, { limit:1000 });
-    if (error) return;
-    for (const item of data || []) {
-      const path = `${prefix}/${item.name}`;
-      if (item.id) paths.push(path); else await walk(path);
-    }
-  }
-  await walk(root);
-  for (let index = 0; index < paths.length; index += 100) {
-    const { error } = await client.storage.from(STORY_BUCKET).remove(paths.slice(index,index+100));
-    if (error) throw new HttpError(502,`Projektets filer kunne ikke slettes: ${error.message}`);
+  let cursor;
+  do {
+    const page = await bucket.list({ prefix:root, cursor, limit:1000 });
+    paths.push(...page.objects.map(object => object.key));
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor);
+  for (let index = 0; index < paths.length; index += 1000) {
+    await bucket.delete(paths.slice(index,index+1000));
   }
 }
 
@@ -233,19 +230,23 @@ async function handleApi(request, env) {
     return json({ projects:(data || []).map(row => ({ folderName:row.title, title:row.title, savedAt:row.saved_at, archived:row.archived, createdAt:row.created_at, state:{ ...row.project, projectId:row.id } })) });
   }
   if (url.pathname.startsWith("/generated-projects/") && request.method === "GET") {
-    const path = url.pathname.slice(1), { data, error } = await client.storage.from(STORY_BUCKET).download(path);
-    if (error || !data) throw new HttpError(404, "Billedet blev ikke fundet i cloudlageret.");
-    return new Response(data.stream(), { headers:{ "content-type":data.type || "application/octet-stream", "cache-control":"private, max-age=3600" } });
+    const path = url.pathname.slice(1), object = await env.STORY_ASSETS.get(path);
+    if (!object) throw new HttpError(404, "Billedet blev ikke fundet i Cloudflare R2.");
+    const headers = new Headers();
+    object.writeHttpMetadata(headers);
+    headers.set("etag", object.httpEtag);
+    headers.set("cache-control", "private, max-age=3600");
+    return new Response(object.body, { headers });
   }
   const length = Number(request.headers.get("content-length") || 0);
   if (length > 60_000_000) throw new HttpError(413, "Anmodningen er for stor.");
   const body = request.method === "POST" ? await request.json() : {};
-  if (url.pathname === "/api/autosave-story-project" && request.method === "POST") return json(await saveProject(client,email,body,false));
-  if (url.pathname === "/api/save-story-project" && request.method === "POST") return json(await saveProject(client,email,body,true));
+  if (url.pathname === "/api/autosave-story-project" && request.method === "POST") return json(await saveProject(client,env.STORY_ASSETS,email,body,false));
+  if (url.pathname === "/api/save-story-project" && request.method === "POST") return json(await saveProject(client,env.STORY_ASSETS,email,body,true));
   if (url.pathname === "/api/delete-story-project" && request.method === "POST") {
     const projectId = String(body.projectId || "");
     if (!projectId) throw new HttpError(400, "Projekt-id mangler.");
-    await removeProjectAssets(client,projectId);
+    await removeProjectAssets(env.STORY_ASSETS,projectId);
     const { error } = await client.from("story_projects").delete().eq("id",projectId).eq("owner_email",email);
     if (error) throw new HttpError(502, `Historien kunne ikke slettes: ${error.message}`);
     return json({ deleted:true });
@@ -257,13 +258,13 @@ async function handleApi(request, env) {
     const bytes = bytesFromBase64(match[2]); if (!bytes.length || bytes.length > 20_000_000) throw new HttpError(400,"Billedet har en ugyldig størrelse.");
     const ext = match[1].toLowerCase() === "jpeg" ? "jpg" : match[1].toLowerCase();
     const path = `generated-projects/${safePart(body.projectId,"project")}/${body.kind}/${safePart(body.entityId,"asset")}.${ext}`;
-    return json({ url:await uploadAsset(client,path,bytes,`image/${match[1].toLowerCase()}`) });
+    return json({ url:await uploadAsset(env.STORY_ASSETS,path,bytes,`image/${match[1].toLowerCase()}`) });
   }
   if (url.pathname === "/api/save-comic-pdf" && request.method === "POST") {
     const bytes = bytesFromBase64(String(body.pdfBase64 || "")); if (!bytes.length || bytes.length > 55_000_000) throw new HttpError(400,"PDF-filen er ugyldig eller for stor.");
     const projectId = safePart(body.projectId,"project"), name = safePart(String(body.suggestedName || "tegneserie").replace(/\.pdf$/i,""),"tegneserie") + ".pdf";
-    const path = `generated-projects/${projectId}/exports/${name}`; await uploadAsset(client,path,bytes,"application/pdf");
-    return json({ saved:true, path:`Supabase/${path}`, cloud:true });
+    const path = `generated-projects/${projectId}/exports/${name}`; await uploadAsset(env.STORY_ASSETS,path,bytes,"application/pdf");
+    return json({ saved:true, path:`Cloudflare R2/${path}`, cloud:true });
   }
   if (url.pathname === "/api/export-obsidian" && request.method === "POST") throw new HttpError(501,"Obsidian-eksporten er kun tilgængelig i den lokale version.");
   if (url.pathname === "/api/suggest" && request.method === "POST") {
@@ -314,15 +315,15 @@ async function handleApi(request, env) {
   }
   if (url.pathname === "/api/character-image" && request.method === "POST") {
     if (!body.character?.id) throw new HttpError(400,"Gem personen, før du skaber et personbillede.");
-    return json({ ...(await createCharacterImage(env,client,body.character,body.project || {})),model:env.OPENAI_IMAGE_MODEL });
+    return json({ ...(await createCharacterImage(env,body.character,body.project || {})),model:env.OPENAI_IMAGE_MODEL });
   }
   if (url.pathname === "/api/scene-image" && request.method === "POST") {
     if (!body.scene?.id) throw new HttpError(400,"Gem scenen, før du skaber et billede.");
-    return json({ ...(await createSceneImage(env,client,body.scene,body.project || {})),model:env.OPENAI_IMAGE_MODEL });
+    return json({ ...(await createSceneImage(env,body.scene,body.project || {})),model:env.OPENAI_IMAGE_MODEL });
   }
   if (url.pathname === "/api/comic-page" && request.method === "POST") {
     if (!body.page || !Array.isArray(body.page.panels) || !body.page.panels.length) throw new HttpError(400,"Tegneseriesiden mangler en panelplan.");
-    return json({ ...(await createComicPage(env,client,body.page,Math.max(0,Math.min(30,Number(body.pageIndex)||0)),body.project || {},request.signal)),model:env.OPENAI_IMAGE_MODEL });
+    return json({ ...(await createComicPage(env,body.page,Math.max(0,Math.min(30,Number(body.pageIndex)||0)),body.project || {},request.signal)),model:env.OPENAI_IMAGE_MODEL });
   }
   if (url.pathname === "/api/chat" && request.method === "POST") {
     const history = Array.isArray(body.messages) ? body.messages.slice(-20).map(message=>({role:message.role==="assistant"?"assistant":"user",content:String(message.content||"").slice(0,12_000)})) : [];
