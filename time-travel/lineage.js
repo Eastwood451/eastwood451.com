@@ -27,7 +27,7 @@
 
   const lineages = {
     human: [
-      stage(0, 'Moderne menneske', { src: 'images/modern-human.png' }, 'Homo sapiens. Tøjet illustrerer nutiden; vores art går cirka 300.000 år tilbage.'),
+      stage(0, 'Moderne menneske', { src: 'images/modern-human-man.png' }, 'Homo sapiens. Tøjet illustrerer nutiden; vores art går cirka 300.000 år tilbage.'),
       stage(300000, 'Tidlige mennesker', cell(7), 'Repræsentativ Homo-rekonstruktion. Flere menneskearter og populationer indgår i historien.'),
       stage(2 * million, 'Australopithecus-lignende', picture('human_3_australopithecus.png'), 'To ben til gang og flere abelignende træk. Et repræsentativt trin nær Homo-slægtens ophav.'),
       stage(4 * million, 'Tidlige homininer', picture('human_3_australopithecus.png'), 'Skematisk rekonstruktion af tidlige medlemmer af menneskelinjen.'),
