@@ -47,6 +47,7 @@
   }
   .speed-btn:hover { background: rgba(0,0,0,0.06); color: rgba(0,0,0,0.7); }
   .speed-btn.active { background: rgba(20,100,180,0.12); border-color: rgba(20,100,180,0.35); color: rgba(20,100,180,0.95); font-weight: 700; }
+  .speed-controls { max-width: 100%; flex-wrap: wrap; justify-content: center; }
   .arrow-icon { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 
   #info-hud {
@@ -189,7 +190,7 @@
 </div>
 
 <div id="hud">
-  <div class="controls-panel">
+  <div class="controls-panel speed-controls">
     <button class="move-btn" id="btn-up" title="Kamera op">
       <svg class="arrow-icon" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
     </button>
@@ -204,13 +205,17 @@
     <button class="speed-btn" data-speed="50">+50</button>
     <button class="speed-btn" data-speed="500">+500</button>
     <button class="speed-btn" data-speed="1000">+1000</button>
+    <button class="speed-btn" data-speed="100000" title="100.000 år i sekundet">10<sup>5</sup> år/s</button>
+    <button class="speed-btn" data-speed="1000000" title="1.000.000 år i sekundet">10<sup>6</sup> år/s</button>
+    <button class="speed-btn" data-speed="10000000" title="10.000.000 år i sekundet">10<sup>7</sup> år/s</button>
+    <button class="speed-btn" data-speed="100000000" title="100.000.000 år i sekundet">10<sup>8</sup> år/s</button>
   </div>
   <div class="controls-panel" style="margin-top:8px;">
-    <span class="slider-edge-label">← Nutid 5 mio.</span>
+    <span class="slider-edge-label">← Nutid 100 mio.</span>
     <div class="slider-wrap">
-      <input type="range" id="speed-slider" min="-5000000" max="5000000" value="0" step="10" />
+      <input type="range" id="speed-slider" min="-100000000" max="100000000" value="0" step="10" />
     </div>
-    <span class="slider-edge-label">Fortid 5 mio. →</span>
+    <span class="slider-edge-label">Fortid 100 mio. →</span>
     <span class="slider-label" id="slider-label">0 år/s</span>
     <div class="divider"></div>
     <button class="horizon-btn" id="horizon-btn" title="Skift horisontens retning">Horisont: Fortid &#8594;</button>
@@ -874,9 +879,9 @@
 
   function getYears() { return positionZ * 10; }
 
-  // The slider maps directly to years per second, up to five million.
+  // The slider maps directly to years per second, up to one hundred million.
   function sliderToSpeed(val) {
-    return Math.min(5000000, Math.abs(val));
+    return Math.min(100000000, Math.abs(val));
   }
 
   // DOM
