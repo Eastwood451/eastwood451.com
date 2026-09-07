@@ -154,22 +154,6 @@
     border: 1px solid rgba(0,0,0,0.08); border-radius: 12px;
     padding: 10px 14px;
   }
-  #time-blur {
-    position: fixed; inset: 0; z-index: 2; pointer-events: none;
-    opacity: 0; visibility: hidden; transition: opacity 0.18s ease, visibility 0.18s ease;
-    overflow: hidden;
-    background:
-      radial-gradient(ellipse at center, rgba(232,246,255,0.92) 0%, rgba(202,222,238,0.8) 22%, rgba(111,160,197,0.42) 53%, rgba(31,78,115,0.16) 100%),
-      repeating-linear-gradient(90deg, transparent 0 4%, rgba(255,255,255,0.42) 5% 6%, transparent 7% 12%);
-    filter: blur(7px) saturate(1.15);
-  }
-  #time-blur::after {
-    content: 'HØJ HASTIGHED · SCENEN ER SLØRET FOR AT SPARE HUKOMMELSE';
-    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-    color: rgba(21,101,192,0.78); font: 700 11px 'JetBrains Mono', monospace;
-    letter-spacing: 1.4px; white-space: nowrap; text-shadow: 0 1px 12px rgba(255,255,255,0.9);
-  }
-  #time-blur.visible { opacity: 1; visibility: visible; }
 </style>
 </head>
 <body>
@@ -188,8 +172,6 @@
   <canvas id="speedo-100000000" width="110" height="130"></canvas>
   <canvas id="speedo-1000000000" width="110" height="130"></canvas>
 </div>
-
-<div id="time-blur" aria-hidden="true"></div>
 
 <div id="geo-panel">
   <div class="geo-era-label" id="geo-era"></div>
@@ -485,6 +467,80 @@
   ground.receiveShadow = true;
   // Ground is added to scene directly and repositioned each frame
   scene.add(ground);
+
+  // A fixed, low-detail road for high speeds. Only the repeated tiles and
+  // lampposts become streaks; the sky, ground and road outline stay clear.
+  // Build this once, independent of speed and travelled distance.
+  const fastRoad = new THREE.Group();
+  fastRoad.visible = false;
+  scene.add(fastRoad);
+  const fastRoadLength = 2400;
+  const roadSurface = new THREE.Mesh(
+    new THREE.PlaneGeometry(TRACK_WIDTH, fastRoadLength),
+    new THREE.MeshStandardMaterial({ color: 0xeaeff4, roughness: 0.85, metalness: 0.05 })
+  );
+  roadSurface.rotation.x = -Math.PI / 2;
+  roadSurface.position.y = -0.01;
+  fastRoad.add(roadSurface);
+
+  // Soft bands replace the tile grid, stretched along the direction of travel.
+  const tileCanvas = document.createElement('canvas');
+  tileCanvas.width = 256;
+  tileCanvas.height = 4;
+  const tileCtx = tileCanvas.getContext('2d');
+  for (let lane = 0; lane <= 10; lane++) {
+    const x = lane * tileCanvas.width / 10;
+    const fade = tileCtx.createLinearGradient(x - 5, 0, x + 5, 0);
+    fade.addColorStop(0, 'rgba(125,153,179,0)');
+    fade.addColorStop(0.5, 'rgba(125,153,179,0.26)');
+    fade.addColorStop(1, 'rgba(125,153,179,0)');
+    tileCtx.fillStyle = fade;
+    tileCtx.fillRect(x - 5, 0, 10, 4);
+  }
+  const tileTexture = new THREE.CanvasTexture(tileCanvas);
+  const tileStreaks = new THREE.Mesh(
+    roadSurface.geometry,
+    new THREE.MeshBasicMaterial({ map: tileTexture, transparent: true, depthWrite: false })
+  );
+  tileStreaks.rotation.x = -Math.PI / 2;
+  tileStreaks.position.y = 0.005;
+  fastRoad.add(tileStreaks);
+
+  // A small gradient texture makes the lamps merge into translucent roadside
+  // haze. It is attached to the world, so camera height and direction still work.
+  const lampCanvas = document.createElement('canvas');
+  lampCanvas.width = 4;
+  lampCanvas.height = 128;
+  const lampCtx = lampCanvas.getContext('2d');
+  const lampFade = lampCtx.createLinearGradient(0, 0, 0, 128);
+  lampFade.addColorStop(0, 'rgba(80,132,170,0)');
+  lampFade.addColorStop(0.15, 'rgba(80,132,170,0.03)');
+  lampFade.addColorStop(0.47, 'rgba(64,133,182,0.12)');
+  lampFade.addColorStop(0.55, 'rgba(64,133,182,0.25)');
+  lampFade.addColorStop(0.68, 'rgba(101,142,171,0.16)');
+  lampFade.addColorStop(0.92, 'rgba(101,142,171,0.10)');
+  lampFade.addColorStop(1, 'rgba(101,142,171,0)');
+  lampCtx.fillStyle = lampFade;
+  lampCtx.fillRect(0, 0, 4, 128);
+  const lampTexture = new THREE.CanvasTexture(lampCanvas);
+  const lampHazeMaterial = new THREE.MeshBasicMaterial({
+    map: lampTexture, transparent: true, depthWrite: false, side: THREE.DoubleSide
+  });
+  const lampHazeGeometry = new THREE.PlaneGeometry(fastRoadLength, 9);
+  for (const side of [-1, 1]) {
+    const edge = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(side * HALF_WIDTH, 0.02, -fastRoadLength / 2),
+        new THREE.Vector3(side * HALF_WIDTH, 0.02, fastRoadLength / 2)
+      ]),
+      new THREE.LineBasicMaterial({ color: 0x2979b0, transparent: true, opacity: 0.6 })
+    );
+    fastRoad.add(edge);
+    const lampHaze = new THREE.Mesh(lampHazeGeometry, lampHazeMaterial);
+    lampHaze.rotation.y = Math.PI / 2;
+    lampHaze.position.set(side * (HALF_WIDTH + 0.8), 4.5, 0);
+    fastRoad.add(lampHaze);
+  }
 
   // --- TRACK CHUNKS (relative to worldGroup) ---
   function createTrackChunk(localStart, localEnd) {
@@ -833,16 +889,13 @@
   const geoYears = document.getElementById('geo-years'), geoContent = document.getElementById('geo-content');
   const speedSlider = document.getElementById('speed-slider');
   const sliderLabel = document.getElementById('slider-label');
-  const timeBlur = document.getElementById('time-blur');
   let highSpeedScene = false;
 
   function setHighSpeedScene(enabled) {
     if (highSpeedScene === enabled) return;
     highSpeedScene = enabled;
-    timeBlur.classList.toggle('visible', enabled);
     worldGroup.visible = !enabled;
-    ground.visible = !enabled;
-    stars.visible = !enabled;
+    fastRoad.visible = enabled;
 
     // Do not build and discard 3D chunks while crossing millions of years per second.
     // Rebuild the normal scene once when the user slows down again.
@@ -1228,9 +1281,8 @@
     frameCount++;
     if (frameCount % 10 === 0) updateGeoPanel(years);
 
-    // The overlay fully replaces the 3D scene in high-speed mode, so there is
-    // no reason to keep issuing costly WebGL draws behind it.
-    if (!highSpeedScene || frameCount % 30 === 0) renderer.render(scene, camera);
+    // High speed renders only the fixed road and haze, without chunk creation.
+    renderer.render(scene, camera);
   }
 
   worldGroup.userData.lastChunkOrigin = -Infinity; // force initial build
