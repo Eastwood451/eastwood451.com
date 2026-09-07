@@ -278,11 +278,11 @@
     <button class="speed-btn" data-speed="100000000" title="100.000.000 år i sekundet">10<sup>8</sup> år/s</button>
   </div>
   <div class="controls-panel" style="margin-top:8px;">
-    <span class="slider-edge-label">← Nutid 100 mio.</span>
+    <span class="slider-edge-label" id="speed-backward-label">← Nutid 100 mio.</span>
     <div class="slider-wrap">
       <input type="range" id="speed-slider" min="-100000000" max="100000000" value="0" step="10" />
     </div>
-    <span class="slider-edge-label">Fortid 100 mio. →</span>
+    <span class="slider-edge-label" id="speed-forward-label">Fortid 100 mio. →</span>
     <span class="slider-label" id="slider-label">0 år/s</span>
     <div class="divider"></div>
     <button class="horizon-btn" id="horizon-btn" title="Skift horisontens retning">Horisont: Fortid &#8594;</button>
@@ -940,8 +940,8 @@
   // So years = positionZ * 10.
   // Speed is in years/s, so track movement = speed / 10 meters/s.
   // sliderValue drives both speed AND direction.
-  // Positive = into the past (+Z), negative = towards the present (-Z).
-  // Forward in the visible scene means travelling towards the selected horizon.
+  // Positive = forward towards the selected horizon; negative = reverse.
+  // Convert that camera-relative direction to chronological direction below.
   // =============================================
   let currentSpeed = 0;     // absolute years per second
   let trackDirection = 0;   // +1, -1, or 0
@@ -1043,12 +1043,12 @@
     const speed = sliderToSpeed(val);
     const dir = val > 0 ? 1 : val < 0 ? -1 : 0;
     currentSpeed = speed;
-    trackDirection = dir;
+    trackDirection = dir * (horizonIsPast ? 1 : -1);
     const displaySpeed = speed.toLocaleString('da-DK');
     if (dir === 0) {
       speedDisplay.textContent = '0';
       sliderLabel.textContent = 'Stoppet';
-    } else if (dir > 0) {
+    } else if (trackDirection > 0) {
       speedDisplay.textContent = displaySpeed;
       sliderLabel.textContent = displaySpeed + ' år/s → Fortid';
     } else {
@@ -1101,11 +1101,17 @@
     horizonBtn.innerHTML = horizonIsPast
       ? 'Horisont: Fortid &#8594;'
       : 'Horisont: Nutid &#8592;';
+    document.getElementById('speed-backward-label').textContent = horizonIsPast
+      ? '← Nutid 100 mio.' : '← Fortid 100 mio.';
+    document.getElementById('speed-forward-label').textContent = horizonIsPast
+      ? 'Fortid 100 mio. →' : 'Nutid 100 mio. →';
   }
   horizonBtn.addEventListener('click', () => {
     horizonIsPast = !horizonIsPast;
     updateHorizonLabel();
     setCameraHorizon(horizonIsPast);
+    // Keep the chosen forward/reverse speed, but travel towards the new horizon.
+    applySlider(Number(speedSlider.value));
   });
 
   function parseNumber(s) { return parseInt(s.replace(/[\s.]/g, '')); }
@@ -1141,8 +1147,10 @@
     const val = parseNumber(jumpInput.value||'0');
     if (isNaN(val)||val<=0) { etaLine.innerHTML=''; return; }
     const currentYears = getYears();
-    const remaining = Math.max(0, val - currentYears);
-    const secs = remaining / currentSpeed;
+    const distance = val - currentYears;
+    const remaining = Math.abs(distance);
+    const secs = remaining === 0 ? 0
+      : distance * trackDirection > 0 ? remaining / currentSpeed : Infinity;
     etaLine.innerHTML = `Resterende: <span class="value">${formatYears(remaining)}</span> år<br>Tid: <span class="value">${formatDuration(secs)}</span>`;
   }
   jumpInput.addEventListener('input', updateETA);
@@ -1340,12 +1348,16 @@
 
     if (trackDirection !== 0) {
       // Speed is in years/s. 10 years = 1 meter on track.
-      // Positive slider = trackDirection +1 = positionZ increases = deeper into past.
-      // Horizon setting only affects camera view direction, not movement.
+      // trackDirection already combines the chosen speed sign and horizon:
+      // +1 increases years ago (past); -1 decreases years ago (present).
       const trackSpeed = currentSpeed / 10;
       positionZ += trackDirection * trackSpeed * dt;
     }
-    if (positionZ < 0) positionZ = 0;
+    if (positionZ <= 0 && trackDirection < 0) {
+      positionZ = 0;
+      speedSlider.value = 0;
+      applySlider(0);
+    }
 
     // Vertical camera movement
     if (verticalDirection !== 0) {
