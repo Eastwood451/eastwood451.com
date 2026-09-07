@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Geologisk Tidssimulator</title>
+<link rel="stylesheet" href="lineage.css">
 <script src="/auth.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;600;700&display=swap');
@@ -147,11 +148,28 @@
 
   #speedo-panel {
     position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-    z-index: 10; display: flex; gap: 8px;
+    z-index: 10; display: flex; gap: 8px; max-width: calc(100vw - 80px);
+    justify-content: center; flex-wrap: wrap;
     background: rgba(255,255,255,0.8); backdrop-filter: blur(12px);
     border: 1px solid rgba(0,0,0,0.08); border-radius: 12px;
     padding: 10px 14px;
   }
+  #time-blur {
+    position: fixed; inset: 0; z-index: 2; pointer-events: none;
+    opacity: 0; visibility: hidden; transition: opacity 0.18s ease, visibility 0.18s ease;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at center, rgba(232,246,255,0.92) 0%, rgba(202,222,238,0.8) 22%, rgba(111,160,197,0.42) 53%, rgba(31,78,115,0.16) 100%),
+      repeating-linear-gradient(90deg, transparent 0 4%, rgba(255,255,255,0.42) 5% 6%, transparent 7% 12%);
+    filter: blur(7px) saturate(1.15);
+  }
+  #time-blur::after {
+    content: 'HØJ HASTIGHED · SCENEN ER SLØRET FOR AT SPARE HUKOMMELSE';
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    color: rgba(21,101,192,0.78); font: 700 11px 'JetBrains Mono', monospace;
+    letter-spacing: 1.4px; white-space: nowrap; text-shadow: 0 1px 12px rgba(255,255,255,0.9);
+  }
+  #time-blur.visible { opacity: 1; visibility: visible; }
 </style>
 </head>
 <body>
@@ -166,7 +184,12 @@
   <canvas id="speedo-1000" width="110" height="130"></canvas>
   <canvas id="speedo-100000" width="110" height="130"></canvas>
   <canvas id="speedo-1000000" width="110" height="130"></canvas>
+  <canvas id="speedo-10000000" width="110" height="130"></canvas>
+  <canvas id="speedo-100000000" width="110" height="130"></canvas>
+  <canvas id="speedo-1000000000" width="110" height="130"></canvas>
 </div>
+
+<div id="time-blur" aria-hidden="true"></div>
 
 <div id="geo-panel">
   <div class="geo-era-label" id="geo-era"></div>
@@ -201,17 +224,18 @@
     <button class="speed-btn" data-speed="1000">+1000</button>
   </div>
   <div class="controls-panel" style="margin-top:8px;">
-    <span class="slider-edge-label">← Nutid 100K</span>
+    <span class="slider-edge-label">← Nutid 5 mio.</span>
     <div class="slider-wrap">
-      <input type="range" id="speed-slider" min="-10100" max="10100" value="0" step="10" />
+      <input type="range" id="speed-slider" min="-5000000" max="5000000" value="0" step="10" />
     </div>
-    <span class="slider-edge-label">Fortid 100K →</span>
+    <span class="slider-edge-label">Fortid 5 mio. →</span>
     <span class="slider-label" id="slider-label">0 år/s</span>
     <div class="divider"></div>
     <button class="horizon-btn" id="horizon-btn" title="Skift horisontens retning">Horisont: Fortid &#8594;</button>
   </div>
 </div>
 
+<script src="lineage.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function() {
@@ -794,11 +818,9 @@
 
   function getYears() { return positionZ * 10; }
 
-  // Convert slider value to actual speed (with 100K jump at extremes)
+  // The slider maps directly to years per second, up to five million.
   function sliderToSpeed(val) {
-    const abs = Math.abs(val);
-    if (abs > 10000) return 100000; // snap to 100K at max
-    return abs;
+    return Math.min(5000000, Math.abs(val));
   }
 
   // DOM
@@ -811,13 +833,28 @@
   const geoYears = document.getElementById('geo-years'), geoContent = document.getElementById('geo-content');
   const speedSlider = document.getElementById('speed-slider');
   const sliderLabel = document.getElementById('slider-label');
+  const timeBlur = document.getElementById('time-blur');
+  let highSpeedScene = false;
+
+  function setHighSpeedScene(enabled) {
+    if (highSpeedScene === enabled) return;
+    highSpeedScene = enabled;
+    timeBlur.classList.toggle('visible', enabled);
+    worldGroup.visible = !enabled;
+    ground.visible = !enabled;
+    stars.visible = !enabled;
+
+    // Do not build and discard 3D chunks while crossing millions of years per second.
+    // Rebuild the normal scene once when the user slows down again.
+    if (!enabled) worldGroup.userData.lastChunkOrigin = -Infinity;
+  }
 
   function applySlider(val) {
     const speed = sliderToSpeed(val);
     const dir = val > 0 ? 1 : val < 0 ? -1 : 0;
     currentSpeed = speed;
     trackDirection = dir;
-    const displaySpeed = speed === 100000 ? '100.000' : speed.toLocaleString('da-DK');
+    const displaySpeed = speed.toLocaleString('da-DK');
     if (dir === 0) {
       speedDisplay.textContent = '0';
       sliderLabel.textContent = 'Stoppet';
@@ -833,6 +870,7 @@
       const bv = parseInt(b.dataset.speed);
       b.classList.toggle('active', bv === val || (bv === 0 && val === 0));
     });
+    setHighSpeedScene(speed > 100000);
     updateETA();
   }
 
@@ -924,6 +962,7 @@
 
   // --- GEO PANEL ---
   function updateGeoPanel(y) {
+    window.TimeTravelLineages.update(y);
     const absY = Math.abs(y);
     const period = getPeriodForYear(y);
     if (period.name === lastPeriodName) return;
@@ -985,9 +1024,34 @@
     { canvas: document.getElementById('speedo-1000'), range: 1000, label: '1.000 år' },
     { canvas: document.getElementById('speedo-100000'), range: 100000, label: '100.000 år' },
     { canvas: document.getElementById('speedo-1000000'), range: 1000000, label: '1 mio. år' },
+    { canvas: document.getElementById('speedo-10000000'), range: 10000000, label: '10 mio. år' },
+    { canvas: document.getElementById('speedo-100000000'), range: 100000000, label: '100 mio. år' },
+    { canvas: document.getElementById('speedo-1000000000'), range: 1000000000, label: '1 mia. år' },
   ];
 
-  function drawSpeedo(s, years) {
+  function drawNeedleBlur(ctx, cx, cy, r, startAngle) {
+    // A soft radial streak is much cheaper than updating a needle that would
+    // be visually indistinguishable once it rotates more than five times/s.
+    ctx.save();
+    ctx.filter = 'blur(2px)';
+    ctx.globalCompositeOperation = 'source-over';
+    for (let i = 0; i < 16; i++) {
+      const a = startAngle + (i / 16) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(a) * (r - 9), cy + Math.sin(a) * (r - 9));
+      ctx.strokeStyle = 'rgba(198,40,40,0.24)';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    }
+    ctx.restore();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r - 16, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(198,40,40,0.12)';
+    ctx.fill();
+  }
+
+  function drawSpeedo(s, years, speed) {
     const ctx = s.canvas.getContext('2d');
     const w = s.canvas.width, h = s.canvas.height;
     const cx = w / 2, cy = h / 2 + 4;
@@ -997,6 +1061,7 @@
     // Fraction around the dial (0-1)
     const fraction = (years % s.range) / s.range;
     const rotations = Math.floor(years / s.range);
+    const needleIsBlurred = speed / s.range > 5;
 
     // 12 o'clock = top = start. Clockwise.
     // Angle: 0 fraction = top (-PI/2), 1 fraction = full circle back to top
@@ -1022,9 +1087,10 @@
     ctx.lineWidth = 4;
     ctx.stroke();
 
-    // Progress arc (clockwise from top)
+    // Progress arc (clockwise from top). At very high rotation rates the dial
+    // deliberately shows only the blurred needle, not an expensive live sweep.
     const needleAngle = startAngle + fraction * Math.PI * 2;
-    if (fraction > 0.001) {
+    if (!needleIsBlurred && fraction > 0.001) {
       ctx.beginPath();
       ctx.arc(cx, cy, r, startAngle, needleAngle, false);
       ctx.strokeStyle = '#1565c0';
@@ -1033,16 +1099,20 @@
       ctx.stroke();
     }
 
-    // Needle
-    const nx = cx + Math.cos(needleAngle) * (r - 8);
-    const ny = cy + Math.sin(needleAngle) * (r - 8);
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.lineTo(nx, ny);
-    ctx.strokeStyle = '#c62828';
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.stroke();
+    if (needleIsBlurred) {
+      drawNeedleBlur(ctx, cx, cy, r, startAngle);
+    } else {
+      // Needle
+      const nx = cx + Math.cos(needleAngle) * (r - 8);
+      const ny = cy + Math.sin(needleAngle) * (r - 8);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(nx, ny);
+      ctx.strokeStyle = '#c62828';
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
 
     // Center dot
     ctx.beginPath();
@@ -1057,7 +1127,11 @@
     ctx.fillText(s.label, cx, cy - 12);
 
     // Rotation count below center
-    if (rotations > 0) {
+    if (needleIsBlurred) {
+      ctx.font = 'bold 8px "JetBrains Mono", monospace';
+      ctx.fillStyle = 'rgba(198,40,40,0.7)';
+      ctx.fillText('VISER BLUR', cx, cy + 14);
+    } else if (rotations > 0) {
       ctx.font = 'bold 9px "JetBrains Mono", monospace';
       ctx.fillStyle = 'rgba(0,0,0,0.4)';
       ctx.fillText('×' + rotations.toLocaleString('da-DK'), cx, cy + 14);
@@ -1065,7 +1139,7 @@
   }
 
   function updateSpeedos(years) {
-    for (const s of speedos) drawSpeedo(s, years);
+    for (const s of speedos) drawSpeedo(s, years, currentSpeed);
   }
 
   let frameCount = 0;
@@ -1092,69 +1166,60 @@
       camera.position.y = cameraY;
     }
 
-    // ORIGIN REBASING:
-    // Camera stays at (0, 2, 0). We offset the worldGroup so that
-    // local chunk z=0 lines up with wherever the camera "should" be.
-    // We compute a fractional offset within the current chunk neighborhood.
-    const chunkOrigin = Math.floor(positionZ / CHUNK_SIZE) * CHUNK_SIZE;
-    const localOffset = positionZ - chunkOrigin;
+    if (!highSpeedScene) {
+      // ORIGIN REBASING:
+      // Camera stays at (0, 2, 0). We offset the worldGroup so that
+      // local chunk z=0 lines up with wherever the camera "should" be.
+      const chunkOrigin = Math.floor(positionZ / CHUNK_SIZE) * CHUNK_SIZE;
+      const localOffset = positionZ - chunkOrigin;
 
-    // Move worldGroup so that the camera (at z=0) sees the right position
-    worldGroup.position.z = -localOffset;
+      // Move worldGroup so that the camera (at z=0) sees the right position.
+      worldGroup.position.z = -localOffset;
 
-    // Rebuild chunks centered on localOffset=0
-    // Chunks are always placed at local coords 0, ±200, ±400, etc.
-    // But we need to rebuild when chunkOrigin changes.
-    // We track this:
-    if (worldGroup.userData.lastChunkOrigin !== chunkOrigin) {
-      // Clear and rebuild all chunk types
-      for (const [k, c] of chunks) { worldGroup.remove(c); }
-      chunks.clear();
-      for (const [k, c] of lampChunks) { worldGroup.remove(c); }
-      lampChunks.clear();
-      for (const [k, c] of signChunks) { worldGroup.remove(c); }
-      signChunks.clear();
+      // Rebuild chunks only in the detailed scene. This path is never entered
+      // while travelling over 100,000 years/s, avoiding rapid allocations.
+      if (worldGroup.userData.lastChunkOrigin !== chunkOrigin) {
+        for (const [k, c] of chunks) { worldGroup.remove(c); }
+        chunks.clear();
+        for (const [k, c] of lampChunks) { worldGroup.remove(c); }
+        lampChunks.clear();
+        for (const [k, c] of signChunks) { worldGroup.remove(c); }
+        signChunks.clear();
 
-      const needed = [];
-      for (let o = -CHUNK_SIZE * 2; o <= CHUNK_SIZE * 3; o += CHUNK_SIZE) {
-        needed.push(o);
-      }
-      for (const k of needed) {
-        const c = createTrackChunk(k, k + CHUNK_SIZE);
-        worldGroup.add(c);
-        chunks.set(k, c);
+        const needed = [];
+        for (let o = -CHUNK_SIZE * 2; o <= CHUNK_SIZE * 3; o += CHUNK_SIZE) {
+          needed.push(o);
+        }
+        for (const k of needed) {
+          const c = createTrackChunk(k, k + CHUNK_SIZE);
+          worldGroup.add(c);
+          chunks.set(k, c);
 
-        // Lampposts for this chunk
-        const lc = createLampsForChunk(k, chunkOrigin);
-        worldGroup.add(lc);
-        lampChunks.set(k, lc);
+          const lc = createLampsForChunk(k, chunkOrigin);
+          worldGroup.add(lc);
+          lampChunks.set(k, lc);
 
-        // Signs for this chunk
-        const sc = createSignsForChunk(k, chunkOrigin);
-        worldGroup.add(sc);
-        signChunks.set(k, sc);
+          const sc = createSignsForChunk(k, chunkOrigin);
+          worldGroup.add(sc);
+          signChunks.set(k, sc);
+        }
+
+        worldGroup.userData.lastChunkOrigin = chunkOrigin;
       }
 
-      worldGroup.userData.lastChunkOrigin = chunkOrigin;
+      ground.position.z = 0;
+      stars.position.z = 0;
+      dirLight.position.z = 30;
+      dirLight.target.position.z = 0;
+      dirLight.target.updateMatrixWorld();
     }
-
-    // Ground follows camera
-    ground.position.z = 0;
-
-    // Stars stay around camera
-    stars.position.z = 0;
-
-    // Light follows
-    dirLight.position.z = 30;
-    dirLight.target.position.z = 0;
-    dirLight.target.updateMatrixWorld();
 
     // HUD — show years
     const years = getYears();
     posDisplay.textContent = formatYears(years);
 
     // Speedometers
-    if (frameCount % 3 === 0) updateSpeedos(years);
+    if (frameCount % (highSpeedScene ? 6 : 3) === 0) updateSpeedos(years);
 
     // Update ETA periodically
     if (frameCount % 30 === 0 && jumpInput.value) updateETA();
@@ -1162,7 +1227,9 @@
     frameCount++;
     if (frameCount % 10 === 0) updateGeoPanel(years);
 
-    renderer.render(scene, camera);
+    // The overlay fully replaces the 3D scene in high-speed mode, so there is
+    // no reason to keep issuing costly WebGL draws behind it.
+    if (!highSpeedScene || frameCount % 30 === 0) renderer.render(scene, camera);
   }
 
   worldGroup.userData.lastChunkOrigin = -Infinity; // force initial build
