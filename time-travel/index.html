@@ -285,7 +285,7 @@
     <span class="slider-edge-label" id="speed-forward-label">Fortid 100 mio. →</span>
     <span class="slider-label" id="slider-label">0 år/s</span>
     <div class="divider"></div>
-    <button class="horizon-btn" id="horizon-btn" title="Skift horisontens retning">Horisont: Fortid &#8594;</button>
+    <button class="horizon-btn" id="horizon-btn" title="Vend kameraet 180° uden at ændre rejseretningen">Horisont: Fortid &#8594;</button>
   </div>
 </div>
 
@@ -940,8 +940,9 @@
   // So years = positionZ * 10.
   // Speed is in years/s, so track movement = speed / 10 meters/s.
   // sliderValue drives both speed AND direction.
-  // Positive = forward towards the selected horizon; negative = reverse.
-  // Convert that camera-relative direction to chronological direction below.
+  // Positive = forward along the timeline (+Z, more years ago).
+  // Negative = backward along the timeline (-Z, towards the present).
+  // The horizon setting only rotates the camera; it never changes movement.
   // =============================================
   let currentSpeed = 0;     // absolute years per second
   let trackDirection = 0;   // +1, -1, or 0
@@ -1043,7 +1044,7 @@
     const speed = sliderToSpeed(val);
     const dir = val > 0 ? 1 : val < 0 ? -1 : 0;
     currentSpeed = speed;
-    trackDirection = dir * (horizonIsPast ? 1 : -1);
+    trackDirection = dir;
     const displaySpeed = speed.toLocaleString('da-DK');
     if (dir === 0) {
       speedDisplay.textContent = '0';
@@ -1069,6 +1070,12 @@
   });
 
   // Preset buttons set slider and apply
+  speedBtns.forEach(btn => {
+    const speed = Number(btn.dataset.speed);
+    btn.title = speed === 0 ? 'Stop tidsrejsen'
+      : (speed > 0 ? 'Fremad' : 'Baglæns') + ' på tidslinjen · '
+        + Math.abs(speed).toLocaleString('da-DK') + ' år/s';
+  });
   speedBtns.forEach(btn => { btn.addEventListener('click', () => {
     const val = parseInt(btn.dataset.speed);
     speedSlider.value = val;
@@ -1101,17 +1108,11 @@
     horizonBtn.innerHTML = horizonIsPast
       ? 'Horisont: Fortid &#8594;'
       : 'Horisont: Nutid &#8592;';
-    document.getElementById('speed-backward-label').textContent = horizonIsPast
-      ? '← Nutid 100 mio.' : '← Fortid 100 mio.';
-    document.getElementById('speed-forward-label').textContent = horizonIsPast
-      ? 'Fortid 100 mio. →' : 'Nutid 100 mio. →';
   }
   horizonBtn.addEventListener('click', () => {
     horizonIsPast = !horizonIsPast;
     updateHorizonLabel();
     setCameraHorizon(horizonIsPast);
-    // Keep the chosen forward/reverse speed, but travel towards the new horizon.
-    applySlider(Number(speedSlider.value));
   });
 
   function parseNumber(s) { return parseInt(s.replace(/[\s.]/g, '')); }
@@ -1348,7 +1349,7 @@
 
     if (trackDirection !== 0) {
       // Speed is in years/s. 10 years = 1 meter on track.
-      // trackDirection already combines the chosen speed sign and horizon:
+      // Only the chosen speed sign determines movement along the timeline:
       // +1 increases years ago (past); -1 decreases years ago (present).
       const trackSpeed = currentSpeed / 10;
       positionZ += trackDirection * trackSpeed * dt;
