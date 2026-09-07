@@ -43,6 +43,11 @@
   .timeline-scale span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
   .timeline-scale .timeline-now { left: 0; transform: none; }
   .timeline-scale .timeline-origin { right: 0; transform: none; }
+  .timeline-scale .timeline-break { left: 80%; color: #1565c0; }
+  .timeline-scale .timeline-break::before {
+    content: ''; position: absolute; left: 50%; top: -12px;
+    height: 6px; width: 2px; background: #1565c0; pointer-events: none;
+  }
   #info-hud { top: calc(var(--timeline-height) + 48px) !important; }
   #speedo-panel, #geo-panel { top: calc(var(--timeline-height) + 20px) !important; }
   #geo-panel { max-height: calc(100vh - 220px) !important; }
@@ -53,6 +58,8 @@
   @media (max-width: 700px) {
     .timeline-heading, .timeline-scale { font-size: 9px; }
     .timeline-scale .timeline-middle { display: none; }
+    .timeline-scale .timeline-break { transform: translateX(-100%); }
+    .timeline-scale .timeline-break::before { left: 100%; }
   }
 
   #hud {
@@ -207,14 +214,15 @@
     <label for="time-slider">Tidslinje · træk for at rejse</label>
     <output id="time-position" for="time-slider">Nutid</output>
   </div>
-  <input type="range" id="time-slider" min="0" max="3800000000" step="1" value="0"
+  <input type="range" id="time-slider" min="0" max="100" step="any" value="0"
     aria-label="År siden nutiden" aria-valuetext="Nutid" />
   <div class="timeline-scale" aria-hidden="true">
     <span class="timeline-now">Nutid · 0 år</span>
-    <span class="timeline-middle" style="left:26.3158%">1 mia. år</span>
-    <span class="timeline-middle" style="left:52.6316%">2 mia. år</span>
-    <span class="timeline-middle" style="left:78.9474%">3 mia. år</span>
-    <span class="timeline-origin">Livets oprindelse · ca. 3,8 mia. år</span>
+    <span class="timeline-middle" style="left:20%">250 mio. år</span>
+    <span class="timeline-middle" style="left:40%">500 mio. år</span>
+    <span class="timeline-middle" style="left:60%">750 mio. år</span>
+    <span class="timeline-break">1 mia. år</span>
+    <span class="timeline-origin" title="Livets oprindelse · ca. 3,8 milliarder år siden">3,8 mia. år</span>
   </div>
 </div>
 
@@ -965,11 +973,28 @@
   let lastTimelineYear = -1;
   let highSpeedScene = false;
 
+  // Piecewise-linear scale: the first billion years occupies 80% of the
+  // slider; the remaining 2.8 billion years occupies its final 20%.
+  const TIMELINE_BREAK_YEAR = 1000000000;
+  const TIMELINE_END_YEAR = 3800000000;
+  function yearsToTimelinePosition(years) {
+    const year = Math.max(0, Math.min(years, TIMELINE_END_YEAR));
+    return year <= TIMELINE_BREAK_YEAR
+      ? year / TIMELINE_BREAK_YEAR * 80
+      : 80 + (year - TIMELINE_BREAK_YEAR) / (TIMELINE_END_YEAR - TIMELINE_BREAK_YEAR) * 20;
+  }
+  function timelinePositionToYears(position) {
+    const percent = Math.max(0, Math.min(Number(position), 100));
+    return Math.round(percent <= 80
+      ? percent / 80 * TIMELINE_BREAK_YEAR
+      : TIMELINE_BREAK_YEAR + (percent - 80) / 20 * (TIMELINE_END_YEAR - TIMELINE_BREAK_YEAR));
+  }
+
   function updateTimeline(years) {
     const year = Math.max(0, Math.round(years));
     if (year === lastTimelineYear) return;
     lastTimelineYear = year;
-    if (!timelineDragging) timelineSlider.value = Math.min(year, Number(timelineSlider.max));
+    if (!timelineDragging) timelineSlider.value = yearsToTimelinePosition(year);
     const text = year === 0 ? 'Nutid' : year.toLocaleString('da-DK') + ' år siden';
     timelinePosition.textContent = text;
     timelineSlider.setAttribute('aria-valuetext', text);
@@ -984,7 +1009,7 @@
     setHighSpeedScene(true);
   });
   timelineSlider.addEventListener('input', () => {
-    const year = Number(timelineSlider.value);
+    const year = timelinePositionToYears(timelineSlider.value);
     if (timelineDragging) {
       positionZ = year / 10;
       updateGeoPanel(year);
@@ -997,7 +1022,7 @@
   function finishTimelineDrag() {
     if (!timelineDragging) return;
     timelineDragging = false;
-    jumpToYear(Number(timelineSlider.value));
+    jumpToYear(timelinePositionToYears(timelineSlider.value));
   }
   window.addEventListener('pointerup', finishTimelineDrag);
   window.addEventListener('pointercancel', finishTimelineDrag);
