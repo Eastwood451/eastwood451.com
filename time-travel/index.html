@@ -962,7 +962,8 @@
 
   // --- GEO PANEL ---
   function updateGeoPanel(y) {
-    window.TimeTravelLineages.update(y);
+    // This optional panel must not prevent the simulator from starting.
+    window.TimeTravelLineages?.update?.(y);
     const absY = Math.abs(y);
     const period = getPeriodForYear(y);
     if (period.name === lastPeriodName) return;
