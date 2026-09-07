@@ -116,8 +116,38 @@
         transition: transform 220ms ease, filter 220ms ease;
       }
 
+      .expression-preview {
+        display: grid;
+        place-content: center;
+        gap: 8px;
+        height: 144px;
+        padding: 16px;
+        background:
+          radial-gradient(circle at 18% 18%, rgba(255, 121, 91, 0.36), transparent 42%),
+          linear-gradient(145deg, #39241d, #171411 68%);
+        color: #fff4db;
+        text-align: center;
+        transition: transform 220ms ease, filter 220ms ease;
+      }
+
+      .expression-preview strong {
+        font-family: Georgia, serif;
+        font-size: 1.15rem;
+        line-height: 1.05;
+      }
+
+      .expression-preview small {
+        color: #f5bd61;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
       .app-button:hover img,
-      .app-button:focus-visible img {
+      .app-button:focus-visible img,
+      .app-button:hover .expression-preview,
+      .app-button:focus-visible .expression-preview {
         transform: scale(1.04);
         filter: saturate(1.12) contrast(1.08);
       }
@@ -215,6 +245,14 @@
         <a class="app-button" href="undervisningsplan/" aria-label="Åbn undervisningskalenderen">
           <img src="undervisningsplan-preview.png" alt="Undervisningskalender med månedsplan og materialeliste" />
           <span class="app-label"><span>Undervisningsplan</span><span class="arrow" aria-hidden="true">&rarr;</span></span>
+        </a>
+
+        <a class="app-button" href="colourful-language/" aria-label="Åbn Colourful Language Index">
+          <span class="expression-preview" aria-hidden="true">
+            <strong>“Wild, weird &amp;<br />wonderfully rude”</strong>
+            <small>4,895 expressions</small>
+          </span>
+          <span class="app-label"><span>Colourful Language</span><span class="arrow" aria-hidden="true">&rarr;</span></span>
         </a>
       </nav>
     </main>
