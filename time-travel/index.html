@@ -494,8 +494,13 @@
   const camera = new THREE.PerspectiveCamera(65, window.innerWidth/window.innerHeight, 0.1, 2000);
   // Camera stays at origin, world moves around it
   camera.position.set(0, 2, 0);
-  // Camera look direction is controlled by horizonIsPast toggle
-  camera.rotation.x = -0.35;
+  // Years ago increase along +Z. Three.js cameras look along -Z by default,
+  // so facing the past must explicitly look towards +Z, with the same downward
+  // pitch in either direction. Use this for both startup and the horizon toggle.
+  function setCameraHorizon(isPast) {
+    camera.lookAt(0, camera.position.y - Math.tan(0.35), isPast ? 1 : -1);
+  }
+  setCameraHorizon(true);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -927,7 +932,8 @@
   // So years = positionZ * 10.
   // Speed is in years/s, so track movement = speed / 10 meters/s.
   // sliderValue drives both speed AND direction.
-  // Positive = fly forward on track, negative = fly backward.
+  // Positive = into the past (+Z), negative = towards the present (-Z).
+  // Forward in the visible scene means travelling towards the selected horizon.
   // =============================================
   let currentSpeed = 0;     // absolute years per second
   let trackDirection = 0;   // +1, -1, or 0
@@ -1074,11 +1080,7 @@
   horizonBtn.addEventListener('click', () => {
     horizonIsPast = !horizonIsPast;
     updateHorizonLabel();
-    camera.rotation.set(
-      horizonIsPast ? -0.35 : 0.35,
-      horizonIsPast ? 0 : Math.PI,
-      0
-    );
+    setCameraHorizon(horizonIsPast);
   });
 
   function parseNumber(s) { return parseInt(s.replace(/[\s.]/g, '')); }
