@@ -278,14 +278,14 @@
     <button class="speed-btn" data-speed="100000000" title="100.000.000 år i sekundet">10<sup>8</sup> år/s</button>
   </div>
   <div class="controls-panel" style="margin-top:8px;">
-    <span class="slider-edge-label" id="speed-backward-label">← Nutid 100 mio.</span>
+    <span class="slider-edge-label" id="speed-backward-label">← Baglæns 100 mio.</span>
     <div class="slider-wrap">
       <input type="range" id="speed-slider" min="-100000000" max="100000000" value="0" step="10" />
     </div>
-    <span class="slider-edge-label" id="speed-forward-label">Fortid 100 mio. →</span>
+    <span class="slider-edge-label" id="speed-forward-label">Fremad 100 mio. →</span>
     <span class="slider-label" id="slider-label">0 år/s</span>
     <div class="divider"></div>
-    <button class="horizon-btn" id="horizon-btn" title="Vend kameraet 180° uden at ændre rejseretningen">Horisont: Fortid &#8594;</button>
+    <button class="horizon-btn" id="horizon-btn" title="Vend kameraet 180°. Plus kører altid fremad; minus bakker.">Horisont: Fortid &#8594;</button>
   </div>
 </div>
 
@@ -940,9 +940,9 @@
   // So years = positionZ * 10.
   // Speed is in years/s, so track movement = speed / 10 meters/s.
   // sliderValue drives both speed AND direction.
-  // Positive = forward along the timeline (+Z, more years ago).
-  // Negative = backward along the timeline (-Z, towards the present).
-  // The horizon setting only rotates the camera; it never changes movement.
+  // Each field represents one year. Positive speed always drives forward
+  // towards the camera's horizon; negative speed always reverses away from it.
+  // Convert driving direction to world +Z/-Z using the camera's heading.
   // =============================================
   let currentSpeed = 0;     // absolute years per second
   let trackDirection = 0;   // +1, -1, or 0
@@ -1044,17 +1044,16 @@
     const speed = sliderToSpeed(val);
     const dir = val > 0 ? 1 : val < 0 ? -1 : 0;
     currentSpeed = speed;
-    trackDirection = dir;
+    trackDirection = dir * (horizonIsPast ? 1 : -1);
     const displaySpeed = speed.toLocaleString('da-DK');
     if (dir === 0) {
       speedDisplay.textContent = '0';
       sliderLabel.textContent = 'Stoppet';
-    } else if (trackDirection > 0) {
-      speedDisplay.textContent = displaySpeed;
-      sliderLabel.textContent = displaySpeed + ' år/s → Fortid';
     } else {
       speedDisplay.textContent = displaySpeed;
-      sliderLabel.textContent = displaySpeed + ' år/s ← Nutid';
+      const driving = dir > 0 ? 'Fremad' : 'Baglæns';
+      const destination = trackDirection > 0 ? 'fortid' : 'nutid';
+      sliderLabel.textContent = displaySpeed + ' felter/s · ' + driving + ' mod ' + destination;
     }
     // Highlight matching preset
     speedBtns.forEach(b => {
@@ -1073,8 +1072,8 @@
   speedBtns.forEach(btn => {
     const speed = Number(btn.dataset.speed);
     btn.title = speed === 0 ? 'Stop tidsrejsen'
-      : (speed > 0 ? 'Fremad' : 'Baglæns') + ' på tidslinjen · '
-        + Math.abs(speed).toLocaleString('da-DK') + ' år/s';
+      : (speed > 0 ? 'Fremad i kameraets retning' : 'Bakgear – modsat kameraets retning')
+        + ' · ' + Math.abs(speed).toLocaleString('da-DK') + ' felter/s';
   });
   speedBtns.forEach(btn => { btn.addEventListener('click', () => {
     const val = parseInt(btn.dataset.speed);
@@ -1113,6 +1112,9 @@
     horizonIsPast = !horizonIsPast;
     updateHorizonLabel();
     setCameraHorizon(horizonIsPast);
+    // Keep the selected gear and field rate when turning: forward still means
+    // forward on screen, while its chronological direction follows the heading.
+    applySlider(Number(speedSlider.value));
   });
 
   function parseNumber(s) { return parseInt(s.replace(/[\s.]/g, '')); }
@@ -1349,7 +1351,7 @@
 
     if (trackDirection !== 0) {
       // Speed is in years/s. 10 years = 1 meter on track.
-      // Only the chosen speed sign determines movement along the timeline:
+      // Driving direction multiplied by camera heading gives world direction:
       // +1 increases years ago (past); -1 decreases years ago (present).
       const trackSpeed = currentSpeed / 10;
       positionZ += trackDirection * trackSpeed * dt;
