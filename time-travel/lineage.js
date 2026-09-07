@@ -9,6 +9,7 @@
   const cell = index => ({ src: atlas, cell: index });
   const stage = (from, name, art, description) => ({ from, name, art, description });
   const million = 1e6;
+  const rexPicture = { src: '../biology/images/tyrannosaurus_rex.png', wide: true };
 
   const shared = [
     stage(320 * million, 'Tidlige landhvirveldyr', picture('shared_10_amniote_1779704533314.png'), 'Fælles ophav: små landdyr nær amnioternes tidlige udvikling.'),
@@ -48,6 +49,16 @@
       stage(230 * million, 'Tidlige arkosaurer', cell(5), 'Små arkosaurer på grenen mod dinosaurer og fugle.'),
       stage(250 * million, 'Tidlige sauropsider', cell(6), 'Tidlige krybdyrlignende dyr på fuglenes gren, efter adskillelsen fra pattedyrlinjen.'),
       ...shared
+    ],
+    trex: [
+      { ...stage(0, 'Tyrannosaurus rex', rexPicture, 'T. rex er uddød. Billedet er en rekonstruktion af dyret, som levede for cirka 68–66 millioner år siden.'), status: 'Uddød', period: 'Levede ca. 68–66 mio. år siden' },
+      { ...stage(66 * million, 'Tyrannosaurus rex', rexPicture, 'T. rex levede i Nordamerika i slutningen af Kridttiden. Stor krop, kraftige kæber og meget korte arme.'), status: 'Levede her' },
+      { ...stage(68 * million, 'Tidligere tyrannosaurer', rexPicture, 'T. rex fandtes endnu ikke. Rekonstruktionen illustrerer kropsformen hos større, tidligere tyrannosaur-slægtninge; den præcise direkte forfader er ukendt.'), status: 'Før T. rex' },
+      { ...stage(100 * million, 'Tidlige tyrannosauroider', picture('eagle_1_theropod.png'), 'Mindre, lettere rovdinosaurer med længere arme. En fjerklædt theropod illustrerer dette tidlige udviklingstrin.'), status: 'Før T. rex' },
+      { ...stage(170 * million, 'Tidlige theropoder', cell(5), 'En letbygget, tobenet rovdinosaur illustrerer den ældre gren mod tyrannosaurer. T. rex er ikke havørnens direkte forfader.'), status: 'Før T. rex' },
+      { ...stage(230 * million, 'Tidlige arkosaurer', cell(5), 'Små arkosaurer på dinosaurernes udviklingslinje, længe før tyrannosaurerne.'), status: 'Før T. rex' },
+      { ...stage(250 * million, 'Tidlige sauropsider', cell(6), 'Krybdyrlignende landdyr på grenen mod dinosaurer og fugle.'), status: 'Før T. rex' },
+      ...shared
     ]
   };
 
@@ -65,17 +76,19 @@
 
   const panel = document.createElement('aside');
   panel.id = 'lineage-panel';
-  panel.setAttribute('aria-label', 'Menneskets og havørnens udvikling gennem tiden');
+  panel.setAttribute('aria-label', 'Menneskets, havørnens og T. rex’ udvikling gennem tiden');
+  const headings = { human: 'Menneskets', eagle: 'Havørnens', trex: 'T. rex’' };
   const cards = [];
   for (const [key, stages] of Object.entries(lineages)) {
     const card = document.createElement('article');
     card.className = 'lineage-card';
     card.dataset.lineage = key;
     card.innerHTML = `
-      <h2 class="lineage-heading"><span>${key === 'human' ? 'Menneskets' : 'Havørnens'}</span> udvikling</h2>
+      <h2 class="lineage-heading"><span>${headings[key]}</span> udvikling</h2>
       <div class="lineage-art">
         <div class="lineage-image-window"><img alt="" decoding="async" /></div>
         <div class="lineage-empty">Ingen sikker rekonstruktion</div>
+        <span class="lineage-status" hidden></span>
       </div>
       <div class="lineage-copy">
         <h3 class="lineage-name"></h3>
@@ -92,6 +105,7 @@
     img.addEventListener('load', () => art.classList.remove('image-unavailable'));
     cards.push({ card, art, img, stages, index: -1,
       name: card.querySelector('.lineage-name'),
+      status: card.querySelector('.lineage-status'),
       period: card.querySelector('.lineage-period'),
       description: card.querySelector('.lineage-description') });
   }
@@ -103,7 +117,8 @@
     <p>Intervallerne er afrundede visningstrin, ikke præcise artsdateringer. Især havørnens tidlige slægtslinje og livets ældste historie er usikre. Farver, pels og fjer er delvist fortolkede.</p>
     <p>Grundlag: <a href="https://humanorigins.si.edu/evidence/human-fossils/species/homo-sapiens" target="_blank" rel="noopener noreferrer">Smithsonian: mennesker</a> ·
     <a href="https://www.nhm.ac.uk/discover/how-dinosaurs-evolved-into-birds.html" target="_blank" rel="noopener noreferrer">Natural History Museum: fugle</a> ·
-    <a href="https://www.bto.org/learn/about-birds/birdfacts/white-tailed-eagle" target="_blank" rel="noopener noreferrer">BTO: havørn</a>.</p>`;
+    <a href="https://www.bto.org/learn/about-birds/birdfacts/white-tailed-eagle" target="_blank" rel="noopener noreferrer">BTO: havørn</a> ·
+    <a href="https://www.nhm.ac.uk/discover/dino-directory/tyrannosaurus.html" target="_blank" rel="noopener noreferrer">Natural History Museum: T. rex</a>.</p>`;
   panel.appendChild(note);
   document.body.appendChild(panel);
 
@@ -118,7 +133,10 @@
       const next = entry.stages[index + 1];
       entry.card.dataset.stage = String(current.from);
       entry.name.textContent = current.name;
-      entry.period.textContent = 'Ca. ' + age(current.from) + (next ? '–' + age(next.from) : '+') + ' år siden';
+      entry.period.textContent = current.period || 'Ca. ' + age(current.from) + (next ? '–' + age(next.from) : '+') + ' år siden';
+      entry.status.textContent = current.status || '';
+      entry.status.hidden = !current.status;
+      entry.art.classList.toggle('is-wide', !!current.art?.wide);
       entry.description.textContent = current.description;
       entry.card.title = current.description;
       entry.art.classList.toggle('is-unknown', !current.art);
@@ -134,7 +152,7 @@
       entry.img.style.left = isAtlas ? -(current.art.cell % 4) * 100 + '%' : '0';
       entry.img.style.top = isAtlas ? -Math.floor(current.art.cell / 4) * 100 + '%' : '0';
       entry.img.alt = current.name + ' – kunstnerisk illustration';
-      // Only two persistent image elements. An atlas cell change does not reload
+      // One persistent image element per lineage. An atlas cell change does not reload
       // the image; no preload queue, crossfade buffers or per-frame allocations.
       if (entry.img.getAttribute('src') !== current.art.src) entry.img.src = current.art.src;
     }
