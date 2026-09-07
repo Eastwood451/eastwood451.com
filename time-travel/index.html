@@ -11,6 +11,49 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { overflow: hidden; background: #e8ecf1; font-family: 'Outfit', sans-serif; user-select: none; -webkit-user-select: none; }
   canvas { display: block; }
+  :root { --timeline-height: 76px; }
+  #time-navigation {
+    position: fixed; top: 0; left: 0; right: 0; height: var(--timeline-height);
+    z-index: 20; padding: 8px 18px;
+    background: rgba(255,255,255,0.94); border-bottom: 1px solid rgba(21,101,192,0.16);
+    font: 700 11px 'JetBrains Mono', monospace; color: #1565c0;
+  }
+  .timeline-heading { display: flex; justify-content: space-between; gap: 12px; }
+  .timeline-heading label { cursor: pointer; color: #64788c; }
+  #time-position { white-space: nowrap; }
+  #time-slider {
+    display: block; width: 100%; height: 28px; margin: 3px 0 0;
+    appearance: none; -webkit-appearance: none; background: transparent; cursor: pointer;
+    touch-action: none;
+  }
+  #time-slider::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: #c9d9e8; }
+  #time-slider::-moz-range-track { height: 6px; border-radius: 3px; background: #c9d9e8; }
+  #time-slider::-webkit-slider-thumb {
+    appearance: none; -webkit-appearance: none; width: 22px; height: 22px; margin-top: -8px;
+    border-radius: 7px; border: 3px solid white; background: #1565c0;
+    box-shadow: 0 0 0 1px #1565c0, 0 2px 5px #1565c033; cursor: grab;
+  }
+  #time-slider::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 7px; border: 3px solid white; background: #1565c0;
+    box-shadow: 0 0 0 1px #1565c0; cursor: grab;
+  }
+  #time-slider:active { cursor: grabbing; }
+  #time-slider:focus-visible { outline: 2px solid #1565c0; outline-offset: 2px; border-radius: 4px; }
+  .timeline-scale { position: relative; height: 16px; margin: 0 11px; font-size: 10px; color: #64788c; }
+  .timeline-scale span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+  .timeline-scale .timeline-now { left: 0; transform: none; }
+  .timeline-scale .timeline-origin { right: 0; transform: none; }
+  #info-hud { top: calc(var(--timeline-height) + 48px) !important; }
+  #speedo-panel, #geo-panel { top: calc(var(--timeline-height) + 20px) !important; }
+  #geo-panel { max-height: calc(100vh - 220px) !important; }
+  #eastwood-home-link { top: calc(var(--timeline-height) + 10px) !important; }
+  @media (min-width: 701px) {
+    #lineage-panel { top: calc(var(--timeline-height) + 170px); max-height: calc(100dvh - 430px); }
+  }
+  @media (max-width: 700px) {
+    .timeline-heading, .timeline-scale { font-size: 9px; }
+    .timeline-scale .timeline-middle { display: none; }
+  }
 
   #hud {
     position: fixed; bottom: 0; left: 0; right: 0;
@@ -158,6 +201,22 @@
 </style>
 </head>
 <body>
+
+<div id="time-navigation" role="region" aria-label="Tidslinje fra nutiden til livets oprindelse">
+  <div class="timeline-heading">
+    <label for="time-slider">Tidslinje · træk for at rejse</label>
+    <output id="time-position" for="time-slider">Nutid</output>
+  </div>
+  <input type="range" id="time-slider" min="0" max="3800000000" step="1" value="0"
+    aria-label="År siden nutiden" aria-valuetext="Nutid" />
+  <div class="timeline-scale" aria-hidden="true">
+    <span class="timeline-now">Nutid · 0 år</span>
+    <span class="timeline-middle" style="left:26.3158%">1 mia. år</span>
+    <span class="timeline-middle" style="left:52.6316%">2 mia. år</span>
+    <span class="timeline-middle" style="left:78.9474%">3 mia. år</span>
+    <span class="timeline-origin">Livets oprindelse · ca. 3,8 mia. år</span>
+  </div>
+</div>
 
 <div id="info-hud">
   <div>År siden: <span class="value" id="pos-display">0</span></div>
@@ -894,7 +953,49 @@
   const geoYears = document.getElementById('geo-years'), geoContent = document.getElementById('geo-content');
   const speedSlider = document.getElementById('speed-slider');
   const sliderLabel = document.getElementById('slider-label');
+  const timelineSlider = document.getElementById('time-slider');
+  const timelinePosition = document.getElementById('time-position');
+  let timelineDragging = false;
+  let lastTimelineYear = -1;
   let highSpeedScene = false;
+
+  function updateTimeline(years) {
+    const year = Math.max(0, Math.round(years));
+    if (year === lastTimelineYear) return;
+    lastTimelineYear = year;
+    if (!timelineDragging) timelineSlider.value = Math.min(year, Number(timelineSlider.max));
+    const text = year === 0 ? 'Nutid' : year.toLocaleString('da-DK') + ' år siden';
+    timelinePosition.textContent = text;
+    timelineSlider.setAttribute('aria-valuetext', text);
+  }
+
+  timelineSlider.addEventListener('pointerdown', () => {
+    speedSlider.value = 0;
+    applySlider(0);
+    timelineDragging = true;
+    // Reuse the lightweight road while scrubbing; build detailed chunks only
+    // once at the destination, instead of for every pointer movement.
+    setHighSpeedScene(true);
+  });
+  timelineSlider.addEventListener('input', () => {
+    const year = Number(timelineSlider.value);
+    if (timelineDragging) {
+      positionZ = year / 10;
+      updateGeoPanel(year);
+      updateETA();
+      updateTimeline(year);
+    } else {
+      jumpToYear(year);
+    }
+  });
+  function finishTimelineDrag() {
+    if (!timelineDragging) return;
+    timelineDragging = false;
+    jumpToYear(Number(timelineSlider.value));
+  }
+  window.addEventListener('pointerup', finishTimelineDrag);
+  window.addEventListener('pointercancel', finishTimelineDrag);
+  window.addEventListener('blur', finishTimelineDrag);
 
   function setHighSpeedScene(enabled) {
     if (highSpeedScene === enabled) return;
@@ -956,7 +1057,7 @@
   btnDown.addEventListener('click', () => { verticalDirection = verticalDirection===-1?0:-1; updateVerticalButtons(); });
 
   document.addEventListener('keydown', (e) => {
-    if (e.target === jumpInput) return;
+    if (e.target === jumpInput || e.target === timelineSlider) return;
     if (e.key==='ArrowUp'||e.key==='w') { verticalDirection=verticalDirection===1?0:1; updateVerticalButtons(); }
     if (e.key==='ArrowDown'||e.key==='s') { verticalDirection=verticalDirection===-1?0:-1; updateVerticalButtons(); }
     if (e.key==='n'||e.key==='N') { const ev=findNextEvent(getYears()); if(ev)jumpToYear(ev.y); }
@@ -989,6 +1090,7 @@
     lastPeriodName = '';
     updateGeoPanel(getYears());
     updateETA();
+    updateTimeline(getYears());
   }
 
   jumpBtn.addEventListener('click', () => {
@@ -1276,6 +1378,7 @@
     // HUD — show years
     const years = getYears();
     posDisplay.textContent = formatYears(years);
+    updateTimeline(years);
 
     // Speedometers
     if (frameCount % (highSpeedScene ? 6 : 3) === 0) updateSpeedos(years);
