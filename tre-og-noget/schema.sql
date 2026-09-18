@@ -1,7 +1,7 @@
 -- Tre-og-noget: private per-account progress and idempotent answer history.
 create table public.tre_og_noget_progress (
   user_id uuid not null references auth.users(id) on delete cascade,
-  mode text not null check (mode in ('nw','ne','south','all','preferences')),
+  mode text not null check (mode in ('nw','ne','south','all','distance','preferences')),
   data jsonb not null,
   updated_at timestamptz not null default now(),
   primary key (user_id, mode)
@@ -34,7 +34,7 @@ begin
   perform pg_advisory_xact_lock(hashtextextended(uid::text, 517));
   if op is not null then
     event_id := (op->>'id')::uuid; m := op->>'mode'; kind := op->>'kind';
-    if event_id is null or m is null or m not in ('nw','ne','south','all','preferences')
+    if event_id is null or m is null or m not in ('nw','ne','south','all','distance','preferences')
       or kind is null or kind not in ('seed','answer','reset','preferences') then
       raise exception 'Invalid operation';
     end if;
@@ -53,13 +53,15 @@ begin
         p := op->'data';
       else
         if p is null or m='preferences' then raise exception 'Missing progress'; end if;
-        if op->>'side' not in ('nw','ne','south') or (m<>'all' and m<>op->>'side') then raise exception 'Invalid side'; end if;
+        if op->>'side' not in ('nw','ne','south','distance')
+          or (m='all' and op->>'side'='distance')
+          or (m<>'all' and m<>op->>'side') then raise exception 'Invalid side'; end if;
         ms := (op->>'ms')::numeric;
         if ms is null or ms<0 or (op->>'value')::integer not between 0 and 9 then raise exception 'Invalid answer'; end if;
         select value, ordinality::integer-1 into c,idx
           from jsonb_array_elements(p->'cards') with ordinality where value->>'id'=op->>'card';
         if c is null then raise exception 'Invalid card'; end if;
-        expected := (c->>case op->>'side' when 'nw' then 'a' when 'ne' then 'b' else 'c' end)::integer;
+        expected := (c->>case op->>'side' when 'nw' then 'a' when 'ne' then 'b' when 'south' then 'c' when 'distance' then 'b' end)::integer;
         correct := (op->>'value')::integer=expected;
         n := coalesce((p->>'round')::integer,0)+1;
         gap := case when correct then greatest(2,round(14-least(ms,3000)/250)::integer) else 1 end;
