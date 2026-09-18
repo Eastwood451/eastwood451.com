@@ -10,11 +10,13 @@ export function createMinusQuestion({digits='one',ones='borrow',random=Math.rand
   if(!ONES_MODES.includes(ones))throw new Error('Ugyldig enertilstand');
   let top,bottom;
   if(digits==='one'){
-    top=intBetween(10,99,random);
     if(ones==='borrow'){
-      const topOnes=top%10;
+      const topTens=intBetween(1,9,random);
+      const topOnes=intBetween(0,8,random);
+      top=topTens*10+topOnes;
       bottom=intBetween(topOnes+1,9,random);
     }else{
+      top=intBetween(10,99,random);
       bottom=intBetween(1,9,random);
     }
   }else if(ones==='borrow'){
