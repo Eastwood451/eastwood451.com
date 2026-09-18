@@ -38,7 +38,7 @@ function persistSettings(){
     data:{minusDigits:settings.digits,minusOnes:settings.ones},
     at:new Date().toISOString()
   };
-  void client.rpc('tre_og_noget_sync',{op}).catch(()=>{});
+  void (async()=>{try{await client.rpc('tre_og_noget_sync',{op});}catch{}})();
 }
 
 function renderToggles(){
