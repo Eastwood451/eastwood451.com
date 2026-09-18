@@ -1,5 +1,29 @@
 export function needsAnswerHelp(correct,ms){return !correct||ms>4000;}
 
+export function numberLineQuestion(card){
+  if(!card||!Number.isInteger(card.a)||!Number.isInteger(card.b)||card.a<0||card.a>=card.b||card.b>9){
+    throw new RangeError('Tallinjen kræver cifre med 0 ≤ a < b ≤ 9.');
+  }
+  const start=80+card.a,end=start-card.b,middle=80;
+  const left=40,unit=21,axisY=150;
+  const x=n=>left+(n-70)*unit;
+  const colors={total:'#7c3aed',axis:'#34465f'};
+  const endLabelY=card.b===1?24:29,startLabelY=card.b===1?56:29;
+  const ticks=Array.from({length:21},(_,i)=>{
+    const n=70+i,major=n%10===0;
+    return `<line x1="${x(n)}" y1="${major?138:145}" x2="${x(n)}" y2="${major?162:155}" stroke="${major?colors.axis:'#b1bfd1'}" stroke-width="${major?2:1}"/>${major?`<text x="${x(n)}" y="185" text-anchor="middle" fill="${colors.axis}" font-size="23"${n===middle?' font-weight="750"':''}>${n}</text>`:''}`;
+  }).join('');
+  const svg=`<svg viewBox="0 0 500 205" role="img" aria-label="Tallinje med markeringer ved ${end} og ${start}. Hvad er afstanden?" xmlns="http://www.w3.org/2000/svg">
+    <line x1="30" y1="${axisY}" x2="470" y2="${axisY}" stroke="${colors.axis}" stroke-width="2"/>
+    ${ticks}
+    <line data-guide="end" x1="${x(end)}" y1="${endLabelY+6}" x2="${x(end)}" y2="156" stroke="${colors.total}" stroke-width="2"/>
+    <line data-guide="start" x1="${x(start)}" y1="${startLabelY+6}" x2="${x(start)}" y2="156" stroke="${colors.total}" stroke-width="2"/>
+    <text data-label="end" x="${x(end)}" y="${endLabelY}" text-anchor="middle" fill="#5b21b6" font-size="24" font-weight="700">${end}</text>
+    <text data-label="start" x="${x(start)}" y="${startLabelY}" text-anchor="middle" fill="#5b21b6" font-size="24" font-weight="700">${start}</text>
+  </svg>`;
+  return {start,end,middle,distance:card.b,svg};
+}
+
 export function numberLineExample(card){
   if(!card||!Number.isInteger(card.a)||!Number.isInteger(card.b)||card.a<0||card.a>=card.b||card.b>9){
     throw new RangeError('Tallinjen kræver cifre med 0 ≤ a < b ≤ 9.');
