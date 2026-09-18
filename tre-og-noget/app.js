@@ -1,7 +1,7 @@
-import {makeCards,missingSide,answerFor,grade,pickCard,heatColor,hardestCards,ANSWER_MODES,ANSWER_TIMEOUT_MS} from './engine.js';
-import {freshProfile,restoreProfile} from './storage.js';
-import {initialize,enqueue,onUpdate} from './cloud.js';
-import {needsAnswerHelp,numberLineExample,numberLineQuestion} from './number-line.js';
+import {makeCards,missingSide,answerFor,grade,pickCard,heatColor,hardestCards,ANSWER_MODES,ANSWER_TIMEOUT_MS} from './engine.js?v=20260918-0640';
+import {freshProfile,restoreProfile} from './storage.js?v=20260918-0640';
+import {initialize,enqueue,onUpdate} from './cloud.js?v=20260918-0640';
+import {needsAnswerHelp,numberLineExample,numberLineQuestion} from './number-line.js?v=20260918-0640';
 const $=id=>document.getElementById(id),MODE_LABELS={nw:'NV',ne:'NØ',south:'Nederst',all:'Alle',distance:'Afstand'};
 const initial=await initialize().catch(error=>{
   $('login-loading').hidden=false;
