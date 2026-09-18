@@ -1,4 +1,4 @@
-import {makeCards,ANSWER_MODES} from './engine.js';
+import {makeCards,ANSWER_MODES} from './engine.js?v=20260918-0640';
 export const PROFILE_PREFIX='tre-og-noget-v2:';
 export const PREFERENCES_KEY='tre-og-noget-v2:preferences';
 export function freshProfile(){return {cards:makeCards(),round:0,lastId:null};}
