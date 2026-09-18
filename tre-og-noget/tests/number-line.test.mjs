@@ -5,7 +5,7 @@ import {readFile} from 'node:fs/promises';
 // Loading as a data URL keeps these tests independent of the repository's
 // package.json module setting; the browser loads the original ES module.
 const source=await readFile(new URL('../number-line.js',import.meta.url),'utf8');
-const {numberLineExample,needsAnswerHelp}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
+const {numberLineExample,numberLineQuestion,needsAnswerHelp}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
 const x=n=>40+(n-70)*21;
 function attributes(svg,attribute,value){
   const tag=svg.match(new RegExp(`<[^>]+ ${attribute}="${value}"[^>]*>`));
@@ -72,6 +72,19 @@ test('80 − 1 = 79 staggers labels vertically without changing x alignment',()=
   assert.notEqual(start.y,end.y);
   assert.equal(Number(start.x)-Number(end.x),21);
   assert.equal(e.decomposition,'1 + 0 = 1');
+});
+
+test('distance question shows only the two endpoints until the answer is revealed',()=>{
+  const q=numberLineQuestion({a:2,b:4});
+  assert.equal(q.start,82);
+  assert.equal(q.end,78);
+  assert.equal(q.distance,4);
+  assert.equal(attributes(q.svg,'data-label','end').x,String(x(78)));
+  assert.equal(attributes(q.svg,'data-label','start').x,String(x(82)));
+  assert.ok(!q.svg.includes('data-part="whole"'));
+  assert.ok(!q.svg.includes('data-part="remainder"'));
+  assert.ok(!q.svg.includes('data-label="decomposition"'));
+  assert.ok(!q.svg.includes('>4</text>'));
 });
 
 test('help triggers and timing are unchanged',()=>{
