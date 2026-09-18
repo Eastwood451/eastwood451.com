@@ -95,10 +95,13 @@ export async function initialize(){
     const file=$('import-file').files[0];if(!file)return;
     try{
       const data=JSON.parse(await file.text());
-      if(data.app!=='tre-og-noget'||!ANSWER_MODES.every(m=>Array.isArray(data.profiles?.[m]?.cards)&&data.profiles[m].cards.length===45))throw new Error('Invalid backup');
-      if(!confirm('Erstat de fire fremskridtsoversigter med fremskridtene fra filen?'))return;
+      const legacyModes=['nw','ne','south','all'];
+      const validLegacy=legacyModes.every(m=>Array.isArray(data.profiles?.[m]?.cards)&&data.profiles[m].cards.length===45);
+      const validDistance=data.profiles?.distance===undefined||Array.isArray(data.profiles.distance?.cards)&&data.profiles.distance.cards.length===45;
+      if(data.app!=='tre-og-noget'||!validLegacy||!validDistance)throw new Error('Invalid backup');
+      if(!confirm('Erstat de fem fremskridtsoversigter med fremskridtene fra filen?'))return;
       document.dispatchEvent(new Event('progress-import'));
-      for(const mode of ANSWER_MODES)enqueue({kind:'reset',mode,data:restoreProfile(data.profiles[mode])});
+      for(const mode of ANSWER_MODES)enqueue({kind:'reset',mode,data:mode==='distance'&&data.profiles?.distance===undefined?freshProfile():restoreProfile(data.profiles[mode])});
       enqueue({kind:'preferences',mode:'preferences',data:{answerMode:ANSWER_MODES.includes(data.answerMode)?data.answerMode:'all',autoContinue:data.autoContinue===true}});
       update(snapshot());await sync();
     }catch{note('Filen kunne ikke importeres. Vælg en eksport fra Tre-og-noget.');}
