@@ -1,4 +1,4 @@
-import {makeCards,missingSide,answerFor,grade,pickCard,heatColor,hardestCards,ANSWER_MODES} from './engine.js';
+import {makeCards,missingSide,answerFor,grade,pickCard,heatColor,hardestCards,ANSWER_MODES,ANSWER_TIMEOUT_MS} from './engine.js';
 import {freshProfile,restoreProfile} from './storage.js';
 import {initialize,enqueue,onUpdate} from './cloud.js';
 import {needsAnswerHelp,numberLineExample} from './number-line.js';
@@ -13,7 +13,7 @@ const profiles=Object.fromEntries(ANSWER_MODES.map(mode=>[mode,restoreProfile(in
 let answerMode=ANSWER_MODES.includes(initial.preferences?.answerMode)?initial.preferences.answerMode:'all';
 let {cards,round,lastId}=profiles[answerMode];
 let focusIds=null;
-let current=null,side='nw',phase='idle',startedAt=0,frame=0,scheduled=0,token=0;
+let current=null,side='nw',phase='idle',startedAt=0,frame=0,scheduled=0,answerTimer=0,token=0;
 function save(operation){
   profiles[answerMode]={cards,round,lastId};
   if(operation)enqueue({...operation,mode:answerMode});
@@ -62,9 +62,16 @@ function progress(){
 }
 function cell(digit,blank,reveal=false){return blank?`<span class="prefix">?</span><span class="missing">${reveal?digit:'?'}</span>`:`<span class="prefix">?</span>${digit}`}
 function renderQuestion(reveal=false){$('nw').innerHTML=cell(current.a,side==='nw',reveal);$('ne').innerHTML=cell(current.b,side==='ne',reveal);$('south').innerHTML=cell(current.c,side==='south',reveal);$('circle').setAttribute('aria-label',`${side==='nw'&&!reveal?'Manglende ciffer':current.a+' og noget'} minus ${side==='ne'&&!reveal?'manglende ciffer':current.b+' og noget'} giver ${side==='south'&&!reveal?'et manglende ciffer':current.c+' og noget eller '+current.c}.`);$('question-progress').textContent=`Dette par: ${current.hits} af 3 hurtige svar`;}
-function cancel(){token++;clearTimeout(scheduled);cancelAnimationFrame(frame);lockKeys(true);$('answer-help').hidden=true;$('keypad').hidden=false;}
+function cancel(){token++;clearTimeout(scheduled);clearTimeout(answerTimer);cancelAnimationFrame(frame);lockKeys(true);$('answer-help').hidden=true;$('keypad').hidden=false;}
 function overlay(title,copy,label,mode){$('overlay').hidden=false;$('overlay').innerHTML=`<span class="eyebrow">TRE-OG-NOGET</span><h2>${title}</h2><p>${copy}</p><button class="primary" id="resume">${label}</button>`;$('resume').addEventListener('click',mode==='reset'?askReset:mode==='all'?toggleFocus:begin)}
-function nextQuestion(){cancel();$('next').hidden=true;$('circle').className='circle';current=pickCard(trainingCards(),lastId);if(!current){finishTraining();return}lastId=current.id;side=missingSide(current,answerMode);phase='preparing';$('overlay').hidden=true;renderQuestion();progress();$('feedback').textContent={nw:'Find cifret øverst til venstre.',ne:'Find cifret øverst til højre.',south:'Find cifret i nederste halvdel.'}[side];$('feedback').className='feedback';const ticket=token;frame=requestAnimationFrame(()=>{if(ticket!==token)return;startedAt=performance.now();phase='asking';lockKeys(false)});}
+function nextQuestion(){cancel();$('next').hidden=true;$('circle').className='circle';current=pickCard(trainingCards(),lastId);if(!current){finishTraining();return}lastId=current.id;side=missingSide(current,answerMode);phase='preparing';$('overlay').hidden=true;renderQuestion();progress();$('feedback').textContent={nw:'Find cifret øverst til venstre.',ne:'Find cifret øverst til højre.',south:'Find cifret i nederste halvdel.'}[side];$('feedback').className='feedback';const ticket=token;frame=requestAnimationFrame(()=>{if(ticket!==token)return;startedAt=performance.now();phase='asking';lockKeys(false);expireQuestion(ticket)});}
+// Re-check elapsed time in case a timer fires early; the token rejects stale questions.
+function expireQuestion(ticket){
+  if(ticket!==token||phase!=='asking')return;
+  const remaining=ANSWER_TIMEOUT_MS-(performance.now()-startedAt);
+  if(remaining>0){answerTimer=setTimeout(()=>expireQuestion(ticket),remaining);return;}
+  submit(null);
+}
 function begin(){if(document.hidden)return;cancel();phase='countdown';$('pause').disabled=false;$('pause').textContent='Pause';$('next').hidden=true;let count=3;$('overlay').hidden=false;const ticket=token;function countDown(){if(ticket!==token)return;if(count===0){nextQuestion();return}$('overlay').innerHTML=`<span class="eyebrow">GØR DIG KLAR</span><h2 style="font-size:5rem">${count--}</h2><p>Ét tryk er dit svar.</p>`;scheduled=setTimeout(countDown,650)}countDown()}
 function renderAutoContinue(){
   $('auto-continue').setAttribute('aria-checked',String(autoContinue));
@@ -93,14 +100,19 @@ $('auto-continue').addEventListener('click',()=>{
 renderAutoContinue();
 function submit(n){
   if(phase!=='asking'||document.hidden)return;
-  const ms=performance.now()-startedAt;
-  phase='feedback';cancelAnimationFrame(frame);lockKeys(true);round++;
-  const result=grade(current,side,n,ms,round);
+  const elapsed=performance.now()-startedAt;
+  // Enforce the deadline even when an input event runs before a delayed timer.
+  const timedOut=elapsed>=ANSWER_TIMEOUT_MS;
+  const value=timedOut?null:n,ms=timedOut?ANSWER_TIMEOUT_MS:elapsed;
+  phase='feedback';clearTimeout(answerTimer);cancelAnimationFrame(frame);lockKeys(true);round++;
+  const result=grade(current,side,value,ms,round);
   cards=cards.map(c=>c.id===current.id?result.card:c);current=result.card;
-  save({kind:'answer',card:current.id,side,value:n,ms});renderQuestion(true);progress();
+  save({kind:'answer',card:current.id,side,value,ms,...(timedOut?{timedOut:true}:{})});renderQuestion(true);progress();
   $('circle').classList.add(result.correct?'correct':'wrong');
   $('feedback').className='feedback '+(result.correct?'good':'bad');
-  if(result.correct){
+  if(timedOut){
+    $('feedback').textContent=`Tiden er gået (5 sek.). Det rigtige ciffer er ${answerFor(current,side)}.`;
+  }else if(result.correct){
     $('feedback').textContent=current.hits===3?'✓ Flyttet til Lært!':result.fast?`✓ Hurtigt! ${current.hits} af 3.`:ms>4000?'✓ Korrekt. Se eksemplet på tallinjen.':'✓ Korrekt. Prøv at komme ned på ét sekund.';
   }else{
     $('feedback').textContent=`Du svarede ${n}. Det rigtige ciffer er ${answerFor(current,side)}.`;
