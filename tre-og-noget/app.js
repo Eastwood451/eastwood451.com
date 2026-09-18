@@ -59,7 +59,7 @@ function progress(){
     el.textContent=answerMode==='distance'?`${end}↔${start}`:`${c.a}−${c.b}`;
     if(heat){el.style.backgroundColor=heat.background;el.style.color=heat.foreground;el.style.borderColor=heat.background;}
     const timing=heat?`Seneste svar: ${(c.lastMs/1000).toFixed(2).replace('.',',')} sek.`:'Ikke øvet';
-    el.title=answerMode==='distance'?`Afstand ${end}↔${start}: ${c.b} · ${timing} · ${c.hits}/3 hurtige svar${c.hits===3?' · Lært':''}`:`?${c.a} − ?${c.b} = ?${c.c} · ${timing} · ${c.hits}/3 hurtige svar${c.hits===3?' · Lært':''}`;
+    el.title=answerMode==='distance'?`Afstand mellem ${end} og ${start} · ${timing} · ${c.hits}/3 hurtige svar${c.hits===3?' · Lært':''}`:`?${c.a} − ?${c.b} = ?${c.c} · ${timing} · ${c.hits}/3 hurtige svar${c.hits===3?' · Lært':''}`;
     el.setAttribute('aria-label',el.title);
     return el;
   }));
@@ -129,7 +129,7 @@ function submit(n){
   phase='feedback';clearTimeout(answerTimer);cancelAnimationFrame(frame);lockKeys(true);round++;
   const result=grade(current,side,value,ms,round);
   cards=cards.map(c=>c.id===current.id?result.card:c);current=result.card;
-  save({kind:'answer',card:current.id,side,value,ms,...(timedOut?{timedOut:true}:{})});renderQuestion(true);progress();
+  save({kind:'answer',card:current.id,side,value,ms,...(timedOut?{timedOut:true}:{})});const showWorked=side!=='distance'||!result.correct||ms>4000;renderQuestion(showWorked);progress();
   const visual=side==='distance'?$('distance-question'):$('circle');visual.classList.add(result.correct?'correct':'wrong');
   $('feedback').className='feedback '+(result.correct?'good':'bad');
   if(timedOut){
