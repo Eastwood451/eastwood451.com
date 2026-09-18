@@ -6,7 +6,7 @@ export function makeCards() {
     return {id:`${a}-${b}`,a,b,c:10+a-b,hits:0,attempts:0,due:0,lastMs:null,firstSide:['nw','ne','south'][Math.floor(Math.random()*3)]};
   })).flat();
 }
-export const ANSWER_MODES = ['nw','ne','south','all'];
+export const ANSWER_MODES = ['nw','ne','south','all','distance'];
 export function missingSide(card,mode='all'){
   if(!ANSWER_MODES.includes(mode))throw new Error('Ugyldigt svarfelt');
   if(mode!=='all')return mode;
@@ -18,6 +18,7 @@ export function answerFor(card,side){
   if(side==='nw')return card.a;
   if(side==='ne')return card.b;
   if(side==='south')return card.c;
+  if(side==='distance')return card.b;
   throw new Error('Ugyldigt svarfelt');
 }
 export function grade(card,side,value,ms,round){
