@@ -1,5 +1,5 @@
-import {ANSWER_MODES, grade} from './engine.js';
-import {freshProfile,restoreProfile,loadProfiles} from './storage.js';
+import {ANSWER_MODES, grade} from './engine.js?v=20260918-0640';
+import {freshProfile,restoreProfile,loadProfiles} from './storage.js?v=20260918-0640';
 
 const client=window.supabase.createClient('https://wpriingzftsboauvkmsj.supabase.co','sb_publishable_bSvkvx_Lqd5ZEt94oVdMaw_44WV2fYE');
 const $=id=>document.getElementById(id);
