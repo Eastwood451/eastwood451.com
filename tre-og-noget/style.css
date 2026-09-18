@@ -54,3 +54,41 @@ main>aside>.overall,main>aside>.collection{margin:0}
 .focus-row .quiet[aria-pressed="true"]{background:#e7eeff;border-color:var(--blue);color:var(--blue)}
 .focus-row .small{flex:1;min-width:180px}
 .collection .pair.focused{box-shadow:inset 0 0 0 2px #18253b}
+
+
+/* Circle exercises can be shown as the circle, a vertical subtraction, or both. */
+.circle-view-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 0 0}
+.circle-view-label{font-size:.875rem;font-weight:650;color:#52637c}
+.circle-view-toggle{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;flex:1;max-width:620px}
+.circle-view-button{min-height:42px;padding:8px 10px;border:1px solid #d5dfef;border-radius:10px;background:white;color:#53647b;font-size:.83rem;font-weight:650}
+.circle-view-button:hover{background:#edf2fd}
+.circle-view-button[aria-pressed="true"]{background:#e7eeff;border-color:var(--blue);color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue)}
+.circle-layout{width:100%;display:flex;align-items:center;justify-content:center;gap:clamp(26px,5vw,64px);min-width:0}
+.circle-layout.view-both .circle{max-width:380px}
+.vertical-equation{flex:0 0 205px;display:flex;flex-direction:column;align-items:stretch;justify-content:center;padding:14px 8px;font-variant-numeric:tabular-nums;color:#18253b}
+.equation-row{display:grid;grid-template-columns:36px 1fr;align-items:center}
+.equation-operator{display:grid;place-items:center;font-size:2rem;font-weight:450;color:#344962}
+.equation-value{display:grid;grid-template-columns:repeat(2,64px);justify-content:end}
+.equation-digit{width:64px;height:78px;display:grid;place-items:center;font-size:3.6rem;font-weight:650;line-height:1;letter-spacing:-.055em}
+.equation-digit.prefix{color:#8491a7;font-weight:400}
+.equation-missing{width:58px;height:70px;align-self:center;justify-self:center;color:var(--blue);background:#eef2ff;border:2px dashed #5372e5;border-radius:12px;font-size:3.1rem}
+.equation-rule{height:0;border-top:3px solid #344962;margin:2px 0 5px 36px}
+.vertical-equation.correct .equation-rule{border-color:var(--green)}
+.vertical-equation.wrong .equation-rule{border-color:#c34738}
+.vertical-equation.correct .equation-missing{color:var(--green);border-color:var(--green);background:#eaf8f0}
+.vertical-equation.wrong .equation-missing{color:#b1372b;border-color:#b1372b;background:#fff0ed}
+@media(max-width:700px){
+  .circle-view-row{align-items:flex-start;flex-direction:column}
+  .circle-view-toggle{width:100%;max-width:none}
+  .circle-view-button{font-size:.76rem;padding:8px 6px}
+  .circle-layout.view-both{flex-direction:column;gap:6px;padding:8px 0 14px}
+  .circle-layout.view-both .circle{max-width:330px}
+  .vertical-equation{flex-basis:auto;width:190px;padding:4px 8px}
+  .equation-value{grid-template-columns:repeat(2,58px)}
+  .equation-digit{width:58px;height:68px;font-size:3.1rem}
+  .equation-missing{width:52px;height:62px;font-size:2.7rem}
+}
+@media(max-width:420px){
+  .circle-view-toggle{grid-template-columns:1fr}
+  .circle-view-button{min-height:38px}
+}
