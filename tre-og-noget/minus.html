@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#234ee8"><meta name="description" content="Øv tocifrede minusstykker med valgfrit ét- eller tocifret tal, der trækkes fra."><title>Minusøvelse · Tre-og-noget</title><link rel="stylesheet" href="style.css?v=20260918-0700"><link rel="stylesheet" href="minus.css?v=20260918-0700"><script src="supabase-2.57.4.js"></script><script src="minus.js?v=20260918-0700" type="module"></script></head>
+<body class="minus-page">
+<p id="minus-loading" role="status">Åbner minusøvelsen …</p>
+<div id="minus-app" class="app" hidden>
+<nav class="account-bar"><a href="./">← Tre-og-noget</a><span id="account-label"></span></nav>
+<header><div class="brand"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17"/><path d="M9 20h22"/></svg><div><h1>Minusøvelse</h1><p>TOCIFREDE TAL</p></div></div><a class="quiet minus-back" href="./">Tilbage til cirkelopgaver</a></header>
+<main>
+<section class="practice minus-practice" aria-label="Minusøvelse">
+<div class="practice-head"><span class="eyebrow">ØV MINUSSTYKKER</span><span class="target">tocifret − ét eller tocifret</span></div>
+<div class="minus-settings">
+<div class="minus-setting"><span class="minus-setting-label">Det, der trækkes fra</span><div class="minus-toggle" role="group" aria-label="Ét eller to cifre i det, der trækkes fra"><button type="button" data-digits="one" aria-pressed="true">1 ciffer</button><button type="button" data-digits="two" aria-pressed="false">2 cifre</button></div></div>
+<div class="minus-setting"><span class="minus-setting-label">Énere</span><div class="minus-toggle" role="group" aria-label="Vælg enere"><button type="button" data-ones="borrow" aria-pressed="true">Øverste éner mindre end nederste</button><button type="button" data-ones="random" aria-pressed="false">Random énere</button></div></div>
+</div>
+<div class="stage minus-stage"><div id="problem" class="minus-problem" role="img"><div class="minus-problem-row"><span></span><span id="top-number" class="minus-problem-number">75</span></div><div class="minus-problem-row"><span class="minus-problem-operator" aria-hidden="true">−</span><span id="bottom-number" class="minus-problem-number">8</span></div><div class="minus-problem-rule" aria-hidden="true"></div><div class="minus-answer-row"><span></span><div id="answer-box" class="minus-answer-box"><span id="answer-value">?</span></div></div></div></div>
+<div id="feedback" class="minus-feedback" role="status" aria-live="polite">Skriv svaret og tryk Enter.</div>
+<div id="minus-keypad" class="minus-keypad" aria-label="Indtast svar"></div>
+<button id="next-question" type="button" class="primary minus-next" hidden>Næste opgave →</button>
+</section>
+<section class="minus-stats" aria-label="Denne session"><div class="minus-stat"><strong id="correct-count">0</strong><span>Korrekte</span></div><div class="minus-stat"><strong id="attempt-count">0</strong><span>Forsøg</span></div><div class="minus-stat"><strong id="streak-count">0</strong><span>I træk</span></div></section>
+</main>
+</div>
+</body></html>
