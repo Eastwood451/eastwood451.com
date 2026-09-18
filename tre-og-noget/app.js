@@ -9,6 +9,8 @@ const initial=await initialize().catch(error=>{
   throw error;
 });
 let autoContinue=initial.preferences?.autoContinue===true;
+const CIRCLE_VIEWS=['circle','calculation','both'];
+let circleView=CIRCLE_VIEWS.includes(initial.preferences?.circleView)?initial.preferences.circleView:'circle';
 const profiles=Object.fromEntries(ANSWER_MODES.map(mode=>[mode,restoreProfile(initial[mode])]));
 let answerMode=ANSWER_MODES.includes(initial.preferences?.answerMode)?initial.preferences.answerMode:'all';
 let {cards,round,lastId}=profiles[answerMode];
@@ -44,6 +46,7 @@ function toggleFocus(){
 $('hardest').addEventListener('click',toggleFocus);
 function progress(){
   renderFocus();
+  renderCircleView();
   $('progress-title').textContent='Din fremgang · '+MODE_LABELS[answerMode];
   $('heatmap-mode').textContent=MODE_LABELS[answerMode];
   $('practice-title').textContent=answerMode==='distance'?'FIND AFSTANDEN':'FIND DET MANGLENDE CIFFER';
@@ -65,11 +68,26 @@ function progress(){
   }));
 }
 function cell(digit,blank,reveal=false){return blank?`<span class="prefix">?</span><span class="missing">${reveal?digit:'?'}</span>`:`<span class="prefix">?</span>${digit}`}
+function equationCell(digit,blank,reveal=false){const value=blank?(reveal?digit:'?'):digit;return `<span class="equation-digit prefix">?</span><span class="equation-digit${blank?' equation-missing':''}">${value}</span>`}
+function renderCircleView(){
+  const circleTask=answerMode!=='distance';
+  $('circle-view-row').hidden=!circleTask;$('circle-layout').hidden=!circleTask;
+  if(!circleTask)return;
+  $('circle-layout').className=`circle-layout view-${circleView}`;
+  $('circle').hidden=circleView==='calculation';$('vertical-equation').hidden=circleView==='circle';
+  document.querySelectorAll('[data-circle-view]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.circleView===circleView)));
+}
+function renderEquation(reveal=false){
+  $('equation-top').innerHTML=equationCell(current.a,side==='nw',reveal);
+  $('equation-bottom').innerHTML=equationCell(current.b,side==='ne',reveal);
+  $('equation-result').innerHTML=equationCell(current.c,side==='south',reveal);
+  $('vertical-equation').setAttribute('aria-label',`Lodret regnestykke: ${side==='nw'&&!reveal?'manglende enerciffer':current.a} i første tal, minus ${side==='ne'&&!reveal?'manglende enerciffer':current.b} i andet tal, giver ${side==='south'&&!reveal?'manglende enerciffer':current.c} i resultatet.`);
+}
 function renderQuestion(reveal=false){
   $('question-progress').textContent=`Dette par: ${current.hits} af 3 hurtige svar`;
   if(side==='distance'){
     const graphic=reveal?numberLineExample(current):numberLineQuestion(current);
-    $('circle').hidden=true;
+    renderCircleView();
     $('distance-question').hidden=false;
     $('distance-question').className='distance-question';
     $('distance-prompt').textContent=reveal?`Afstanden er ${graphic.distance}.`:'Hvad er afstanden?';
@@ -77,13 +95,13 @@ function renderQuestion(reveal=false){
     $('distance-question').setAttribute('aria-label',reveal?`Afstanden mellem ${graphic.end} og ${graphic.start} er ${graphic.distance}.`:`Hvad er afstanden mellem ${graphic.end} og ${graphic.start}?`);
     return;
   }
-  $('circle').hidden=false;$('distance-question').hidden=true;
-  $('nw').innerHTML=cell(current.a,side==='nw',reveal);$('ne').innerHTML=cell(current.b,side==='ne',reveal);$('south').innerHTML=cell(current.c,side==='south',reveal);
+  $('distance-question').hidden=true;renderCircleView();
+  $('nw').innerHTML=cell(current.a,side==='nw',reveal);$('ne').innerHTML=cell(current.b,side==='ne',reveal);$('south').innerHTML=cell(current.c,side==='south',reveal);renderEquation(reveal);
   $('circle').setAttribute('aria-label',`${side==='nw'&&!reveal?'Manglende ciffer':current.a+' og noget'} minus ${side==='ne'&&!reveal?'manglende ciffer':current.b+' og noget'} giver ${side==='south'&&!reveal?'et manglende ciffer':current.c+' og noget eller '+current.c}.`);
 }
 function cancel(){token++;clearTimeout(scheduled);clearTimeout(answerTimer);cancelAnimationFrame(frame);lockKeys(true);$('answer-help').hidden=true;$('keypad').hidden=false;}
 function overlay(title,copy,label,mode){$('overlay').hidden=false;$('overlay').innerHTML=`<span class="eyebrow">TRE-OG-NOGET</span><h2>${title}</h2><p>${copy}</p><button class="primary" id="resume">${label}</button>`;$('resume').addEventListener('click',mode==='reset'?askReset:mode==='all'?toggleFocus:begin)}
-function nextQuestion(){cancel();$('next').hidden=true;$('circle').className='circle';$('distance-question').className='distance-question';current=pickCard(trainingCards(),lastId);if(!current){finishTraining();return}lastId=current.id;side=missingSide(current,answerMode);phase='preparing';$('overlay').hidden=true;renderQuestion();progress();$('feedback').textContent={nw:'Find cifret øverst til venstre.',ne:'Find cifret øverst til højre.',south:'Find cifret i nederste halvdel.',distance:'Indtast afstanden mellem de to markerede tal.'}[side];$('feedback').className='feedback';const ticket=token;frame=requestAnimationFrame(()=>{if(ticket!==token)return;startedAt=performance.now();phase='asking';lockKeys(false);expireQuestion(ticket)});}
+function nextQuestion(){cancel();$('next').hidden=true;$('circle').className='circle';$('vertical-equation').className='vertical-equation';$('distance-question').className='distance-question';current=pickCard(trainingCards(),lastId);if(!current){finishTraining();return}lastId=current.id;side=missingSide(current,answerMode);phase='preparing';$('overlay').hidden=true;renderQuestion();progress();$('feedback').textContent={nw:'Find cifret øverst til venstre.',ne:'Find cifret øverst til højre.',south:'Find cifret i nederste halvdel.',distance:'Indtast afstanden mellem de to markerede tal.'}[side];$('feedback').className='feedback';const ticket=token;frame=requestAnimationFrame(()=>{if(ticket!==token)return;startedAt=performance.now();phase='asking';lockKeys(false);expireQuestion(ticket)});}
 // Re-check elapsed time in case a timer fires early; the token rejects stale questions.
 function expireQuestion(ticket){
   if(ticket!==token||phase!=='asking')return;
@@ -130,7 +148,8 @@ function submit(n){
   const result=grade(current,side,value,ms,round);
   cards=cards.map(c=>c.id===current.id?result.card:c);current=result.card;
   save({kind:'answer',card:current.id,side,value,ms,...(timedOut?{timedOut:true}:{})});const showWorked=side!=='distance'||!result.correct||ms>4000;renderQuestion(showWorked);progress();
-  const visual=side==='distance'?$('distance-question'):$('circle');visual.classList.add(result.correct?'correct':'wrong');
+  const resultClass=result.correct?'correct':'wrong';
+  if(side==='distance')$('distance-question').classList.add(resultClass);else{$('circle').classList.add(resultClass);$('vertical-equation').classList.add(resultClass);}
   $('feedback').className='feedback '+(result.correct?'good':'bad');
   if(timedOut){
     $('feedback').textContent=side==='distance'?`Tiden er gået (5 sek.). Den rigtige afstand er ${answerFor(current,side)}.`:`Tiden er gået (5 sek.). Det rigtige ciffer er ${answerFor(current,side)}.`;
@@ -152,12 +171,12 @@ function renderModes(){
   document.querySelectorAll('[data-answer-mode]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.answerMode===answerMode)));
 }
 function showReady(){
-  $('pause').disabled=true;$('next').hidden=true;$('circle').className='circle';$('distance-question').className='distance-question';
+  $('pause').disabled=true;$('next').hidden=true;$('circle').className='circle';$('vertical-equation').className='vertical-equation';$('distance-question').className='distance-question';
   if(answerMode==='distance'){
     const preview=numberLineQuestion({a:2,b:4});
-    $('circle').hidden=true;$('distance-question').hidden=false;$('distance-prompt').textContent='Hvad er afstanden?';$('distance-line').innerHTML=preview.svg;
+    $('circle-layout').hidden=true;$('circle-view-row').hidden=true;$('distance-question').hidden=false;$('distance-prompt').textContent='Hvad er afstanden?';$('distance-line').innerHTML=preview.svg;
   }else{
-    $('circle').hidden=false;$('distance-question').hidden=true;
+    $('distance-question').hidden=true;renderCircleView();
   }
   $('question-progress').textContent='Tre hurtige, korrekte svar pr. par';
   $('feedback').textContent='Klar, når du er.';$('feedback').className='feedback';
@@ -165,7 +184,8 @@ function showReady(){
     finishTraining();
   }else{
     phase='idle';
-    const copy=answerMode==='distance'?'Find afstanden mellem de to markerede tal på tallinjen.':'Find det manglende ciffer i cirklen.';
+    const circleCopy={circle:'Find det manglende ciffer i cirklen.',calculation:'Find det manglende ciffer i det lodrette regnestykke.',both:'Find det manglende ciffer. Du ser både cirklen og det lodrette regnestykke.'}[circleView];
+    const copy=answerMode==='distance'?'Find afstanden mellem de to markerede tal på tallinjen.':circleCopy;
     overlay(`Træn ${MODE_LABELS[answerMode]}`,copy,cards.some(c=>c.attempts>0)?'Fortsæt træning':'Start træning');
   }
 }
@@ -178,8 +198,14 @@ function chooseMode(mode){
   save();enqueue({kind:'preferences',mode:'preferences',data:{answerMode}});renderModes();progress();
   if(wasRunning&&cards.some(c=>c.hits<3))begin();else showReady();
 }
+function chooseCircleView(view){
+  if(!CIRCLE_VIEWS.includes(view))throw new Error('Ugyldig cirkelvisning');
+  if(view===circleView)return;
+  circleView=view;renderCircleView();enqueue({kind:'preferences',mode:'preferences',data:{circleView}});
+}
 document.querySelectorAll('[data-answer-mode]').forEach(button=>button.addEventListener('click',()=>chooseMode(button.dataset.answerMode)));
-renderModes();
+document.querySelectorAll('[data-circle-view]').forEach(button=>button.addEventListener('click',()=>chooseCircleView(button.dataset.circleView)));
+renderModes();renderCircleView();
 
 progress();showReady();
 const context=document.modelContext;if(context?.registerTool){const lifecycle=new AbortController();try{Promise.resolve(context.registerTool({name:'read_training_progress',title:'Læs træningsfremgang',description:'Læs antal lærte par og hurtige svar uden at ændre træningen.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true},execute(input){if(input&&Object.keys(input).length)throw new Error('Ingen parametre forventes');return{answerMode,total:45,learned:cards.filter(c=>c.hits===3).length,phase,pairs:cards.map(c=>({pair:c.id,fastCorrect:c.hits,attempts:c.attempts}))}}},{signal:lifecycle.signal})).catch(()=>{})}catch{}window.addEventListener('pagehide',()=>lifecycle.abort(),{once:true})}
@@ -188,7 +214,7 @@ onUpdate(state=>{
   for(const mode of ANSWER_MODES)profiles[mode]=restoreProfile(state[mode]);
   ({cards,round}=profiles[answerMode]);
   if(current)current=cards.find(c=>c.id===current.id)||null;
-  autoContinue=state.preferences?.autoContinue===true;renderAutoContinue();progress();
+  autoContinue=state.preferences?.autoContinue===true;if(CIRCLE_VIEWS.includes(state.preferences?.circleView))circleView=state.preferences.circleView;renderAutoContinue();renderCircleView();progress();
   if(['idle','done','paused'].includes(phase))showReady();
 });
 
