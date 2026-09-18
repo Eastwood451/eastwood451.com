@@ -1,4 +1,5 @@
 export const LIMIT = 1000;
+export const ANSWER_TIMEOUT_MS = 5000;
 export function makeCards() {
   return Array.from({length:10},(_,a)=>Array.from({length:9-a},(_,n)=>{
     const b=a+n+1;
@@ -20,7 +21,9 @@ export function answerFor(card,side){
   throw new Error('Ugyldigt svarfelt');
 }
 export function grade(card,side,value,ms,round){
-  if(!Number.isInteger(value)||value<0||value>9||!Number.isFinite(ms)||ms<0)throw new Error('Ugyldigt svar');
+  // null records an unanswered timeout, never a guessed or fabricated digit.
+  const validValue=value===null?ms>=ANSWER_TIMEOUT_MS:Number.isInteger(value)&&value>=0&&value<=9;
+  if(!validValue||!Number.isFinite(ms)||ms<0)throw new Error('Ugyldigt svar');
   const correct=value===answerFor(card,side),fast=correct&&ms<=LIMIT;
   const gap=correct?Math.max(2,Math.round(14-Math.min(ms,3000)/250)):1;
   return {correct,fast,card:{...card,attempts:card.attempts+1,hits:Math.min(3,card.hits+(fast?1:0)),due:round+gap,lastMs:ms}};
