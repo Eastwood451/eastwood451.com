@@ -6,6 +6,7 @@ const headers = {'Cache-Control':'private, no-store','X-Content-Type-Options':'n
 const reply = (value,status=200) => Response.json(value,{status,headers});
 const fail = (message,status=400) => {throw Object.assign(new Error(message),{status});};
 export function validateFilters(raw={}) {
+ if(!raw||typeof raw!=='object'||Array.isArray(raw))fail('Ugyldigt filterobjekt.');
  const f={};
  for(const k of ['q','grade','topic','subtopic','difficulty','scope','status','view','collection']) if(raw[k]!==undefined && raw[k]!==null && raw[k]!=='') f[k]=String(raw[k]);
  if((f.q?.length||0)>200 || (f.subtopic?.length||0)>100) fail('Søgningen er for lang.');
@@ -21,7 +22,7 @@ async function body(request) {
  const reader=request.body?.getReader();if(!reader)fail('Tom forespørgsel.');let bytes=0,chunks=[];
  while(true){const {done,value}=await reader.read();if(done)break;bytes+=value.length;if(bytes>64000){await reader.cancel();fail('For stor forespørgsel.',413)}chunks.push(value)}
  const buffer=new Uint8Array(bytes);let offset=0;for(const c of chunks){buffer.set(c,offset);offset+=c.length}
- try{return JSON.parse(new TextDecoder().decode(buffer))}catch{fail('Ugyldig JSON.')}
+ try{const parsed=JSON.parse(new TextDecoder().decode(buffer));if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))fail('JSON-objekt kræves.');return parsed}catch{fail('Ugyldig JSON.')}
 }
 function validName(name){if(typeof name!=='string'||!name.trim()||name.length>150)fail('Angiv et navn på højst 150 tegn.');return name.trim()}
 export async function onRequest({request,env}) {
