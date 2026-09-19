@@ -30,9 +30,11 @@ header{gap:18px;flex-wrap:wrap}
 .answer-help p{margin:4px 5px 0;font-size:.875rem;line-height:1.5;color:#65537f}
 @media(max-width:380px){.auto-row{gap:8px}.auto-row small{display:block}.help-heading strong{font-size:1.2rem}}
 
-/* Keep the exercise full-width, with progress and the heatmap centered below. */
-main>aside{display:grid;grid-template-columns:minmax(0,1fr);justify-items:center;gap:18px;min-width:0}
-main>aside>*{width:100%;max-width:760px;min-width:0;margin:0}
+/* Desktop: exercise and input stay left; progress and heatmap sit to the right. */
+.app{max-width:1440px}
+main{grid-template-columns:minmax(0,1fr) minmax(350px,410px);align-items:start}
+main>aside{display:grid;grid-template-columns:minmax(0,1fr);align-content:start;gap:18px;min-width:0}
+main>aside>*{width:100%;min-width:0;margin:0}
 main>aside>.overall,main>aside>.collection{margin:0}
 .practice{min-width:0}
 .practice .stage{min-height:0;margin:16px 0 0;padding:16px 0}
@@ -44,7 +46,12 @@ main>aside>.overall,main>aside>.collection{margin:0}
 .practice .next{display:flex}
 .collection .pairs{grid-template-columns:repeat(9,minmax(0,1fr));gap:8px}
 .collection .pair{padding:11px 2px;font-size:1rem}
-@media(max-width:850px){.app{max-width:1000px}}
+@media(max-width:960px){
+  .app{max-width:1000px}
+  main{grid-template-columns:minmax(0,1fr)}
+  main>aside{justify-items:center}
+  main>aside>*{max-width:760px}
+}
 @media(max-width:600px){.distance-question{min-height:250px}.collection .pairs{grid-template-columns:repeat(5,minmax(0,1fr))}.overall,.collection{padding:20px}.practice .circle{max-width:340px}.practice .missing{width:60px;height:72px;font-size:3rem}.practice .stage{padding:10px 0}.practice .keypad button{min-height:56px}}
 @media(max-width:380px){.practice .slot{font-size:3rem}.collection .pairs{gap:6px}.collection .pair{font-size:.875rem}.practice .missing{width:55px;height:65px}}
 
