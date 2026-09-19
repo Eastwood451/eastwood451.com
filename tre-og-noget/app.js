@@ -165,7 +165,17 @@ function submit(n){
 function pause(){if(phase==='idle'||phase==='done'||phase==='paused')return;cancel();phase='paused';$('next').hidden=true;$('pause').disabled=true;overlay('Pause','Din fremgang er gemt.','Fortsæt træning');}
 function askReset(){pause();$('reset-copy').textContent=`Alle 45 par i ${MODE_LABELS[answerMode]} flyttes tilbage til øvebunken. De fire andre valg bevares.`;$('reset-dialog').showModal()}
 $('pause').addEventListener('click',pause);$('next').addEventListener('click',nextQuestion);$('reset').addEventListener('click',askReset);$('cancel-reset').addEventListener('click',()=>$('reset-dialog').close());$('confirm-reset').addEventListener('click',()=>{cancel();focusIds=null;({cards,round,lastId}=freshProfile());current=null;save({kind:'reset',data:{cards,round,lastId}});$('reset-dialog').close();progress();begin()});
-document.addEventListener('keydown',e=>{if($('reset-dialog').open)return;if(e.key==='Escape'){pause();return}if(e.repeat||e.ctrlKey||e.altKey||e.metaKey)return;if(/^[0-9]$/.test(e.key)&&phase==='asking'){e.preventDefault();submit(Number(e.key))}});document.addEventListener('visibilitychange',()=>{if(document.hidden)pause()});
+document.addEventListener('keydown',e=>{
+  if($('reset-dialog').open)return;
+  if(e.key==='Escape'){pause();return}
+  if(e.repeat||e.ctrlKey||e.altKey||e.metaKey)return;
+  if((e.code==='Space'||e.key===' ')&&phase==='review'&&!$('next').hidden){
+    e.preventDefault();
+    nextQuestion();
+    return;
+  }
+  if(/^[0-9]$/.test(e.key)&&phase==='asking'){e.preventDefault();submit(Number(e.key))}
+});document.addEventListener('visibilitychange',()=>{if(document.hidden)pause()});
 
 function renderModes(){
   document.querySelectorAll('[data-answer-mode]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.answerMode===answerMode)));
