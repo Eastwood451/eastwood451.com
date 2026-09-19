@@ -29,13 +29,39 @@ export function grade(card,side,value,ms,round){
   const gap=correct?Math.max(2,Math.round(14-Math.min(ms,3000)/250)):1;
   return {correct,fast,card:{...card,attempts:card.attempts+1,hits:Math.min(3,card.hits+(fast?1:0)),due:round+gap,lastMs:ms}};
 }
+export function practiceWeight(card,earliestDue){
+  // Slow/problematic pairs should dominate the mix instead of merely returning
+  // one round earlier. The heatmap's latest response time is the main signal.
+  const ms=Number.isFinite(card.lastMs)?card.lastMs:null;
+  let difficulty=1;
+  if(ms!==null){
+    if(ms<=1000)difficulty=.55;
+    else if(ms<=2000)difficulty=1.5;
+    else if(ms<=3000)difficulty=3;
+    else if(ms<=4000)difficulty=6;
+    else if(ms<5000)difficulty=12;
+    else difficulty=20;
+  }
+  // Repeated non-fast attempts are a second signal that the pair is sticky.
+  const nonFast=Math.max(0,card.attempts-card.hits);
+  difficulty*=1+Math.min(2,nonFast*.12);
+  // Keep spacing relevant, but do not let it bury a red/orange pair for many turns.
+  const dueDistance=Math.max(0,card.due-earliestDue);
+  return difficulty/(1+dueDistance*.35);
+}
 export function pickCard(cards,lastId,random=Math.random){
   let pool=cards.filter(c=>c.hits<3);
   if(pool.length>1)pool=pool.filter(c=>c.id!==lastId);
   if(!pool.length)return null;
   const earliest=Math.min(...pool.map(c=>c.due));
-  const candidates=pool.filter(c=>c.due===earliest);
-  return candidates[Math.min(candidates.length-1,Math.floor(random()*candidates.length))];
+  const weights=pool.map(c=>practiceWeight(c,earliest));
+  const total=weights.reduce((sum,w)=>sum+w,0);
+  let target=Math.max(0,Math.min(.999999999999,random()))*total;
+  for(let i=0;i<pool.length;i++){
+    target-=weights[i];
+    if(target<0)return pool[i];
+  }
+  return pool[pool.length-1];
 }
 
 export function heatColor(ms) {
