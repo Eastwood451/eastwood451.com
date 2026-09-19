@@ -1,0 +1,13 @@
+{
+  "name": "eastwood451-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:library": "node --test tests/library.test.mjs",
+    "build:library": "node tools/matematikbibliotek/build.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "4.135.0",
+    "supabase": "2.117.0"
+  }
+}

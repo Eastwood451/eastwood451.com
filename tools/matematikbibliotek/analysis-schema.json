@@ -1,0 +1,133 @@
+{
+  "type": "object",
+  "properties": {
+    "pages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string",
+            "enum": [
+              "math",
+              "other",
+              "unknown"
+            ]
+          },
+          "material_type": {
+            "type": "string",
+            "enum": [
+              "student",
+              "answers",
+              "teacher",
+              "other"
+            ]
+          },
+          "needs_review": {
+            "type": "boolean"
+          },
+          "visual_inspected": {
+            "type": "boolean"
+          },
+          "assessments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "topic": {
+                  "type": "string",
+                  "enum": [
+                    "tal",
+                    "regning",
+                    "broeker",
+                    "decimaltal",
+                    "procent",
+                    "algebra",
+                    "geometri",
+                    "maaling",
+                    "funktioner",
+                    "statistik",
+                    "sandsynlighed",
+                    "oekonomi",
+                    "problemlosning",
+                    "logik"
+                  ]
+                },
+                "subtopic": {
+                  "type": "string"
+                },
+                "skill": {
+                  "type": "string"
+                },
+                "grade_min": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 12
+                },
+                "grade_max": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 12
+                },
+                "difficulty": {
+                  "type": "string",
+                  "enum": [
+                    "let",
+                    "middel",
+                    "svaer",
+                    "uafklaret"
+                  ]
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "topic",
+                "subtopic",
+                "skill",
+                "grade_min",
+                "grade_max",
+                "difficulty",
+                "confidence",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "summary",
+          "subject",
+          "material_type",
+          "needs_review",
+          "visual_inspected",
+          "assessments"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "pages"
+  ],
+  "additionalProperties": false
+}
