@@ -82,7 +82,7 @@ def ingest(root,data):
     report={'files':len(paths),'readable_files':db.execute('select count(*) from locations l join contents c on c.hash=l.hash where l.active=1 and c.error is null').fetchone()[0],
       'original_pages':db.execute('select sum(c.page_count) from locations l join contents c on c.hash=l.hash where l.active=1').fetchone()[0],
       'unique_contents':db.execute('select count(distinct hash) from locations where active=1').fetchone()[0],
-      'unique_pages':db.execute('select count(*) from pages').fetchone()[0],
+      'unique_pages':db.execute('select count(*) from pages p where exists(select 1 from locations l where l.hash=p.hash and l.active=1)').fetchone()[0],
       'drive':dict(db.execute('select drive_status,count(*) from locations where active=1 group by drive_status')),
       'errors':[dict(r) for r in db.execute('select path,error from locations where active=1 and error is not null')]}
     (data/'import-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')

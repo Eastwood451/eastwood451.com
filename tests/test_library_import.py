@@ -16,4 +16,5 @@ class ImportTests(unittest.TestCase):
    db.execute("update pages set analysis_json='preserved',status='complete'");db.commit();db.close();lib.ingest(root,data);db=lib.connect(data)
    self.assertEqual(db.execute('select analysis_json from pages').fetchone()[0],'preserved');db.close()
    (root/'Kopi.pdf').unlink();lib.ingest(root,data);db=lib.connect(data);self.assertEqual(db.execute("select active from locations where path='Kopi.pdf'").fetchone()[0],0);db.close()
+   (root/'Opgave.pdf').unlink();lib.ingest(root,data);report=json.loads((data/'import-report.json').read_text(encoding='utf-8'));self.assertEqual(report['unique_pages'],0)
 if __name__=='__main__':unittest.main()

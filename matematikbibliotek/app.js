@@ -3,13 +3,11 @@ const el = (tag,text,cls) => {const n=document.createElement(tag);if(text!==unde
 const labels={pending:'Afventer analyse',review:'Kræver gennemgang',complete:'Færdigvurderet',error:'Fejl'};
 const difficulty={let:'Let',middel:'Middel',svaer:'Svær'};
 const format = n => new Intl.NumberFormat('da-DK').format(n||0);
-let client,session,bootstrap,controller,offset=0,total=0,view='files',editing,adding,searchTimer;
+let bootstrap,controller,offset=0,total=0,view='files',editing,adding,searchTimer;
 const objectUrls=new Set();
 const filters=()=>Object.fromEntries(['q','grade','topic','subtopic','difficulty','scope','status','collection'].map(id=>[id,$(id).value]).concat([['view',view]]));
 async function api(path,options={}){
- const {data}=await client.auth.getSession();session=data.session;
- if(!session)throw new Error('Log ind for at åbne biblioteket.');
- const response=await fetch('/api/library/'+path,{...options,headers:{Authorization:'Bearer '+session.access_token,...(options.body?{'Content-Type':'application/json'}:{}),...options.headers}});
+ const response=await fetch('/api/library/'+path,{...options,headers:{...(options.body?{'Content-Type':'application/json'}:{}),...options.headers}});
  const value=await response.json();if(!response.ok)throw new Error(value.error||'Handlingen mislykkedes.');return value;
 }
 function option(select,value,label){const o=el('option',label);o.value=value;select.append(o)}
@@ -29,12 +27,12 @@ function applyFilters(f){for(const id of ['q','grade','topic','subtopic','diffic
 function updateView(){$('view-files').setAttribute('aria-pressed',view==='files');$('view-pages').setAttribute('aria-pressed',view==='pages')}
 function tag(text){return el('span',text,'tag')}
 async function thumbnail(image,id){
- try{const r=await fetch('/api/library/preview/'+encodeURIComponent(id),{headers:{Authorization:'Bearer '+session.access_token}});if(!r.ok)return;const blob=await r.blob();if(!image.isConnected)return;const url=URL.createObjectURL(blob);objectUrls.add(url);image.src=url;image.hidden=false;image.previousElementSibling.hidden=true;image.parentElement.classList.add('ready');image.parentElement.tabIndex=0;image.parentElement.setAttribute('role','button');image.parentElement.setAttribute('aria-label','Forstør '+image.alt)}catch{/* The catalogue remains usable if a preview is not available. */}
+ try{const r=await fetch('/api/library/preview/'+encodeURIComponent(id));if(!r.ok)return;const blob=await r.blob();if(!image.isConnected)return;const url=URL.createObjectURL(blob);objectUrls.add(url);image.src=url;image.hidden=false;image.previousElementSibling.hidden=true;image.parentElement.classList.add('ready');image.parentElement.tabIndex=0;image.parentElement.setAttribute('role','button');image.parentElement.setAttribute('aria-label','Forstør '+image.alt)}catch{/* The catalogue remains usable if a preview is not available. */}
 }
 const previewObserver=new IntersectionObserver(entries=>{for(const e of entries)if(e.isIntersecting){previewObserver.unobserve(e.target);thumbnail(e.target.querySelector("img"),e.target.dataset.page)}},{rootMargin:'200px'});
 function card(item){
  const c=el('article',undefined,'card'),preview=el('div',undefined,'preview');preview.append(el('span','∑','placeholder'));const img=el('img');img.alt='Forhåndsvisning af '+item.title+', side '+item.number;img.hidden=true;img.dataset.page=item.page_id;const enlarge=()=>{if(!img.src)return;$('preview-title').textContent=item.title+' · Side '+item.number;$('preview-large').src=img.src;$('preview-large').alt=img.alt;$('preview-dialog').showModal()};preview.onclick=enlarge;preview.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();enlarge()}};preview.append(img,el('span','Side '+item.number+' af '+item.page_count,'page-chip'));c.append(preview);
- const b=el('div',undefined,'card-body');b.append(el('span',item.corrected?'Din vurdering':labels[item.status], 'status '+item.status),el('h3',item.title.replace(/_+/g,' ')));
+ const b=el('div',undefined,'card-body');b.append(el('span',item.corrected?'Manuelt rettet':labels[item.status], 'status '+item.status),el('h3',item.title.replace(/_+/g,' ')));
  b.append(el('p',item.summary||'Indholdet er registreret og afventer faglig vurdering.','description'));
  const tags=el('div',undefined,'tags');for(const a of item.assessments){const name=bootstrap.topics.find(t=>t.id===a.topic)?.label||a.topic;const level=a.grade_min===null?'Niveau uafklaret':(a.grade_min===a.grade_max?a.grade_min:a.grade_min+'–'+a.grade_max)+'. kl.';const t=tag(name+' · '+level+(a.difficulty?' · '+difficulty[a.difficulty]:''));t.title=[a.subtopic,a.skill,a.reason].filter(Boolean).join(' → ');tags.append(t)}b.append(tags);
  if(view==='files'&&item.matched_pages>1)b.append(el('p',format(item.matched_pages)+' sider matcher søgningen.','hint'));
@@ -78,9 +76,6 @@ $('new-collection').onclick=async()=>{const name=prompt('Navn på samlingen:');i
 for(const id of ['q','subtopic'])$(id).oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(search,250)};
 for(const id of ['grade','topic','difficulty','scope','status','collection'])$(id).onchange=()=>search();
 $('view-files').onclick=()=>{view='files';updateView();search()};$('view-pages').onclick=()=>{view='pages';updateView();search()};$('clear').onclick=()=>{applyFilters({});search()};$('prev').onclick=()=>{offset=Math.max(0,offset-30);search(false)};$('next').onclick=()=>{offset+=30;search(false)};
-$('login-form').onsubmit=async e=>{e.preventDefault();const button=e.submitter;button.disabled=true;try{const {error}=await client.auth.signInWithOtp({email:$('email').value.trim(),options:{shouldCreateUser:false,emailRedirectTo:location.origin+'/matematikbibliotek/'}});if(error)throw error;$('login-message').textContent='Hvis adressen har adgang, modtager du et loginlink. Åbn det i denne browser.'}catch(error){$('login-message').textContent=error.message}finally{button.disabled=false}};
 $('close-preview').onclick=()=>$('preview-dialog').close();
-$('logout').onclick=async()=>{await client.auth.signOut();location.reload()};
-async function showLibrary(){try{await refreshBootstrap();$('login').hidden=true;$('library').hidden=false;$('logout').hidden=false;await search()}catch(e){$('login-message').textContent=e.message;$('logout').hidden=false}}
-async function init(){try{const config=await fetch('/api/config').then(r=>r.json());if(!config.supabaseUrl||!config.supabaseAnonKey)throw new Error('Biblioteket er endnu ikke konfigureret.');client=window.supabase.createClient(config.supabaseUrl,config.supabaseAnonKey,{auth:{storageKey:'math-library-auth',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});const {data}=await client.auth.getSession();session=data.session;if(session)await showLibrary();client.auth.onAuthStateChange((event,newSession)=>{session=newSession;if(event==='SIGNED_IN'&&$('library').hidden)setTimeout(showLibrary,0)})}catch(error){$('login-message').textContent=error.message}}
+async function init(){try{await refreshBootstrap();await search()}catch(error){$('notice').textContent=error.message;$('result-count').textContent='Biblioteket kunne ikke hentes.'}}
 if(document.readyState==='complete')init();else window.addEventListener('load',init,{once:true});
