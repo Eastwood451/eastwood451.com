@@ -1,6 +1,30 @@
 {
-  "$schema": "https://json.schemastore.org/wrangler.json",
+  "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "eastwood451-com",
   "compatibility_date": "2026-09-02",
-  "pages_build_output_dir": "."
+  "pages_build_output_dir": "dist",
+  "r2_buckets": [
+    {
+      "binding": "MATH_PREVIEWS",
+      "bucket_name": "matematikbibliotek-previews"
+    }
+  ],
+  "vars": {
+    "SUPABASE_URL": "https://wpriingzftsboauvkmsj.supabase.co",
+    "SUPABASE_ANON_KEY": "sb_publishable_bSvkvx_Lqd5ZEt94oVdMaw_44WV2fYE"
+  },
+  "env": {
+    "preview": {
+      "r2_buckets": [
+        {
+          "binding": "MATH_PREVIEWS",
+          "bucket_name": "matematikbibliotek-previews"
+        }
+      ],
+      "vars": {
+        "SUPABASE_URL": "https://wpriingzftsboauvkmsj.supabase.co",
+        "SUPABASE_ANON_KEY": "sb_publishable_bSvkvx_Lqd5ZEt94oVdMaw_44WV2fYE"
+      }
+    }
+  }
 }

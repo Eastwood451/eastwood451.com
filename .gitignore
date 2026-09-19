@@ -1,0 +1,12 @@
+node_modules/
+.wrangler/
+.dev.vars*
+.env*
+dist/
+__pycache__/
+*.sqlite*
+*.db
+*.jsonl
+*.pdf
+supabase/.temp/
+supabase/.branches/
