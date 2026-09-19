@@ -1,4 +1,4 @@
-import {makeCards,missingSide,answerFor,grade,pickCard,heatColor,hardestCards,ANSWER_MODES,ANSWER_TIMEOUT_MS} from './engine.js?v=20260918-0640';
+import {makeCards,missingSide,answerFor,grade,pickCard,heatColor,hardestCards,ANSWER_MODES,ANSWER_TIMEOUT_MS} from './engine.js?v=20260919-1905';
 import {freshProfile,restoreProfile} from './storage.js?v=20260918-0640';
 import {initialize,enqueue,onUpdate} from './cloud.js?v=20260918-0640';
 import {needsAnswerHelp,numberLineExample,numberLineQuestion} from './number-line.js?v=20260918-0640';
