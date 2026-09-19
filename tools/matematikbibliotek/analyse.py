@@ -29,7 +29,7 @@ def main():
     jobs=data/'analysis';jobs.mkdir(exist_ok=True)
     schema=Path(__file__).with_name('analysis-schema.json'); local_schema=jobs/'schema.json';local_schema.write_bytes(schema.read_bytes())
     if a.all_pending:
-        rows=[dict(r) for r in db.execute('select id,hash,number,text from pages where analysis_json is null order by hash,number limit ?',(a.max_pages,))]
+        rows=[dict(r) for r in db.execute('select id,hash,number,text from pages p where analysis_json is null and exists(select 1 from locations l where l.hash=p.hash and l.active=1) order by hash,number limit ?',(a.max_pages,))]
         for r in rows:r['image']=str(data/'previews'/r['hash']/f"{r['number']}.jpg")
         rows=[r for r in rows if Path(r['image']).exists()]
     pending=[r for r in rows if a.force or not db.execute('select analysis_json from pages where id=?',(r['id'],)).fetchone()[0]]

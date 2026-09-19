@@ -1,5 +1,5 @@
 // UI integration using real catalogue fixtures and a mocked transport.
-// Authentication and database persistence are verified separately in library.test.mjs/library-regression.sql.
+// Public API access and database persistence are verified separately in library.test.mjs/library-regression.sql.
 import {createRequire} from 'node:module';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -14,7 +14,6 @@ const items=[];
 await page.route('http://library.test/**',async route=>{
  const req=route.request(),u=new URL(req.url()),p=decodeURIComponent(u.pathname),method=req.method();
  const json=v=>route.fulfill({contentType:'application/json',body:JSON.stringify(v)});
- if(p==='/tre-og-noget/supabase-2.57.4.js')return route.fulfill({contentType:'application/javascript',body:`window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:{access_token:'ui-test-only'}}}),onAuthStateChange:()=>{},signOut:async()=>{}}})}`});
  if(p==='/api/config')return json({supabaseUrl:'https://fixture.invalid',supabaseAnonKey:'fixture'});
  if(p==='/api/library/bootstrap')return json(fixture);
  if(p.startsWith('/api/library/preview/')){const id=p.split('/').at(-1);return route.fulfill({contentType:'image/jpeg',body:await fs.readFile(path.join(data,'previews',id.replace(':','/')+'.jpg'))})}
@@ -27,7 +26,7 @@ await page.route('http://library.test/**',async route=>{
  if(p.startsWith('/matematikbibliotek/')){const name=p.split('/').at(-1)||'index.html';return route.fulfill({contentType:name.endsWith('.js')?'application/javascript':name.endsWith('.css')?'text/css':'text/html',body:await fs.readFile(path.join('matematikbibliotek',name))})}
  return route.fulfill({status:404,body:''});
 });
-await page.goto('http://library.test/matematikbibliotek/');await page.locator('.card').first().waitFor();
+await page.goto('http://library.test/matematikbibliotek/');await page.locator('.card').first().waitFor();assert.equal(await page.locator('#login').count(),0);
 await page.locator('.preview.ready').first().waitFor();assert.ok(await page.locator('.preview img').first().evaluate(img=>img.naturalWidth>0));
 await page.locator('.preview.ready').first().click();assert.equal(await page.locator('#preview-dialog').isVisible(),true);await page.locator('#close-preview').click();
 await page.locator('#grade').selectOption('3');await page.locator('#topic').selectOption('broeker');await page.locator('#difficulty').selectOption('let');await page.waitForFunction(()=>!document.querySelector('#result-count').hasAttribute('aria-busy'));
@@ -40,4 +39,4 @@ await page.locator('.card').first().getByRole('button',{name:'＋ Gem'}).click()
 await page.reload();await page.locator('.card').first().waitFor();assert.ok((await page.locator('.card').first().textContent()).includes('Ændret beskrivelse: æ ø å'));assert.equal(await page.getByRole('button',{name:'Mine lette brøker'}).count(),1);
 await page.screenshot({path:path.join(data,'preview-library-desktop.png'),fullPage:true});
 await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.join(data,'preview-library-mobile.png'),fullPage:true});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
-assert.deepEqual(errors,[]);console.log(JSON.stringify({passed:['real page images','preview zoom','combined filter request','page view','edit dialog','saved filter reload','collection item','Danish text','mobile width','no browser errors'],transport:'fixture; DB and auth separately tested'}));await browser.close();
+assert.deepEqual(errors,[]);console.log(JSON.stringify({passed:['real page images','preview zoom','combined filter request','page view','edit dialog','saved filter reload','collection item','Danish text','mobile width','no browser errors'],transport:'fixture; DB and public API separately tested'}));await browser.close();

@@ -29,19 +29,15 @@ export async function onRequest({request,env}) {
  try {
   const url=new URL(request.url),route=decodeURIComponent(url.pathname.slice(BASE.length));
   if(!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY)return reply({error:'Biblioteket er endnu ikke konfigureret.'},503);
-  const token=request.headers.get('authorization');
-  if(!token?.startsWith('Bearer ')||token.length>8192)return reply({error:'Log ind for at åbne biblioteket.'},401);
   if(!['GET','HEAD'].includes(request.method)&&request.headers.get('origin')!==url.origin)return reply({error:'Ugyldig oprindelse.'},403);
-  const authHeaders={apikey:env.SUPABASE_ANON_KEY,Authorization:token};
-  const userResponse=await fetch(env.SUPABASE_URL+'/auth/v1/user',{headers:authHeaders});
-  if(!userResponse.ok)return reply({error:'Dit login er udløbet.'},401);
-  const user=await userResponse.json();if(!user.id||!user.email_confirmed_at)return reply({error:'Adgang afvist.'},403);
+  // Intentionally public, shared catalogue. Database grants limit anonymous writes
+  // to manual assessments, saved filters and collections; import/AI data stays protected.
+  const authHeaders={apikey:env.SUPABASE_ANON_KEY};
   async function db(path,method='GET',payload) {
    const res=await fetch(env.SUPABASE_URL+'/rest/v1/'+path,{method,headers:{...authHeaders,'Content-Type':'application/json',Prefer:'return=representation'},...(payload!==undefined?{body:JSON.stringify(payload)}:{})});
    if(!res.ok){console.error(JSON.stringify({event:'library_db_error',status:res.status,route:route.split('/')[0]}));fail('Databasen kunne ikke udføre handlingen.',res.status===403?403:502)}
    const text=await res.text();return text?JSON.parse(text):null;
   }
-  if(await db('rpc/math_is_owner','POST',{})!==true)return reply({error:'Biblioteket er privat.'},403);
   if(route==='search' && request.method==='GET') {
    const f=validateFilters(Object.fromEntries(url.searchParams));
    const offset=Math.max(0,Math.min(Number(url.searchParams.get('offset'))||0,100000));

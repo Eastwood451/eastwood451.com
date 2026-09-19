@@ -1,12 +1,11 @@
 # Matematikbiblioteket
 
-Private PDF catalogue at /matematikbibliotek/. The static app contains no catalogue data. Pages Functions validate the Supabase user and owner membership for every request. Database RLS independently enforces the same owner restriction. Original PDFs stay in Drive; R2 stores private derived JPEG previews only.
+Public, shared PDF catalogue at /matematikbibliotek/, explicitly requested by the owner. No login is required. Everyone can search, read previews, correct manual tags, save filters and edit collections. Original PDFs stay in Drive with their existing sharing settings. R2 remains private and serves derived JPEGs through Pages Functions.
 
 ## Setup
 
-- Apply migrations in supabase/migrations using the existing authorized Supabase connection. Add the designated confirmed auth user to math_owners. Never grant anonymous access or use a service key in the browser.
-- Configure SUPABASE_URL and the publishable SUPABASE_ANON_KEY in Pages; bind private R2 bucket as MATH_PREVIEWS. Keep r2.dev public access disabled.
-- Supabase Auth must allow the production and approved preview URLs as email-link redirects. New account signup is disabled in the library login flow.
+- Apply migrations in supabase/migrations using the existing authorized Supabase connection. RLS permits public catalogue reads and shared manual edits. Anonymous users cannot modify source files, extracted text, AI assessments or import jobs. Never use a service key in the browser.
+- Configure SUPABASE_URL and the publishable SUPABASE_ANON_KEY in Pages; bind private R2 bucket as MATH_PREVIEWS. Keep r2.dev public access disabled. No Auth provider or redirect configuration is required for this app.
 - Cloudflare Pages build: npm run build:library, output dist. The GitHub Pages workflow also publishes only dist. Build output excludes tools, tests, database migrations, original PDFs, extraction data and credentials.
 
 ## Local import
@@ -46,7 +45,7 @@ Updates are manual. There is no scheduler, automatic paid fallback, or PDF mergi
 - python tests/test_library_import.py: duplicate hashes, empty file, ambiguous Drive match and resumable import.
 - tests/library-regression.sql: real database assertions for same-page/assessment filtering, manual corrections, reimport, saved filters, collections, Danish text and RLS. All fixture changes roll back.
 - node tests/library-ui.mjs DATA: browser interaction using private real-material fixtures and a mocked transport; this complements, not replaces, actual auth/database tests.
-- node tests/preview.mjs: actual deployed login page smoke test.
-- Build then deploy a preview; inspect actual materials and owner login before production. Do not include fixture screenshots or data in the deployment.
+- node tests/preview.mjs: actual deployed public access smoke test.
+- Build then deploy a preview; inspect actual materials and public search/preview access before production. Do not include fixture screenshots or data in the deployment.
 
 The optimized database query selects the result page before fetching details. Measured on 17,385 unique pages: about 200 ms for an unfiltered search and 107 ms for grade+topic+difficulty. These are database timings, not an end-to-end network guarantee.

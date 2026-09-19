@@ -4,7 +4,7 @@ from pathlib import Path
 
 def main():
  ap=argparse.ArgumentParser();ap.add_argument('--data',type=Path,required=True);a=ap.parse_args();db=sqlite3.connect(a.data/'catalogue.sqlite');db.row_factory=sqlite3.Row
- counts=dict(db.execute('select status,count(*) from pages group by status'));uploaded=json.loads((a.data/'uploaded-previews.json').read_text(encoding='utf-8')) if (a.data/'uploaded-previews.json').exists() else []
+ counts=dict(db.execute('select status,count(*) from pages p where exists(select 1 from locations l where l.hash=p.hash and l.active=1) group by status'));uploaded=json.loads((a.data/'uploaded-previews.json').read_text(encoding='utf-8')) if (a.data/'uploaded-previews.json').exists() else []
  for status,name in [('pending','afventer-analyse.csv'),('review','kraever-gennemgang.csv')]:
   with (a.data/name).open('w',encoding='utf-8-sig',newline='') as f:
    writer=csv.writer(f);writer.writerow(['side_id','fil','sidetal','drive_id','drive_link','status'])
