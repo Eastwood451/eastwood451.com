@@ -15,6 +15,7 @@ const profiles=Object.fromEntries(ANSWER_MODES.map(mode=>[mode,restoreProfile(in
 let answerMode=ANSWER_MODES.includes(initial.preferences?.answerMode)?initial.preferences.answerMode:'all';
 let {cards,round,lastId}=profiles[answerMode];
 let focusIds=null;
+let selectedIds=null;
 let current=null,side='nw',phase='idle',startedAt=0,frame=0,scheduled=0,answerTimer=0,token=0;
 function save(operation){
   profiles[answerMode]={cards,round,lastId};
@@ -22,30 +23,70 @@ function save(operation){
 }
 function lockKeys(locked){document.querySelectorAll('#keypad button').forEach(b=>b.disabled=locked)}
 for(const n of [1,2,3,4,5,6,7,8,9,0]){const b=document.createElement('button');b.textContent=n;b.type='button';b.disabled=true;b.setAttribute('aria-label',`Svar ${n}`);b.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();submit(n)});b.addEventListener('click',e=>{if(e.detail===0)submit(n)});$('keypad').append(b)}
-function trainingCards(){return focusIds?cards.filter(c=>focusIds.includes(c.id)):cards;}
+function trainingCards(){
+  if(selectedIds?.length)return cards.filter(c=>selectedIds.includes(c.id));
+  return focusIds?cards.filter(c=>focusIds.includes(c.id)):cards;
+}
+function renderPairSelection(){
+  const allActive=selectedIds===null&&focusIds===null;
+  $('select-all-pairs').setAttribute('aria-pressed',String(allActive));
+  $('pairs-selection-label').textContent=selectedIds?.length
+    ?`${selectedIds.length} valgt`
+    :focusIds?.length?`${focusIds.length} sværeste`:'Alle par';
+}
+function applyPairSelection(){
+  cancel();
+  current=null;
+  progress();
+  if(trainingCards().some(c=>c.hits<3))begin();
+  else showReady();
+}
+function togglePairSelection(id){
+  focusIds=null;
+  const next=new Set(selectedIds??[]);
+  if(selectedIds===null)next.add(id);
+  else if(next.has(id))next.delete(id);
+  else next.add(id);
+  selectedIds=next.size?[...next]:null;
+  applyPairSelection();
+}
+function selectAllPairs(){
+  if(selectedIds===null&&focusIds===null)return;
+  selectedIds=null;
+  focusIds=null;
+  applyPairSelection();
+}
 function renderFocus(){
   const available=hardestCards(cards);
   $('hardest').textContent=focusIds?'Træn alle par':'Træn de 4 sværeste';
   $('hardest').setAttribute('aria-pressed',String(Boolean(focusIds)));
-  $('hardest').disabled=!focusIds&&!available.length;
-  $('focus-note').textContent=focusIds
-    ?`${focusIds.length} svære par · ${MODE_LABELS[answerMode]}`
-    :available.length?'Vælger øvede par med længst seneste svartid.':'Øv nogle par først. Kun par, der ikke er lært, vælges.';
+  $('hardest').disabled=Boolean(selectedIds)||(!focusIds&&!available.length);
+  if(selectedIds?.length){
+    $('focus-note').textContent=`${selectedIds.length} selvvalgte par · ${MODE_LABELS[answerMode]}`;
+  }else{
+    $('focus-note').textContent=focusIds
+      ?`${focusIds.length} svære par · ${MODE_LABELS[answerMode]}`
+      :available.length?'Vælger øvede par med længst seneste svartid.':'Øv nogle par først. Kun par, der ikke er lært, vælges.';
+  }
 }
 function finishTraining(){
   phase='done';$('pause').disabled=true;progress();
-  if(focusIds)overlay('De svære par er lært!',`Du har lært alle ${focusIds.length} par i denne gruppe.`,'Træn alle par','all');
+  if(selectedIds)overlay('De valgte par er lært!',`Du har lært alle ${selectedIds.length} valgte par.`,'Træn alle par','selected-all');
+  else if(focusIds)overlay('De svære par er lært!',`Du har lært alle ${focusIds.length} par i denne gruppe.`,'Træn alle par','all');
   else overlay('Alle 45 er lært!',`Du har nået målet i ${MODE_LABELS[answerMode]}.`,'Træn forfra','reset');
 }
 function toggleFocus(){
+  selectedIds=null;
   const selected=focusIds?null:hardestCards(cards).map(c=>c.id);
   if(selected&&!selected.length)return;
   cancel();focusIds=selected;current=null;progress();
   if(trainingCards().some(c=>c.hits<3))begin();else showReady();
 }
 $('hardest').addEventListener('click',toggleFocus);
+$('select-all-pairs').addEventListener('click',selectAllPairs);
 function progress(){
   renderFocus();
+  renderPairSelection();
   renderCircleView();
   $('progress-title').textContent='Din fremgang · '+MODE_LABELS[answerMode];
   $('heatmap-mode').textContent=MODE_LABELS[answerMode];
@@ -56,14 +97,24 @@ function progress(){
   $('learned-count').textContent=learned;$('learning-count').textContent=45-learned;
   $('percent').textContent=Math.round(learned/45*100)+' %';$('overall-progress').value=learned;
   $('pairs').replaceChildren(...cards.map(c=>{
-    const el=document.createElement('div'),heat=heatColor(c.lastMs);
-    el.className='pair'+(focusIds?.includes(c.id)?' focused':'')+(current?.id===c.id&&phase!=='idle'?' active':'');
+    const el=document.createElement('div'),heat=heatColor(c.lastMs),isSelected=Boolean(selectedIds?.includes(c.id));
+    el.className='pair'+(isSelected?' selected':'')+(focusIds?.includes(c.id)?' focused':'')+(current?.id===c.id&&phase!=='idle'?' active':'');
+    el.setAttribute('role','button');
+    el.setAttribute('tabindex','0');
+    el.setAttribute('aria-pressed',String(isSelected));
     const start=80+c.a,end=start-c.b;
     el.textContent=answerMode==='distance'?`${end}↔${start}`:`${c.a}−${c.b}`;
     if(heat){el.style.backgroundColor=heat.background;el.style.color=heat.foreground;el.style.borderColor=heat.background;}
     const timing=heat?`Seneste svar: ${(c.lastMs/1000).toFixed(2).replace('.',',')} sek.`:'Ikke øvet';
     el.title=answerMode==='distance'?`Afstand mellem ${end} og ${start} · ${timing} · ${c.hits}/3 hurtige svar${c.hits===3?' · Lært':''}`:`?${c.a} − ?${c.b} = ?${c.c} · ${timing} · ${c.hits}/3 hurtige svar${c.hits===3?' · Lært':''}`;
     el.setAttribute('aria-label',el.title);
+    el.addEventListener('click',()=>togglePairSelection(c.id));
+    el.addEventListener('keydown',event=>{
+      if(event.key==='Enter'||event.key===' '){
+        event.preventDefault();
+        togglePairSelection(c.id);
+      }
+    });
     return el;
   }));
 }
@@ -100,7 +151,7 @@ function renderQuestion(reveal=false){
   $('circle').setAttribute('aria-label',`${side==='nw'&&!reveal?'Manglende ciffer':current.a+' og noget'} minus ${side==='ne'&&!reveal?'manglende ciffer':current.b+' og noget'} giver ${side==='south'&&!reveal?'et manglende ciffer':current.c+' og noget eller '+current.c}.`);
 }
 function cancel(){token++;clearTimeout(scheduled);clearTimeout(answerTimer);cancelAnimationFrame(frame);lockKeys(true);$('answer-help').hidden=true;$('keypad').hidden=false;}
-function overlay(title,copy,label,mode){$('overlay').hidden=false;$('overlay').innerHTML=`<span class="eyebrow">TRE-OG-NOGET</span><h2>${title}</h2><p>${copy}</p><button class="primary" id="resume">${label}</button>`;$('resume').addEventListener('click',mode==='reset'?askReset:mode==='all'?toggleFocus:begin)}
+function overlay(title,copy,label,mode){$('overlay').hidden=false;$('overlay').innerHTML=`<span class="eyebrow">TRE-OG-NOGET</span><h2>${title}</h2><p>${copy}</p><button class="primary" id="resume">${label}</button>`;$('resume').addEventListener('click',mode==='reset'?askReset:mode==='all'?toggleFocus:mode==='selected-all'?selectAllPairs:begin)}
 function nextQuestion(){cancel();$('next').hidden=true;$('circle').className='circle';$('vertical-equation').className='vertical-equation';$('distance-question').className='distance-question';current=pickCard(trainingCards(),lastId);if(!current){finishTraining();return}lastId=current.id;side=missingSide(current,answerMode);phase='preparing';$('overlay').hidden=true;renderQuestion();progress();$('feedback').textContent={nw:'Find cifret øverst til venstre.',ne:'Find cifret øverst til højre.',south:'Find cifret i nederste halvdel.',distance:'Indtast afstanden mellem de to markerede tal.'}[side];$('feedback').className='feedback';const ticket=token;frame=requestAnimationFrame(()=>{if(ticket!==token)return;startedAt=performance.now();phase='asking';lockKeys(false);expireQuestion(ticket)});}
 // Re-check elapsed time in case a timer fires early; the token rejects stale questions.
 function expireQuestion(ticket){
@@ -164,7 +215,7 @@ function submit(n){
 
 function pause(){if(phase==='idle'||phase==='done'||phase==='paused')return;cancel();phase='paused';$('next').hidden=true;$('pause').disabled=true;overlay('Pause','Din fremgang er gemt.','Fortsæt træning');}
 function askReset(){pause();$('reset-copy').textContent=`Alle 45 par i ${MODE_LABELS[answerMode]} flyttes tilbage til øvebunken. De fire andre valg bevares.`;$('reset-dialog').showModal()}
-$('pause').addEventListener('click',pause);$('next').addEventListener('click',nextQuestion);$('reset').addEventListener('click',askReset);$('cancel-reset').addEventListener('click',()=>$('reset-dialog').close());$('confirm-reset').addEventListener('click',()=>{cancel();focusIds=null;({cards,round,lastId}=freshProfile());current=null;save({kind:'reset',data:{cards,round,lastId}});$('reset-dialog').close();progress();begin()});
+$('pause').addEventListener('click',pause);$('next').addEventListener('click',nextQuestion);$('reset').addEventListener('click',askReset);$('cancel-reset').addEventListener('click',()=>$('reset-dialog').close());$('confirm-reset').addEventListener('click',()=>{cancel();focusIds=null;selectedIds=null;({cards,round,lastId}=freshProfile());current=null;save({kind:'reset',data:{cards,round,lastId}});$('reset-dialog').close();progress();begin()});
 document.addEventListener('keydown',e=>{
   if($('reset-dialog').open)return;
   if(e.key==='Escape'){pause();return}
@@ -204,7 +255,7 @@ function chooseMode(mode){
   if(mode===answerMode)return;
   const wasRunning=['asking','preparing','feedback','review','countdown'].includes(phase);
   cancel();save();
-  focusIds=null;answerMode=mode;({cards,round,lastId}=profiles[answerMode]);current=null;
+  focusIds=null;selectedIds=null;answerMode=mode;({cards,round,lastId}=profiles[answerMode]);current=null;
   save();enqueue({kind:'preferences',mode:'preferences',data:{answerMode}});renderModes();progress();
   if(wasRunning&&cards.some(c=>c.hits<3))begin();else showReady();
 }
@@ -228,4 +279,4 @@ onUpdate(state=>{
   if(['idle','done','paused'].includes(phase))showReady();
 });
 
-document.addEventListener('progress-import',()=>{cancel();focusIds=null;phase='paused';current=null;showReady();});
+document.addEventListener('progress-import',()=>{cancel();focusIds=null;selectedIds=null;phase='paused';current=null;showReady();});
