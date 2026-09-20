@@ -3,3 +3,5 @@
 .login .primary{margin-top:12px}.preview.ready{cursor:zoom-in}#preview-dialog{max-width:950px}#preview-large{display:block;max-width:100%;height:auto;margin:20px auto 0}
 
 @media(max-width:480px){.cards{grid-template-columns:1fr}.preview{height:240px}.card-body{padding:18px}.card h3{font-size:16px}.description{font-size:13px}}
+
+.preparation-link{display:block;margin:16px 0 10px;padding:10px 12px;border:1px solid var(--blue);border-radius:7px;text-align:center;text-decoration:none;font-weight:650;background:#edf3f3}.preparation-link:hover{background:#e0ebec}

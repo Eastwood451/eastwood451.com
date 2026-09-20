@@ -1,3 +1,4 @@
+import {preparationLink} from './preparation-link.js';
 const $ = id => document.getElementById(id);
 const el = (tag,text,cls) => {const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n};
 const labels={pending:'Afventer analyse',review:'Kræver gennemgang',complete:'Færdigvurderet',error:'Fejl'};
@@ -40,6 +41,7 @@ function card(item){
  if(verified){const a=el('a','Åbn i Google Drive ↗');a.href='https://drive.google.com/file/d/'+encodeURIComponent(verified.drive_id)+'/view';a.target='_blank';a.rel='noopener noreferrer';actions.append(a)}else actions.append(el('span','Drive-link kræver afklaring','hint'));
  const edit=el('button','Ret tags');edit.onclick=()=>editPage(item);const add=el('button','＋ Gem');add.onclick=()=>addItem(item);actions.append(edit,add);
  if($('collection').value){const remove=el('button','Fjern');remove.onclick=async()=>{try{const entries=await api('collections/'+$('collection').value+'/items');for(const entry of entries)if(entry.page_id===item.page_id||entry.content_id===item.content_id)await api('items/'+entry.id,{method:'DELETE'});await search()}catch(e){$('notice').textContent=e.message}};actions.append(remove)}
+ const preparation=preparationLink(item);if(preparation){const link=el('a','＋ Tilføj til forberedelse','preparation-link');link.href=preparation;link.target='_blank';link.rel='noopener noreferrer';link.title='Vælg dato, klasse, elev og placering i forberedelsen';b.append(link)}
  b.append(actions);
  const locations=el('details',undefined,'locations');locations.append(el('summary',item.locations.length>1?item.locations.length+' identiske kopier':'Filplacering og kilde'));
  for(const l of item.locations){locations.append(el('p',l.path));if(l.source?.source){const s=el('span','Kilde: '+l.source.source);locations.append(s)}if(l.source?.grades?.length)locations.append(el('p','Kildens klassetrin: '+l.source.grades.map(g=>({3:0,1:1,2:2,4:3,5:4,6:5,7:6,8:7,9:8,10:9}[g]??g)+'.').join(', ')+' klasse'));if(l.drive_id){const a=el('a','Åbn denne placering');a.href='https://drive.google.com/file/d/'+encodeURIComponent(l.drive_id)+'/view';a.target='_blank';a.rel='noopener noreferrer';locations.append(a)}}b.append(locations);c.append(b);
