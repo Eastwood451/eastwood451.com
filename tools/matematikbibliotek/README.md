@@ -49,3 +49,11 @@ Updates are manual. There is no scheduler, automatic paid fallback, or PDF mergi
 - Build then deploy a preview; inspect actual materials and public search/preview access before production. Do not include fixture screenshots or data in the deployment.
 
 The optimized database query selects the result page before fetching details. Measured on 17,385 unique pages: about 200 ms for an unfiltered search and 107 ms for grade+topic+difficulty. These are database timings, not an end-to-end network guarantee.
+
+## Unattended Gemini recovery
+
+Run `python tools/matematikbibliotek/analyse.py --data DATA --all-pending --max-pages 20000 --batch-size 5 --keep-running` for the resumable worker. It takes an exclusive process lock, checks that extra credits are off before every request, repairs only the known broken telemetry-hook path (keeping telemetry enabled), and retries temporary CLI/network failures with backoff. Quota errors wait 15 minutes before trying the included allowance again; there is no paid provider fallback.
+
+Malformed batches are split. Repeatedly failing individual pages remain pending and are deferred for an hour while other pages continue. JSON formatting tolerance never relaxes exact page-ID, visual-inspection or assessment validation. Saved results commit atomically. `analysis-worker-status.json` records the current operation/next retry; `analysis-retries.json` lists deferred pages. These runtime files stay outside the repository. Stopping the computer still stops processing.
+
+Recovery tests: `python tests/test_analysis_recovery.py`, including simulated DNS failure, invalid batch output, automatic splitting, credit guard and preservation of the telemetry hook.
