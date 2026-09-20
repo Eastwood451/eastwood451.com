@@ -57,3 +57,11 @@ Run `python tools/matematikbibliotek/analyse.py --data DATA --all-pending --max-
 Malformed batches are split. Repeatedly failing individual pages remain pending and are deferred for an hour while other pages continue. JSON formatting tolerance never relaxes exact page-ID, visual-inspection or assessment validation. Saved results commit atomically. `analysis-worker-status.json` records the current operation/next retry; `analysis-retries.json` lists deferred pages. These runtime files stay outside the repository. Stopping the computer still stops processing.
 
 Recovery tests: `python tests/test_analysis_recovery.py`, including simulated DNS failure, invalid batch output, automatic splitting, credit guard and preservation of the telemetry hook.
+
+## Local Windows process watchdog
+
+The Windows task `Matematikbibliotek-Gemini-Processvagt` runs `analysis_watchdog.py --data DATA` every two minutes under the current interactive Windows account using pythonw.exe. It needs no Codex task or AI calls. Its execution time limit is disabled so Task Scheduler cannot terminate a long-running child worker. StartWhenAvailable is enabled; overlapping task instances are ignored.
+
+The watchdog checks the exclusive worker lock, remaining pages and the extra-credit guard. It starts a missing worker in the background and appends its output to `analysis-background.log`/`analysis-background-errors.log`. `analysis-watchdog-status.json` and `analysis-watchdog.log` record checks and restarts. `analysis-control.json` selects `enabled` and `batch_size` (15); set enabled=false before intentionally stopping the worker. Worker and watchdog locks prevent duplicates. The worker suppresses automatic idle sleep while running and releases that request on exit; shutdown/logoff or loss of power still interrupts execution.
+
+Validation: `python tests/test_analysis_watchdog.py` launches an isolated test process, terminates it, verifies automatic replacement, duplicate prevention and disabled-control handling. The actual scheduled task was also used to restart the production worker.

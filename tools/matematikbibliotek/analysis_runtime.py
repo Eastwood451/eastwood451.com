@@ -1,5 +1,5 @@
 """Resumable Gemini worker with bounded retries, strict validation and no paid fallback."""
-import argparse,datetime,json,os,re,sqlite3,subprocess,time
+import argparse,ctypes,datetime,json,os,re,sqlite3,subprocess,time
 from pathlib import Path
 
 def decode_result(stdout):
@@ -93,8 +93,9 @@ def run(cli,model,version,prompt):
     def pause(seconds,reason):
         state('waiting',reason=reason,retry_at=datetime.datetime.fromtimestamp(time.time()+seconds).astimezone().isoformat())
         time.sleep(seconds)
+    keep_awake=bool(a.keep_running and ctypes.windll.kernel32.SetThreadExecutionState(0x80000001))
     try:
-        state('started',batch_size=a.batch_size)
+        state('started',batch_size=a.batch_size,prevent_idle_sleep=keep_awake)
         while finished<a.max_pages:
             credit_guard()
             if not queue:
@@ -143,4 +144,6 @@ def run(cli,model,version,prompt):
                 for p in staged:p.unlink(missing_ok=True)
     except KeyboardInterrupt:state('paused',reason='Stoppet af bruger')
     except Exception as e:state('stopped',reason=str(e));raise
-    finally:db.close();lock.close()
+    finally:
+        if keep_awake:ctypes.windll.kernel32.SetThreadExecutionState(0x80000000)
+        db.close();lock.close()
