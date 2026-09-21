@@ -4,6 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Eastwood451</title>
+    <meta name="theme-color" content="#07090d" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Eastwood451" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/eastwood451-192.png" />
+    <link rel="apple-touch-icon" href="/icons/eastwood451-192.png" />
+    <script src="/pwa.js?v=20260921" defer></script>
     <script src="/auth.js"></script>
     <link rel="stylesheet" href="/app-order.css?v=1" />
     <script type="module" src="/app-order.js?v=1"></script>
@@ -71,6 +79,31 @@
         font-size: 1.05rem;
         line-height: 1.55;
       }
+
+      #install-app {
+        margin-top: 16px;
+        min-height: 44px;
+        padding: 10px 20px;
+        border: 1px solid var(--blue);
+        border-radius: 8px;
+        background: #111821;
+        color: var(--text);
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      #install-app:focus-visible {
+        outline: 3px solid var(--orange);
+        outline-offset: 4px;
+      }
+
+      #install-status {
+        margin: 8px auto 0;
+        font-size: 0.9rem;
+      }
+
+      #install-status:empty { display: none; }
 
       .app-grid {
         display: grid;
@@ -206,6 +239,8 @@
     <main>
       <section class="intro" aria-labelledby="page-title">
         <h1 id="page-title">Eastwood451</h1>
+        <button id="install-app" type="button" hidden>Installér app</button>
+        <p id="install-status" role="status" aria-live="polite"></p>
       </section>
 
       <section class="organizer" aria-label="Organisér apps" hidden>

@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "test:library": "node --test tests/library.test.mjs",
-    "build:library": "node tools/matematikbibliotek/build.mjs"
+    "test:pwa": "node --test tests/pwa.test.mjs",
+    "build:library": "npm run test:pwa && node tools/matematikbibliotek/build.mjs"
   },
   "devDependencies": {
     "wrangler": "4.135.0",
