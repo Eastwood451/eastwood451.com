@@ -10,18 +10,14 @@ export async function onRequest({request}){
  if(!['GET','POST','DELETE'].includes(request.method))return json({error:'Metoden er ikke tilladt.'},405);
  if(request.method!=='GET'&&request.headers.get('origin')!==url.origin)return json({error:'Ugyldig afsender.'},403);
  if(path==='/session'&&request.method==='DELETE')return json({ok:true},200,{'Set-Cookie':cookie('',0)});
- let token='';
- if(path==='/session'&&request.method==='POST')token=(request.headers.get('authorization')||'').replace(/^Bearer /,'');
- else token=(request.headers.get('cookie')||'').split(';').map(s=>s.trim()).find(s=>s.startsWith(COOKIE+'='))?.slice(COOKIE.length+1)||'';
- if(!/^[\w.-]{20,10000}$/.test(token))return json({error:'Log ind på Eastwood451.'},401);
- const headers=new Headers({Authorization:'Bearer '+token});
+ // Retain the legacy session endpoint for already-open tabs; expire its old cookie.
+ if(path==='/session')return json({ok:true},200,{'Set-Cookie':cookie('',0)});
+ // Public app: do not forward visitors' account tokens or cookies to the backend.
+ const headers=new Headers();
  const type=request.headers.get('content-type');if(type)headers.set('Content-Type',type);
  const length=request.headers.get('content-length');if(length)headers.set('Content-Length',length);
  try{
- const session=path==='/session';
- if(session)headers.delete('Content-Length');
- const result=await fetch(EDGE+path+url.search,{method:session?'GET':request.method,headers,body:!session&&request.method==='POST'?request.body:undefined,redirect:'manual'});
- if(session){if(!result.ok)return json({error:result.status===403?'Denne app er privat. Brug ejerens Eastwood-konto.':'Dit login kunne ikke bekræftes.'},result.status);return json({ok:true},200,{'Set-Cookie':cookie(token,3600)});}
+ const result=await fetch(EDGE+path+url.search,{method:request.method,headers,body:request.method==='POST'?request.body:undefined,redirect:'manual'});
  return new Response(result.body,{status:result.status,headers:{'Content-Type':result.headers.get('content-type')||'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'}});
  }catch{return json({error:'Forbindelsen kunne ikke gennemføres. Prøv igen.'},502);}
 }

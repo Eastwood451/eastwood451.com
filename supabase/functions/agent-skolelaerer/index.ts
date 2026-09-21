@@ -1,8 +1,5 @@
 import postgres from 'https://deno.land/x/postgresjs@v3.4.5/mod.js';
 const SOURCE='https://jacob-forberedelse.eastwood451.chatgpt.site';
-const AUTH='https://wpriingzftsboauvkmsj.supabase.co';
-const PUBLIC_KEY='sb_publishable_bSvkvx_Lqd5ZEt94oVdMaw_44WV2fYE';
-const OWNER='86b7c8d0-0d80-4138-bd51-a1765b296fbd';
 const routes:Record<string,string[]>={
  '/session':['GET'], '/assets/app.js':['GET'], '/assets/app.css':['GET'],
  '/data':['GET'], '/google/config':['GET'], '/materials':['GET'],
@@ -20,12 +17,8 @@ async function credentials(){
 }
 function json(data:unknown,status=200){return Response.json(data,{status,headers:{'Cache-Control':'no-store'}});}
 Deno.serve(async req=>{try{
- const authorization=req.headers.get('authorization')||'';
- if(!/^Bearer [\w.-]{20,10000}$/.test(authorization))return json({error:'Log ind på Eastwood451.'},401);
- // Validate against the issuing project's Auth server, never just decode the JWT.
- const auth=await fetch(AUTH+'/auth/v1/user',{headers:{authorization,apikey:PUBLIC_KEY},signal:AbortSignal.timeout(12000)});
- if(!auth.ok)return json({error:'Dit login er udløbet. Log ind igen.'},401);
- const user=await auth.json();if(user.id!==OWNER)return json({error:'Denne app er privat.'},403);
+ // The owner explicitly enabled public read/write access to these app routes.
+ // Vault credentials remain server-side; unrelated Sites endpoints stay inaccessible.
  const url=new URL(req.url),prefix='/agent-skolelaerer';
  const index=url.pathname.indexOf(prefix);const path=index<0?'':url.pathname.slice(index+prefix.length);
  if(!routes[path]?.includes(req.method))return json({error:'Ukendt handling.'},404);
