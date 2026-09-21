@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Eastwood451</title>
     <script src="/auth.js"></script>
+    <link rel="stylesheet" href="/app-order.css?v=1" />
+    <script type="module" src="/app-order.js?v=1"></script>
     <style>
       :root {
         --bg: #07090d;
@@ -206,6 +208,12 @@
         <h1 id="page-title">Eastwood451</h1>
       </section>
 
+      <section class="organizer" aria-label="Organisér apps" hidden>
+        <div class="organizer-heading"><span>DINE APPS</span><button id="organize-toggle" type="button" aria-pressed="false">Organisér</button></div>
+        <p id="organize-help">Træk et kort for at flytte det. På mobil: hold fingeren nede eller vælg Organisér.</p>
+        <div class="organizer-feedback"><p id="order-status" role="status" aria-live="polite">Henter fælles rækkefølge…</p><button id="order-retry" type="button" hidden>Prøv igen</button></div>
+      </section>
+
       <nav class="app-grid" aria-label="Projektoversigt">
         <a class="app-button" href="https://fortaellervaerksted.eastwood451.com/" aria-label="Åbn Fortællerværkstedet">
           <img src="fortaellervaerksted-preview.svg" alt="Fortællerværksted med scener og forbindelser" />
@@ -275,3 +283,4 @@
     </main>
   </body>
 </html>
+
