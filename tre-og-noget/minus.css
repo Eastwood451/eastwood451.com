@@ -40,3 +40,7 @@
   .minus-stats{gap:8px}
   .minus-stat{padding:14px 8px}
 }
+
+/* The answer-order toggle can place the first digit explicitly in the ones column. */
+#answer-value{display:inline-grid;grid-auto-flow:column;grid-auto-columns:minmax(.72em,auto);align-items:center;justify-content:center;text-align:center}
+#answer-value .answer-placeholder{color:#8491a7;font-weight:400}

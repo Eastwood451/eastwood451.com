@@ -22,9 +22,11 @@ try{
   remote=data?.preferences||{};
 }catch{}
 
+const ANSWER_ORDERS=['ones-first','tens-first'];
 const settings={
   digits:DIGIT_MODES.includes(remote.minusDigits)?remote.minusDigits:(DIGIT_MODES.includes(local.digits)?local.digits:'one'),
-  ones:ONES_MODES.includes(remote.minusOnes)?remote.minusOnes:(ONES_MODES.includes(local.ones)?local.ones:'borrow')
+  ones:ONES_MODES.includes(remote.minusOnes)?remote.minusOnes:(ONES_MODES.includes(local.ones)?local.ones:'borrow'),
+  answerOrder:ANSWER_ORDERS.includes(remote.minusAnswerOrder)?remote.minusAnswerOrder:(ANSWER_ORDERS.includes(local.answerOrder)?local.answerOrder:'ones-first')
 };
 
 let question=null,lastKey='',buffer='',answered=false,correct=0,attempts=0,streak=0,advanceTimer=0;
@@ -35,7 +37,7 @@ function persistSettings(){
     id:crypto.randomUUID(),
     kind:'preferences',
     mode:'preferences',
-    data:{minusDigits:settings.digits,minusOnes:settings.ones},
+    data:{minusDigits:settings.digits,minusOnes:settings.ones,minusAnswerOrder:settings.answerOrder},
     at:new Date().toISOString()
   };
   void (async()=>{try{await client.rpc('tre_og_noget_sync',{op});}catch{}})();
@@ -44,6 +46,7 @@ function persistSettings(){
 function renderToggles(){
   document.querySelectorAll('[data-digits]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.digits===settings.digits)));
   document.querySelectorAll('[data-ones]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.ones===settings.ones)));
+  document.querySelectorAll('[data-answer-order]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.answerOrder===settings.answerOrder)));
 }
 
 function renderStats(){
@@ -52,8 +55,24 @@ function renderStats(){
   $('streak-count').textContent=streak;
 }
 
+function resolvedAnswer(){
+  if(settings.answerOrder==='ones-first'&&buffer.length===2)return buffer[1]+buffer[0];
+  return buffer;
+}
+
+function answerInstruction(){
+  return settings.answerOrder==='ones-first'?'Indtast éneren først, derefter tieren. Tryk Enter.':'Indtast tieren først, derefter éneren. Tryk Enter.';
+}
+
 function renderAnswer(){
-  $('answer-value').textContent=buffer||'?';
+  const value=resolvedAnswer();
+  if(settings.answerOrder==='ones-first'&&buffer.length===1){
+    $('answer-value').innerHTML=`<span class="answer-placeholder">?</span><span>${buffer}</span>`;
+    $('answer-box').setAttribute('aria-label',`Éner ${buffer} er indtastet. Indtast tieren.`);
+  }else{
+    $('answer-value').textContent=value||'?';
+    $('answer-box').setAttribute('aria-label',value?`Indtastet svar ${value}`:'Intet svar indtastet');
+  }
   $('answer-box').className='minus-answer-box';
 }
 
@@ -64,7 +83,7 @@ function newQuestion(){
   buffer='';answered=false;
   $('top-number').textContent=question.top;
   $('bottom-number').textContent=question.bottom;
-  $('feedback').textContent='Skriv svaret og tryk Enter.';
+  $('feedback').textContent=answerInstruction();
   $('feedback').className='minus-feedback';
   $('next-question').hidden=true;
   renderAnswer();
@@ -87,7 +106,7 @@ function erase(){
 function submit(){
   if(answered||!buffer)return;
   answered=true;attempts++;
-  const value=Number(buffer);
+  const value=Number(resolvedAnswer());
   const isCorrect=value===question.answer;
   if(isCorrect){
     correct++;streak++;
@@ -115,6 +134,11 @@ document.querySelectorAll('[data-ones]').forEach(button=>button.addEventListener
   const value=button.dataset.ones;
   if(!ONES_MODES.includes(value)||value===settings.ones)return;
   settings.ones=value;persistSettings();renderToggles();newQuestion();
+}));
+document.querySelectorAll('[data-answer-order]').forEach(button=>button.addEventListener('click',()=>{
+  const value=button.dataset.answerOrder;
+  if(!ANSWER_ORDERS.includes(value)||value===settings.answerOrder)return;
+  settings.answerOrder=value;persistSettings();renderToggles();newQuestion();
 }));
 
 for(const n of [1,2,3,4,5,6,7,8,9]){
