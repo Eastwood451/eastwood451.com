@@ -23,10 +23,12 @@ try{
 }catch{}
 
 const ANSWER_ORDERS=['ones-first','tens-first'];
+const CONFIRMATION_MODES=['auto','enter'];
 const settings={
   digits:DIGIT_MODES.includes(remote.minusDigits)?remote.minusDigits:(DIGIT_MODES.includes(local.digits)?local.digits:'one'),
   ones:ONES_MODES.includes(remote.minusOnes)?remote.minusOnes:(ONES_MODES.includes(local.ones)?local.ones:'borrow'),
-  answerOrder:ANSWER_ORDERS.includes(remote.minusAnswerOrder)?remote.minusAnswerOrder:(ANSWER_ORDERS.includes(local.answerOrder)?local.answerOrder:'ones-first')
+  answerOrder:ANSWER_ORDERS.includes(remote.minusAnswerOrder)?remote.minusAnswerOrder:(ANSWER_ORDERS.includes(local.answerOrder)?local.answerOrder:'ones-first'),
+  confirmation:CONFIRMATION_MODES.includes(remote.minusConfirmation)?remote.minusConfirmation:(CONFIRMATION_MODES.includes(local.confirmation)?local.confirmation:'auto')
 };
 
 let question=null,lastKey='',buffer='',answered=false,correct=0,attempts=0,streak=0,advanceTimer=0;
@@ -37,7 +39,7 @@ function persistSettings(){
     id:crypto.randomUUID(),
     kind:'preferences',
     mode:'preferences',
-    data:{minusDigits:settings.digits,minusOnes:settings.ones,minusAnswerOrder:settings.answerOrder},
+    data:{minusDigits:settings.digits,minusOnes:settings.ones,minusAnswerOrder:settings.answerOrder,minusConfirmation:settings.confirmation},
     at:new Date().toISOString()
   };
   void (async()=>{try{await client.rpc('tre_og_noget_sync',{op});}catch{}})();
@@ -47,6 +49,7 @@ function renderToggles(){
   document.querySelectorAll('[data-digits]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.digits===settings.digits)));
   document.querySelectorAll('[data-ones]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.ones===settings.ones)));
   document.querySelectorAll('[data-answer-order]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.answerOrder===settings.answerOrder)));
+  document.querySelectorAll('[data-confirmation]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.confirmation===settings.confirmation)));
 }
 
 function renderStats(){
@@ -61,7 +64,12 @@ function resolvedAnswer(){
 }
 
 function answerInstruction(){
-  return settings.answerOrder==='ones-first'?'Indtast éneren først, derefter tieren. Tryk Enter.':'Indtast tieren først, derefter éneren. Tryk Enter.';
+  const order=settings.answerOrder==='ones-first'?'éneren først, derefter tieren':'tieren først, derefter éneren';
+  return settings.confirmation==='auto'?`Indtast ${order}. Svaret bekræftes automatisk.`:`Indtast ${order}. Tryk Enter.`;
+}
+
+function expectedAnswerLength(){
+  return String(question.answer).length;
 }
 
 function renderAnswer(){
@@ -95,6 +103,7 @@ function addDigit(digit){
   if(buffer==='0')buffer='';
   buffer+=String(digit);
   renderAnswer();
+  if(settings.confirmation==='auto'&&buffer.length>=expectedAnswerLength())submit();
 }
 
 function erase(){
@@ -139,6 +148,11 @@ document.querySelectorAll('[data-answer-order]').forEach(button=>button.addEvent
   const value=button.dataset.answerOrder;
   if(!ANSWER_ORDERS.includes(value)||value===settings.answerOrder)return;
   settings.answerOrder=value;persistSettings();renderToggles();newQuestion();
+}));
+document.querySelectorAll('[data-confirmation]').forEach(button=>button.addEventListener('click',()=>{
+  const value=button.dataset.confirmation;
+  if(!CONFIRMATION_MODES.includes(value)||value===settings.confirmation)return;
+  settings.confirmation=value;persistSettings();renderToggles();newQuestion();
 }));
 
 for(const n of [1,2,3,4,5,6,7,8,9]){
