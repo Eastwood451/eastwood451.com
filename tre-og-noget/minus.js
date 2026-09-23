@@ -114,6 +114,7 @@ function erase(){
 
 function submit(){
   if(answered||!buffer)return;
+  if(settings.confirmation==='auto'&&buffer.length<expectedAnswerLength())return;
   answered=true;attempts++;
   const value=Number(resolvedAnswer());
   const isCorrect=value===question.answer;
