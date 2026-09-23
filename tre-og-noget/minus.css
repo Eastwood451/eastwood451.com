@@ -41,8 +41,16 @@
   .minus-stat{padding:14px 8px}
 }
 
-/* The answer-order toggle can place the first digit explicitly in the ones column. */
-#answer-value{display:inline-grid;grid-auto-flow:column;grid-auto-columns:minmax(.72em,auto);align-items:center;justify-content:center;text-align:center}
-#answer-value .answer-placeholder{color:#8491a7;font-weight:400}
+/* The two answer fields show the selected entry order directly. */
+.answer-digits{display:flex;align-items:center;justify-content:center;gap:5px;width:100%}
+.answer-digit{width:1.05em;height:1.18em;display:grid;place-items:center;border:3px solid transparent;border-radius:11px;font-size:1em;font-weight:700;line-height:1}
+.answer-digit.active{background:#eaf8f0;border-color:#20a765;color:#15724b;box-shadow:0 0 0 2px #b8e8cc}
+.answer-digit.pending{background:#edf0f3;border-color:#aeb7c2;color:#7b8797}
+.answer-digit.filled{background:#eef2ff;border-color:#5372e5;color:#234ee8}
+.minus-answer-box.correct .answer-digit.filled{background:#eaf8f0;border-color:#15724b;color:#15724b}
+.minus-answer-box.wrong .answer-digit.filled{background:#fff0ed;border-color:#b1372b;color:#b1372b}
+@media(max-width:650px){
+  .answer-digit{font-size:.9em}
+}
 
 /* Confirmation mode is a sibling of the other practice settings. */

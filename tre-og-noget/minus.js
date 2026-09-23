@@ -64,7 +64,8 @@ function resolvedAnswer(){
 }
 
 function answerInstruction(){
-  const order=settings.answerOrder==='ones-first'?'éneren først, derefter tieren':'tieren først, derefter éneren';
+  const singleDigit=expectedAnswerLength()===1;
+  const order=singleDigit?'éneren':settings.answerOrder==='ones-first'?'éneren først, derefter tieren':'tieren først, derefter éneren';
   return settings.confirmation==='auto'?`Indtast ${order}. Svaret bekræftes automatisk.`:`Indtast ${order}. Tryk Enter.`;
 }
 
@@ -73,17 +74,32 @@ function expectedAnswerLength(){
 }
 
 function renderAnswer(){
-  const value=resolvedAnswer();
-  if(settings.answerOrder==='ones-first'&&buffer.length===1){
-    $('answer-value').innerHTML=`<span class="answer-placeholder">?</span><span>${buffer}</span>`;
-    $('answer-box').setAttribute('aria-label',`Éner ${buffer} er indtastet. Indtast tieren.`);
-  }else{
-    $('answer-value').textContent=value||'?';
-    $('answer-box').setAttribute('aria-label',value?`Indtastet svar ${value}`:'Intet svar indtastet');
+  const answerLength=expectedAnswerLength();
+  const positions=answerLength===1?['ones']:['tens','ones'];
+  const entryOrder=answerLength===1
+    ?['ones']
+    :(settings.answerOrder==='ones-first'?['ones','tens']:['tens','ones']);
+  const entered={};
+  for(let index=0;index<buffer.length&&index<entryOrder.length;index++){
+    entered[entryOrder[index]]=buffer[index];
   }
+  const activePosition=entryOrder[buffer.length]||null;
+  const fields=positions.map(position=>{
+    const state=entered[position]!==undefined
+      ?'filled'
+      :position===activePosition?'active':'pending';
+    const label=position==='tens'?'tier':'éner';
+    const value=entered[position]??'?';
+    return `<span class="answer-digit position-${position} ${state}" data-position="${position}" aria-label="${label} ${state==='active'?'– aktiv':state==='pending'?'– afventer':'– indtastet'}">${value}</span>`;
+  });
+  $('answer-value').innerHTML=fields.join('');
+  const description=positions.map(position=>{
+    const label=position==='tens'?'tier':'éner';
+    return `${label}: ${entered[position]??'ikke indtastet'}`;
+  }).join(', ');
+  $('answer-box').setAttribute('aria-label',`Svar: ${description}`);
   $('answer-box').className='minus-answer-box';
 }
-
 function newQuestion(){
   clearTimeout(advanceTimer);
   question=nextMinusQuestion(settings,lastKey);
