@@ -100,7 +100,7 @@ function newQuestion(){
 
 function addDigit(digit){
   if(answered||buffer.length>=2)return;
-  if(buffer==='0')buffer='';
+  if(buffer==='0'&&settings.answerOrder==='tens-first')buffer='';
   buffer+=String(digit);
   renderAnswer();
   if(settings.confirmation==='auto'&&buffer.length>=expectedAnswerLength())submit();
