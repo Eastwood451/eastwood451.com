@@ -73,6 +73,13 @@ function expectedAnswerLength(){
   return String(question.answer).length;
 }
 
+function numberMarkup(value){
+  const text=String(value);
+  const tens=text.length>1?text[0]:'';
+  const ones=text.slice(-1);
+  return `<span class="number-digit">${tens}</span><span class="number-digit">${ones}</span>`;
+}
+
 function renderAnswer(){
   const answerLength=expectedAnswerLength();
   const positions=answerLength===1?['ones']:['tens','ones'];
@@ -105,8 +112,8 @@ function newQuestion(){
   question=nextMinusQuestion(settings,lastKey);
   lastKey=`${question.top}-${question.bottom}`;
   buffer='';answered=false;
-  $('top-number').textContent=question.top;
-  $('bottom-number').textContent=question.bottom;
+  $('top-number').innerHTML=numberMarkup(question.top);
+  $('bottom-number').innerHTML=numberMarkup(question.bottom);
   $('feedback').textContent=answerInstruction();
   $('feedback').className='minus-feedback';
   $('next-question').hidden=true;
