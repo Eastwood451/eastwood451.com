@@ -70,7 +70,12 @@ function answerInstruction(){
 }
 
 function expectedAnswerLength(){
-  return String(question.answer).length;
+  // Alle resultater besvares som tocifrede tal: 9 skal indtastes som 09.
+  return 2;
+}
+
+function formattedAnswer(){
+  return String(question.answer).padStart(2,'0');
 }
 
 function numberMarkup(value){
@@ -123,7 +128,6 @@ function newQuestion(){
 
 function addDigit(digit){
   if(answered||buffer.length>=2)return;
-  if(buffer==='0'&&settings.answerOrder==='tens-first')buffer='';
   buffer+=String(digit);
   renderAnswer();
   if(settings.confirmation==='auto'&&buffer.length>=expectedAnswerLength())submit();
@@ -151,7 +155,7 @@ function submit(){
   }else{
     streak=0;
     $('answer-box').classList.add('wrong');
-    $('feedback').textContent=`${question.top} − ${question.bottom} = ${question.answer}`;
+    $('feedback').textContent=`${question.top} − ${question.bottom} = ${formattedAnswer()}`;
     $('feedback').className='minus-feedback bad';
     $('next-question').hidden=false;
     renderStats();
