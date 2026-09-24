@@ -6,7 +6,8 @@ const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&
 let polling = null;
 
 async function api(path) {
-  const response = await fetch(path, { cache: 'no-store' });
+  const base = location.pathname.startsWith('/kvoter/') ? '/kvoter' : '';
+  const response = await fetch(base + path, { cache: 'no-store' });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || 'Kunne ikke hente data');
   return data;

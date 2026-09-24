@@ -65,11 +65,11 @@ async function hasValidSession(request, env) {
   } catch { return false; }
 }
 
-function loginPage(error = "", quota = false) {
+function loginPage(error = "", quota = false, action = "/auth/login") {
   const message = error ? `<p class="error" role="alert">${error}</p>` : "";
   const title = quota ? "OpenAI Kvoter" : "Fortællerværkstedet";
   const description = quota ? "Dit private overblik over planforbrug, credits og tokenaktivitet." : "Dit private cloud-værksted til historier, scener, billeder og tegneserier.";
-  return new Response(`<!doctype html><html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Log ind · ${title}</title><style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 20% 10%,#17334a 0,transparent 36%),radial-gradient(circle at 90% 90%,#261a42 0,transparent 34%),#07090d;color:#f6f8fb;font:16px/1.5 Inter,system-ui,sans-serif}.card{width:min(430px,100%);padding:36px;border:1px solid #ffffff24;border-radius:24px;background:#11151dd9;box-shadow:0 28px 80px #0008;backdrop-filter:blur(18px)}.eyebrow{margin:0 0 8px;color:#79cdf4;font-size:.78rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}h1{margin:0 0 8px;font-size:clamp(2rem,8vw,3.1rem);line-height:1}p{color:#b8c0cd}label{display:block;margin:28px 0 8px;font-weight:750}input{width:100%;padding:14px 15px;border:1px solid #ffffff30;border-radius:12px;background:#07090dbf;color:#fff;font:inherit}button{width:100%;margin-top:14px;padding:14px;border:0;border-radius:12px;background:#79cdf4;color:#071019;font:inherit;font-weight:850;cursor:pointer}.error{padding:10px 12px;border-radius:10px;background:#6f1d2a;color:#ffdce2}</style></head><body><main class="card"><p class="eyebrow">Eastwood451</p><h1>${title}</h1><p>${description}</p>${message}<form method="post" action="/auth/login"><label for="password">Adgangskode</label><input id="password" name="password" type="password" autocomplete="current-password" required autofocus><button type="submit">Åbn siden</button></form></main></body></html>`, { status:error?401:200, headers:{"content-type":"text/html; charset=utf-8","cache-control":"no-store","content-security-policy":"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"} });
+  return new Response(`<!doctype html><html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Log ind · ${title}</title><style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 20% 10%,#17334a 0,transparent 36%),radial-gradient(circle at 90% 90%,#261a42 0,transparent 34%),#07090d;color:#f6f8fb;font:16px/1.5 Inter,system-ui,sans-serif}.card{width:min(430px,100%);padding:36px;border:1px solid #ffffff24;border-radius:24px;background:#11151dd9;box-shadow:0 28px 80px #0008;backdrop-filter:blur(18px)}.eyebrow{margin:0 0 8px;color:#79cdf4;font-size:.78rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}h1{margin:0 0 8px;font-size:clamp(2rem,8vw,3.1rem);line-height:1}p{color:#b8c0cd}label{display:block;margin:28px 0 8px;font-weight:750}input{width:100%;padding:14px 15px;border:1px solid #ffffff30;border-radius:12px;background:#07090dbf;color:#fff;font:inherit}button{width:100%;margin-top:14px;padding:14px;border:0;border-radius:12px;background:#79cdf4;color:#071019;font:inherit;font-weight:850;cursor:pointer}.error{padding:10px 12px;border-radius:10px;background:#6f1d2a;color:#ffdce2}</style></head><body><main class="card"><p class="eyebrow">Eastwood451</p><h1>${title}</h1><p>${description}</p>${message}<form method="post" action="${action}"><label for="password">Adgangskode</label><input id="password" name="password" type="password" autocomplete="current-password" required autofocus><button type="submit">Åbn siden</button></form></main></body></html>`, { status:error?401:200, headers:{"content-type":"text/html; charset=utf-8","cache-control":"no-store","content-security-policy":"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"} });
 }
 
 function supabase(env) {
@@ -443,7 +443,9 @@ function quotaSnapshot(value) {
 
 async function handleQuotaRequest(request, env) {
   const url = new URL(request.url);
-  if (url.pathname === "/api/sync" && request.method === "POST") {
+  const base = url.hostname === QUOTA_HOST ? "" : "/kvoter";
+  const path = url.pathname.slice(base.length) || "/";
+  if (path === "/api/sync" && request.method === "POST") {
     const bearer = request.headers.get("authorization")?.replace(/^Bearer /i, "") || "";
     if (!await sameSecret(bearer, env.QUOTA_SYNC_TOKEN)) throw new HttpError(401, "Ugyldig synkroniseringsnøgle.");
     const raw = await request.text();
@@ -454,37 +456,37 @@ async function handleQuotaRequest(request, env) {
     await env.STORY_ASSETS.put(QUOTA_OBJECT, JSON.stringify(snapshot), { httpMetadata: { contentType: "application/json" } });
     return json({ syncedAt: snapshot.updatedAt });
   }
-  if (url.pathname === "/login" && request.method === "GET") {
-    if (await hasValidSession(request, env)) return Response.redirect(`${url.origin}/`, 303);
-    return loginPage("", true);
+  if (path === "/login" && request.method === "GET") {
+    if (await hasValidSession(request, env)) return Response.redirect(`${url.origin}${base}/`, 303);
+    return loginPage("", true, `${base}/auth/login`);
   }
-  if (url.pathname === "/auth/login" && request.method === "POST") {
+  if (path === "/auth/login" && request.method === "POST") {
     const form = await request.formData(), password = String(form.get("password") || "");
-    if (!env.AUTH_PASSWORD_HASH || cyrb53(password) !== env.AUTH_PASSWORD_HASH) return loginPage("Adgangskoden er forkert.", true);
+    if (!env.AUTH_PASSWORD_HASH || cyrb53(password) !== env.AUTH_PASSWORD_HASH) return loginPage("Adgangskoden er forkert.", true, `${base}/auth/login`);
     const token = await createSession(env);
-    return new Response(null, { status: 303, headers: { location: "/", "set-cookie": `${SESSION_COOKIE}=${token}; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax` } });
+    return new Response(null, { status: 303, headers: { location: `${base}/`, "set-cookie": `${SESSION_COOKIE}=${token}; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax` } });
   }
-  if (url.pathname === "/auth/logout" && request.method === "POST") {
-    return new Response(null, { status: 303, headers: { location: "/login", "set-cookie": `${SESSION_COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax` } });
+  if (path === "/auth/logout" && request.method === "POST") {
+    return new Response(null, { status: 303, headers: { location: `${base}/login`, "set-cookie": `${SESSION_COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax` } });
   }
   if (!await hasValidSession(request, env)) {
-    if (url.pathname.startsWith("/api/")) throw new HttpError(401, "Log ind for at se kvoter.");
-    return Response.redirect(`${url.origin}/login`, 303);
+    if (path.startsWith("/api/")) throw new HttpError(401, "Log ind for at se kvoter.");
+    return Response.redirect(`${url.origin}${base}/login`, 303);
   }
-  if (url.pathname === "/api/status" && request.method === "GET") {
+  if (path === "/api/status" && request.method === "GET") {
     const object = await env.STORY_ASSETS.get(QUOTA_OBJECT);
     return object ? new Response(object.body, { headers: { ...JSON_HEADERS, "x-content-type-options": "nosniff" } })
       : json({ connected: true, updatedAt: null, limits: null, usage: null, awaitingSync: true });
   }
   if (request.method !== "GET" && request.method !== "HEAD") throw new HttpError(405, "Metoden er ikke tilladt.");
-  if (!(["/", "/app.js", "/style.css"].includes(url.pathname))) throw new HttpError(404, "Siden findes ikke.");
+  if (!(["/", "/app.js", "/style.css"].includes(path))) throw new HttpError(404, "Siden findes ikke.");
   const assetUrl = new URL(request.url);
-  assetUrl.pathname = `/kvoter/${url.pathname === "/" ? "index.html" : url.pathname.slice(1)}`;
+  assetUrl.pathname = `/kvoter/${path === "/" ? "index.html" : path.slice(1)}`;
   const response = await env.ASSETS.fetch(new Request(assetUrl.toString(), request));
   const headers = new Headers(response.headers);
   headers.set("cache-control", "private, no-store");
   headers.set("x-content-type-options", "nosniff");
-  if (url.pathname === "/") headers.set("content-security-policy", "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'");
+  if (path === "/") headers.set("content-security-policy", "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'");
   return new Response(response.body, { status: response.status, headers });
 }
 
@@ -493,6 +495,8 @@ export default {
     const started = Date.now(), url = new URL(request.url);
     try {
       if (url.hostname === QUOTA_HOST) return await handleQuotaRequest(request, env);
+      if (url.pathname === "/kvoter" && request.method === "GET") return Response.redirect(`${url.origin}/kvoter/`, 308);
+      if (url.pathname.startsWith("/kvoter/")) return await handleQuotaRequest(request, env);
       if (url.pathname === "/login" && request.method === "GET") {
         if (await hasValidSession(request,env)) return Response.redirect(`${url.origin}/`,303);
         return loginPage();
