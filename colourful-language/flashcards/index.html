@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="da">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#080b12">
+    <meta name="description" content="Lær 21 danske ord på græsk, latin, arabisk, japansk, serbisk eller russisk. Tre ord ad gangen.">
+    <title>Sprogkort · Eastwood451</title>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <a class="back-link" href="../../">← Eastwood451</a>
+        <span id="data-source" class="data-source" role="status">Henter ordliste …</span>
+      </header>
+
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">COLOURFUL LANGUAGE · SPROGKORT</p>
+        <h1 id="page-title">Lær <span>ét ord ad gangen.</span></h1>
+        <p class="lede">Vælg et sprog. Vi øver tre ord ad gangen, både genkendelse og genkaldelse.</p>
+      </section>
+
+      <section class="language-bar" aria-label="Vælg sprog">
+        <label for="language-select">Jeg øver</label>
+        <select id="language-select" name="language"></select>
+        <p class="language-note">Et ord er først lært efter tre rigtige svar i træk i begge øvelser.</p>
+      </section>
+
+      <section class="progress-overview" aria-label="Din fremgang">
+        <div class="progress-copy">
+          <div>
+            <span class="eyebrow">ORD DU KAN</span>
+          <strong id="learned-count">0 <span>/ 21</span></strong>
+          </div>
+          <div class="progress-track" role="progressbar" aria-label="Ord du kan" aria-valuemin="0" aria-valuemax="21" aria-valuenow="0">
+            <span id="overall-progress"></span>
+          </div>
+        </div>
+        <p id="deck-count" class="deck-count">Første sæt: 3 ord</p>
+      </section>
+
+      <div class="learning-layout">
+        <section class="practice-panel" aria-labelledby="practice-title">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">TRÆNING</p>
+              <h2 id="practice-title">Din næste øvelse</h2>
+            </div>
+            <span id="mode-step" class="mode-step">01 / 03</span>
+          </div>
+
+          <div class="mode-tabs" role="tablist" aria-label="Vælg øvelse">
+            <button id="recognition-tab" class="mode-tab" type="button" role="tab" aria-selected="true">Genkend</button>
+            <button id="recall-tab" class="mode-tab" type="button" role="tab" aria-selected="false">Genkald</button>
+          </div>
+
+          <div id="quiz" class="quiz" aria-live="polite">
+            <p class="loading">Gør ordkortene klar …</p>
+          </div>
+
+          <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+        </section>
+
+        <aside class="deck-panel" aria-labelledby="deck-title">
+          <div class="panel-heading compact">
+            <div>
+              <p class="eyebrow">AKTUELT SÆT</p>
+              <h2 id="deck-title">Tre ord i spil</h2>
+            </div>
+            <span class="deck-mark" aria-hidden="true">03</span>
+          </div>
+          <ol id="active-words" class="active-words"></ol>
+          <p class="deck-hint">Når du kan et ord i begge øvelser, kommer det næste ind i sættet.</p>
+        </aside>
+      </div>
+
+      <footer class="footer">
+        <p>Ordlisten hentes fra Supabase, når tjenesten er tilgængelig. Din øvefremgang gemmes på denne enhed.</p>
+        <div class="footer-links">
+          <a href="../">Expressions from books</a>
+          <button id="reset-progress" type="button">Nulstil dette sprog</button>
+        </div>
+      </footer>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
+
