@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10181c">
+  <meta name="description" content="Lokalt overblik over dine OpenAI kvoter, credits og tokenaktivitet.">
+  <title>OpenAI Kvoter · Eastwood451</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2310181c'/%3E%3Cpath d='M14 42h36M14 32h26M14 22h17' stroke='%238ee0be' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">◉</span><span>OpenAI <strong>Kvoter</strong></span></div>
+      <div class="top-actions"><span id="updated" class="updated">Henter data…</span><button id="refresh" class="button button-secondary" type="button">Opdater nu</button></div>
+    </header>
+    <div class="heading"><div><p class="eyebrow">DIT OVERBLIK</p><h1>Forbrug og grænser</h1><p class="intro">Dine senest synkroniserede planvinduer, credits og tokenaktivitet.</p></div><div id="account" class="account-badge" hidden></div></div>
+    <div id="message" class="message" role="status" aria-live="polite" hidden></div>
+    <div id="dashboard">
+      <section class="section" aria-labelledby="limits-title">
+        <div class="section-heading"><div><p class="eyebrow">PLAN</p><h2 id="limits-title">Dine kvoter</h2></div><span class="section-note">Andel tilbage i hvert vindue</span></div>
+        <div id="limits" class="limit-grid"></div>
+      </section>
+      <section class="section lower-grid">
+        <div class="panel" aria-labelledby="credits-title"><p class="eyebrow">EKSTRA FORBRUG</p><h2 id="credits-title">Credits</h2><div id="credits"></div></div>
+        <div class="panel" aria-labelledby="tokens-title"><p class="eyebrow">AKTIVITET</p><h2 id="tokens-title">Tokens</h2><div id="tokens"></div></div>
+      </section>
+      <section class="section panel chart-panel" aria-labelledby="activity-title"><div class="section-heading"><div><p class="eyebrow">SENESTE DAGE</p><h2 id="activity-title">Tokenaktivitet</h2></div><span class="section-note">Dagsforbrug</span></div><div id="chart" class="chart"></div></section>
+    </div>
+    <footer><span>Synkroniseres fra din pc, når den er tændt. Planforbrug, credits og tokens er forskellige mål.</span><a href="https://platform.openai.com/usage" target="_blank" rel="noopener noreferrer">Se API-forbrug <span aria-hidden="true">↗</span></a></footer>
+  </main>
+</body>
+</html>

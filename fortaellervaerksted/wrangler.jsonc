@@ -9,6 +9,10 @@
     {
       "pattern": "fortaellervaerksted.eastwood451.com",
       "custom_domain": true
+    },
+    {
+      "pattern": "kvoter.eastwood451.com",
+      "custom_domain": true
     }
   ],
   "assets": {

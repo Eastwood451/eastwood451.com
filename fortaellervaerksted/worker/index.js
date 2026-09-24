@@ -65,9 +65,11 @@ async function hasValidSession(request, env) {
   } catch { return false; }
 }
 
-function loginPage(error = "") {
+function loginPage(error = "", quota = false) {
   const message = error ? `<p class="error" role="alert">${error}</p>` : "";
-  return new Response(`<!doctype html><html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Log ind · Fortællerværkstedet</title><style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 20% 10%,#17334a 0,transparent 36%),radial-gradient(circle at 90% 90%,#261a42 0,transparent 34%),#07090d;color:#f6f8fb;font:16px/1.5 Inter,system-ui,sans-serif}.card{width:min(430px,100%);padding:36px;border:1px solid #ffffff24;border-radius:24px;background:#11151dd9;box-shadow:0 28px 80px #0008;backdrop-filter:blur(18px)}.eyebrow{margin:0 0 8px;color:#79cdf4;font-size:.78rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}h1{margin:0 0 8px;font-size:clamp(2rem,8vw,3.1rem);line-height:1}p{color:#b8c0cd}label{display:block;margin:28px 0 8px;font-weight:750}input{width:100%;padding:14px 15px;border:1px solid #ffffff30;border-radius:12px;background:#07090dbf;color:#fff;font:inherit}button{width:100%;margin-top:14px;padding:14px;border:0;border-radius:12px;background:#79cdf4;color:#071019;font:inherit;font-weight:850;cursor:pointer}.error{padding:10px 12px;border-radius:10px;background:#6f1d2a;color:#ffdce2}</style></head><body><main class="card"><p class="eyebrow">Eastwood451</p><h1>Fortællerværkstedet</h1><p>Dit private cloud-værksted til historier, scener, billeder og tegneserier.</p>${message}<form method="post" action="/auth/login"><label for="password">Adgangskode</label><input id="password" name="password" type="password" autocomplete="current-password" required autofocus><button type="submit">Åbn værkstedet</button></form></main></body></html>`, { status:error?401:200, headers:{"content-type":"text/html; charset=utf-8","cache-control":"no-store","content-security-policy":"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"} });
+  const title = quota ? "OpenAI Kvoter" : "Fortællerværkstedet";
+  const description = quota ? "Dit private overblik over planforbrug, credits og tokenaktivitet." : "Dit private cloud-værksted til historier, scener, billeder og tegneserier.";
+  return new Response(`<!doctype html><html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Log ind · ${title}</title><style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 20% 10%,#17334a 0,transparent 36%),radial-gradient(circle at 90% 90%,#261a42 0,transparent 34%),#07090d;color:#f6f8fb;font:16px/1.5 Inter,system-ui,sans-serif}.card{width:min(430px,100%);padding:36px;border:1px solid #ffffff24;border-radius:24px;background:#11151dd9;box-shadow:0 28px 80px #0008;backdrop-filter:blur(18px)}.eyebrow{margin:0 0 8px;color:#79cdf4;font-size:.78rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}h1{margin:0 0 8px;font-size:clamp(2rem,8vw,3.1rem);line-height:1}p{color:#b8c0cd}label{display:block;margin:28px 0 8px;font-weight:750}input{width:100%;padding:14px 15px;border:1px solid #ffffff30;border-radius:12px;background:#07090dbf;color:#fff;font:inherit}button{width:100%;margin-top:14px;padding:14px;border:0;border-radius:12px;background:#79cdf4;color:#071019;font:inherit;font-weight:850;cursor:pointer}.error{padding:10px 12px;border-radius:10px;background:#6f1d2a;color:#ffdce2}</style></head><body><main class="card"><p class="eyebrow">Eastwood451</p><h1>${title}</h1><p>${description}</p>${message}<form method="post" action="/auth/login"><label for="password">Adgangskode</label><input id="password" name="password" type="password" autocomplete="current-password" required autofocus><button type="submit">Åbn siden</button></form></main></body></html>`, { status:error?401:200, headers:{"content-type":"text/html; charset=utf-8","cache-control":"no-store","content-security-policy":"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"} });
 }
 
 function supabase(env) {
@@ -377,10 +379,120 @@ async function handleApi(request, env) {
   throw new HttpError(404,"Ukendt API-rute.");
 }
 
+const QUOTA_HOST = "kvoter.eastwood451.com";
+const QUOTA_OBJECT = "system/openai-quotas/current.json";
+
+async function sameSecret(provided, expected) {
+  if (!provided || !expected) return false;
+  const [a, b] = await Promise.all([provided, expected].map(value => crypto.subtle.digest("SHA-256", encoder.encode(value))));
+  const left = new Uint8Array(a), right = new Uint8Array(b);
+  let different = left.length ^ right.length;
+  for (let index = 0; index < left.length; index++) different |= left[index] ^ right[index];
+  return different === 0;
+}
+
+function quotaWindow(value) {
+  if (!value || value.usedPercent == null || !Number.isFinite(Number(value.usedPercent))) return null;
+  return {
+    usedPercent: Math.min(100, Math.max(0, Number(value.usedPercent))),
+    windowDurationMins: Number(value.windowDurationMins) || null,
+    resetsAt: Number(value.resetsAt) || null,
+  };
+}
+
+function quotaBucket(value) {
+  if (!value || typeof value !== "object") return null;
+  return {
+    limitId: String(value.limitId || "").slice(0, 60),
+    limitName: value.limitName ? String(value.limitName).slice(0, 100) : null,
+    primary: quotaWindow(value.primary),
+    secondary: quotaWindow(value.secondary),
+    credits: value.credits ? {
+      balance: String(value.credits.balance ?? "0").slice(0, 30),
+      hasCredits: Boolean(value.credits.hasCredits),
+      unlimited: Boolean(value.credits.unlimited),
+    } : null,
+  };
+}
+
+function quotaSnapshot(value) {
+  if (!value?.connected || !value.limits || !value.usage) throw new HttpError(400, "Kvotedata mangler.");
+  const buckets = Object.fromEntries(Object.entries(value.limits.rateLimitsByLimitId || {}).slice(0, 8)
+    .map(([key, bucket]) => [String(key).slice(0, 60), quotaBucket(bucket)]));
+  const summary = value.usage.summary || {};
+  return {
+    connected: true,
+    updatedAt: new Date().toISOString(),
+    account: { planType: String(value.account?.planType || "").slice(0, 40) },
+    limits: {
+      rateLimitsByLimitId: buckets,
+      rateLimits: quotaBucket(value.limits.rateLimits),
+      rateLimitResetCredits: { availableCount: Number(value.limits.rateLimitResetCredits?.availableCount) || 0 },
+    },
+    usage: {
+      summary: {
+        lifetimeTokens: summary.lifetimeTokens != null && Number.isFinite(Number(summary.lifetimeTokens)) ? Number(summary.lifetimeTokens) : null,
+        peakDailyTokens: summary.peakDailyTokens != null && Number.isFinite(Number(summary.peakDailyTokens)) ? Number(summary.peakDailyTokens) : null,
+      },
+      dailyUsageBuckets: Array.isArray(value.usage.dailyUsageBuckets)
+        ? value.usage.dailyUsageBuckets.slice(-60).filter(day => /^\d{4}-\d{2}-\d{2}$/.test(day.startDate) && Number.isFinite(Number(day.tokens)))
+          .map(day => ({ startDate: day.startDate, tokens: Number(day.tokens) })) : null,
+    },
+  };
+}
+
+async function handleQuotaRequest(request, env) {
+  const url = new URL(request.url);
+  if (url.pathname === "/api/sync" && request.method === "POST") {
+    const bearer = request.headers.get("authorization")?.replace(/^Bearer /i, "") || "";
+    if (!await sameSecret(bearer, env.QUOTA_SYNC_TOKEN)) throw new HttpError(401, "Ugyldig synkroniseringsnøgle.");
+    const raw = await request.text();
+    if (raw.length > 65_536) throw new HttpError(413, "Kvotedata er for store.");
+    let body;
+    try { body = JSON.parse(raw); } catch { throw new HttpError(400, "Ugyldig JSON."); }
+    const snapshot = quotaSnapshot(body);
+    await env.STORY_ASSETS.put(QUOTA_OBJECT, JSON.stringify(snapshot), { httpMetadata: { contentType: "application/json" } });
+    return json({ syncedAt: snapshot.updatedAt });
+  }
+  if (url.pathname === "/login" && request.method === "GET") {
+    if (await hasValidSession(request, env)) return Response.redirect(`${url.origin}/`, 303);
+    return loginPage("", true);
+  }
+  if (url.pathname === "/auth/login" && request.method === "POST") {
+    const form = await request.formData(), password = String(form.get("password") || "");
+    if (!env.AUTH_PASSWORD_HASH || cyrb53(password) !== env.AUTH_PASSWORD_HASH) return loginPage("Adgangskoden er forkert.", true);
+    const token = await createSession(env);
+    return new Response(null, { status: 303, headers: { location: "/", "set-cookie": `${SESSION_COOKIE}=${token}; Path=/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax` } });
+  }
+  if (url.pathname === "/auth/logout" && request.method === "POST") {
+    return new Response(null, { status: 303, headers: { location: "/login", "set-cookie": `${SESSION_COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax` } });
+  }
+  if (!await hasValidSession(request, env)) {
+    if (url.pathname.startsWith("/api/")) throw new HttpError(401, "Log ind for at se kvoter.");
+    return Response.redirect(`${url.origin}/login`, 303);
+  }
+  if (url.pathname === "/api/status" && request.method === "GET") {
+    const object = await env.STORY_ASSETS.get(QUOTA_OBJECT);
+    return object ? new Response(object.body, { headers: { ...JSON_HEADERS, "x-content-type-options": "nosniff" } })
+      : json({ connected: true, updatedAt: null, limits: null, usage: null, awaitingSync: true });
+  }
+  if (request.method !== "GET" && request.method !== "HEAD") throw new HttpError(405, "Metoden er ikke tilladt.");
+  if (!(["/", "/app.js", "/style.css"].includes(url.pathname))) throw new HttpError(404, "Siden findes ikke.");
+  const assetUrl = new URL(request.url);
+  assetUrl.pathname = `/kvoter/${url.pathname === "/" ? "index.html" : url.pathname.slice(1)}`;
+  const response = await env.ASSETS.fetch(new Request(assetUrl.toString(), request));
+  const headers = new Headers(response.headers);
+  headers.set("cache-control", "private, no-store");
+  headers.set("x-content-type-options", "nosniff");
+  if (url.pathname === "/") headers.set("content-security-policy", "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'");
+  return new Response(response.body, { status: response.status, headers });
+}
+
 export default {
   async fetch(request, env) {
     const started = Date.now(), url = new URL(request.url);
     try {
+      if (url.hostname === QUOTA_HOST) return await handleQuotaRequest(request, env);
       if (url.pathname === "/login" && request.method === "GET") {
         if (await hasValidSession(request,env)) return Response.redirect(`${url.origin}/`,303);
         return loginPage();

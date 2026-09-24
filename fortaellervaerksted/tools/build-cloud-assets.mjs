@@ -12,4 +12,6 @@ for (const fileName of allowedAssets) {
   await cp(resolve(projectRoot, fileName), resolve(publicDir, fileName));
 }
 
-console.log(`Cloud assets prepared: ${allowedAssets.join(", ")}`);
+await cp(resolve(projectRoot, "kvoter"), resolve(publicDir, "kvoter"), { recursive: true });
+
+console.log(`Cloud assets prepared: ${allowedAssets.join(", ")}, kvoter/`);
