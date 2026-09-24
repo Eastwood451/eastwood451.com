@@ -4,7 +4,7 @@ const el = (tag,text,cls) => {const n=document.createElement(tag);if(text!==unde
 const labels={pending:'Afventer analyse',review:'Kræver gennemgang',complete:'Færdigvurderet',error:'Fejl'};
 const difficulty={let:'Let',middel:'Middel',svaer:'Svær'};
 const format = n => new Intl.NumberFormat('da-DK').format(n||0);
-let bootstrap,controller,offset=0,total=0,view='files',editing,adding,searchTimer;
+let bootstrap,controller,offset=0,total=0,view='files',editing,adding,searchTimer,viewerPages=[],viewerIndex=0,viewerTitle='',viewerSession=0,viewerRender=0;
 const objectUrls=new Set();
 const filters=()=>Object.fromEntries(['q','grade','topic','subtopic','difficulty','scope','status','collection'].map(id=>[id,$(id).value]).concat([['view',view]]));
 async function api(path,options={}){
@@ -27,12 +27,42 @@ async function refreshBootstrap(){
 function applyFilters(f){for(const id of ['q','grade','topic','subtopic','difficulty','scope','status','collection'])$(id).value=f[id]??(id==='scope'?'students':'');view=f.view==='pages'?'pages':'files';offset=0;updateView()}
 function updateView(){$('view-files').setAttribute('aria-pressed',view==='files');$('view-pages').setAttribute('aria-pressed',view==='pages')}
 function tag(text){return el('span',text,'tag')}
+function updateViewerControls(){
+ $('preview-page-label').textContent=viewerPages.length?`Side ${viewerPages[viewerIndex].number} af ${viewerPages.length}`:'Henter sider…';
+ $('preview-prev').disabled=!viewerPages.length||viewerIndex<=0;
+ $('preview-next').disabled=!viewerPages.length||viewerIndex>=viewerPages.length-1;
+}
+async function showViewerPage(index,session=viewerSession){
+ if(index<0||index>=viewerPages.length)return;
+ viewerIndex=index;const render=++viewerRender,page=viewerPages[index];updateViewerControls();
+ try{
+  const response=await fetch('/api/library/preview/'+encodeURIComponent(page.id));
+  if(!response.ok)throw new Error('Siden kunne ikke hentes.');
+  const url=URL.createObjectURL(await response.blob());objectUrls.add(url);
+  if(session!==viewerSession||render!==viewerRender)return;
+  $('preview-large').src=url;$('preview-large').alt=viewerTitle+', side '+page.number;
+  $('preview-title').textContent=viewerTitle+' · Side '+page.number;
+  updateViewerControls();
+ }catch{if(session===viewerSession&&render===viewerRender)$('preview-page-label').textContent='Siden kunne ikke hentes.'}
+}
+async function openPreview(item,image){
+ if(!image.src)return;
+ const session=++viewerSession;viewerTitle=item.title;viewerPages=[{id:item.page_id,number:item.number}];viewerIndex=0;
+ $('preview-title').textContent=viewerTitle+' · Side '+item.number;
+ $('preview-large').src=image.src;$('preview-large').alt=viewerTitle+', side '+item.number;
+ $('preview-dialog').showModal();updateViewerControls();
+ try{
+  const pages=await api('content/'+encodeURIComponent(item.content_id)+'/pages');
+  if(session!==viewerSession)return;
+  if(Array.isArray(pages)&&pages.length){viewerPages=pages;viewerIndex=Math.max(0,pages.findIndex(page=>page.id===item.page_id));await showViewerPage(viewerIndex,session)}
+ }catch{$('preview-page-label').textContent='Siderne kunne ikke hentes.'}
+}
 async function thumbnail(image,id){
  try{const r=await fetch('/api/library/preview/'+encodeURIComponent(id));if(!r.ok)return;const blob=await r.blob();if(!image.isConnected)return;const url=URL.createObjectURL(blob);objectUrls.add(url);image.src=url;image.hidden=false;image.previousElementSibling.hidden=true;image.parentElement.classList.add('ready');image.parentElement.tabIndex=0;image.parentElement.setAttribute('role','button');image.parentElement.setAttribute('aria-label','Forstør '+image.alt)}catch{/* The catalogue remains usable if a preview is not available. */}
 }
 const previewObserver=new IntersectionObserver(entries=>{for(const e of entries)if(e.isIntersecting){previewObserver.unobserve(e.target);thumbnail(e.target.querySelector("img"),e.target.dataset.page)}},{rootMargin:'200px'});
 function card(item){
- const c=el('article',undefined,'card'),preview=el('div',undefined,'preview');preview.append(el('span','∑','placeholder'));const img=el('img');img.alt='Forhåndsvisning af '+item.title+', side '+item.number;img.hidden=true;img.dataset.page=item.page_id;const enlarge=()=>{if(!img.src)return;$('preview-title').textContent=item.title+' · Side '+item.number;$('preview-large').src=img.src;$('preview-large').alt=img.alt;$('preview-dialog').showModal()};preview.onclick=enlarge;preview.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();enlarge()}};preview.append(img,el('span','Side '+item.number+' af '+item.page_count,'page-chip'));c.append(preview);
+ const c=el('article',undefined,'card'),preview=el('div',undefined,'preview');preview.append(el('span','∑','placeholder'));const img=el('img');img.alt='Forhåndsvisning af '+item.title+', side '+item.number;img.hidden=true;img.dataset.page=item.page_id;const enlarge=()=>openPreview(item,img);preview.onclick=enlarge;preview.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();enlarge()}};preview.append(img,el('span','Side '+item.number+' af '+item.page_count,'page-chip'));c.append(preview);
  const b=el('div',undefined,'card-body');b.append(el('span',item.corrected?'Manuelt rettet':labels[item.status], 'status '+item.status),el('h3',item.title.replace(/_+/g,' ')));
  b.append(el('p',item.summary||'Indholdet er registreret og afventer faglig vurdering.','description'));
  const tags=el('div',undefined,'tags');for(const a of item.assessments){const name=bootstrap.topics.find(t=>t.id===a.topic)?.label||a.topic;const level=a.grade_min===null?'Niveau uafklaret':(a.grade_min===a.grade_max?a.grade_min:a.grade_min+'–'+a.grade_max)+'. kl.';const t=tag(name+' · '+level+(a.difficulty?' · '+difficulty[a.difficulty]:''));t.title=[a.subtopic,a.skill,a.reason].filter(Boolean).join(' → ');tags.append(t)}b.append(tags);
@@ -79,5 +109,8 @@ for(const id of ['q','subtopic'])$(id).oninput=()=>{clearTimeout(searchTimer);se
 for(const id of ['grade','topic','difficulty','scope','status','collection'])$(id).onchange=()=>search();
 $('view-files').onclick=()=>{view='files';updateView();search()};$('view-pages').onclick=()=>{view='pages';updateView();search()};$('clear').onclick=()=>{applyFilters({});search()};$('prev').onclick=()=>{offset=Math.max(0,offset-30);search(false)};$('next').onclick=()=>{offset+=30;search(false)};
 $('close-preview').onclick=()=>$('preview-dialog').close();
+$('preview-prev').onclick=()=>showViewerPage(viewerIndex-1);
+$('preview-next').onclick=()=>showViewerPage(viewerIndex+1);
+window.addEventListener('keydown',event=>{if(!$('preview-dialog').open)return;if(event.key==='ArrowLeft'){event.preventDefault();showViewerPage(viewerIndex-1)}else if(event.key==='ArrowRight'){event.preventDefault();showViewerPage(viewerIndex+1)}});
 async function init(){try{await refreshBootstrap();await search()}catch(error){$('notice').textContent=error.message;$('result-count').textContent='Biblioteket kunne ikke hentes.'}}
 if(document.readyState==='complete')init();else window.addEventListener('load',init,{once:true});
