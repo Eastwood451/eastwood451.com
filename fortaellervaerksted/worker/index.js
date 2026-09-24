@@ -481,7 +481,7 @@ async function handleQuotaRequest(request, env) {
   if (request.method !== "GET" && request.method !== "HEAD") throw new HttpError(405, "Metoden er ikke tilladt.");
   if (!(["/", "/app.js", "/style.css"].includes(path))) throw new HttpError(404, "Siden findes ikke.");
   const assetUrl = new URL(request.url);
-  assetUrl.pathname = `/kvoter/${path === "/" ? "index.html" : path.slice(1)}`;
+  assetUrl.pathname = path === "/" ? "/kvoter/" : `/kvoter/${path.slice(1)}`;
   const response = await env.ASSETS.fetch(new Request(assetUrl.toString(), request));
   const headers = new Headers(response.headers);
   headers.set("cache-control", "private, no-store");

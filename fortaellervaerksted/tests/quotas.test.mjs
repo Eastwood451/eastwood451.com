@@ -14,7 +14,11 @@ const env = {
       return value ? { body: value } : null;
     },
   },
-  ASSETS: { async fetch(request) { return new Response(new URL(request.url).pathname); } },
+  ASSETS: { async fetch(request) {
+    const url = new URL(request.url);
+    if (url.pathname === '/kvoter/index.html') return Response.redirect(`${url.origin}/kvoter/`, 308);
+    return new Response(url.pathname);
+  } },
 };
 
 async function sessionCookie() {
@@ -61,7 +65,7 @@ test('authenticated quota page reads a sanitized synced snapshot', async () => {
   assert.equal(data.usage.dailyUsageBuckets[0].tokens, 123);
   const page = await worker.fetch(new Request(`${host}/`, { headers: { cookie: await sessionCookie() } }), env);
   assert.equal(page.status, 200);
-  assert.equal(await page.text(), '/kvoter/index.html');
+  assert.equal(await page.text(), '/kvoter/');
 });
 
 test('quota dashboard works on the established site hostname', async () => {
@@ -79,7 +83,7 @@ test('quota dashboard works on the established site hostname', async () => {
   assert.equal(denied.status, 401);
   const page = await worker.fetch(new Request(`${site}/kvoter/`, { headers: { cookie: await sessionCookie() } }), env);
   assert.equal(page.status, 200);
-  assert.equal(await page.text(), '/kvoter/index.html');
+  assert.equal(await page.text(), '/kvoter/');
   const status = await worker.fetch(new Request(`${site}/kvoter/api/status`, { headers: { cookie: await sessionCookie() } }), env);
   assert.equal(status.status, 200);
   assert.equal((await status.json()).usage.summary.lifetimeTokens, 12345);
