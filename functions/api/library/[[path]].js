@@ -47,6 +47,10 @@ export async function onRequest({request,env}) {
    const [stats,topics,filters,collections]=await Promise.all([db('rpc/math_stats','POST',{}),db('math_topics?select=*&order=label'),db('math_saved_filters?select=*&order=name'),db('math_collections?select=*&order=name')]);
    return reply({stats,topics,filters,collections});
   }
+  if(route.startsWith('content/')&&route.endsWith('/pages')&&request.method==='GET') {
+   const id=route.slice(8,-6);if(!HASH.test(id))fail('Ugyldigt materiale.');
+   return reply(await db('math_pages?select=id,number&content_id=eq.'+encodeURIComponent(id)+'&order=number.asc'));
+  }
   if(route.startsWith('preview/')&&request.method==='GET') {
    const id=route.slice(8);if(!PAGE.test(id))fail('Ugyldigt sidetal.');
    const rows=await db('math_pages?select=preview_key&id=eq.'+encodeURIComponent(id));
