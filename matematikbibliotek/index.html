@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="da">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Matematikbiblioteket · Eastwood451</title><link rel="stylesheet" href="style.css?v=20260924-side-controls"><script type="module" src="app.js?v=20260924-page-flip"></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Matematikbiblioteket · Eastwood451</title><link rel="stylesheet" href="style.css?v=20260924-page-size"><script type="module" src="app.js?v=20260924-page-size"></script></head>
 <body>
 <header class="top"><a href="/" class="brand">E<span>451</span></a><span class="divider"></span><span>Dit undervisningsbibliotek</span><span class="private">Fælles bibliotek</span></header>
 <main>
@@ -17,7 +17,7 @@
 <label>Analysestatus<select id="status"><option value="">Alle statusser</option><option value="complete">Færdigvurderet</option><option value="review">Kræver gennemgang</option><option value="pending">Afventer analyse</option></select></label>
 <hr><h3>Gemte søgninger</h3><div id="saved"></div><h3>Fælles samlinger <button id="new-collection" class="link" aria-label="Ny samling">＋</button></h3><select id="collection" aria-label="Vælg samling"><option value="">Hele biblioteket</option></select><div id="collection-actions"></div>
 </aside>
-<section class="results"><div class="result-heading"><div><h2 id="result-count">Henter materialer…</h2><p id="result-detail" class="hint"></p></div><div class="view-switch" role="group" aria-label="Resultatvisning"><button id="view-files" aria-pressed="true">Filer</button><button id="view-pages" aria-pressed="false">Sider</button></div></div><div id="notice" role="status"></div><div id="cards" class="cards"></div><nav class="pagination" aria-label="Resultatsider"><button id="prev">← Forrige</button><span id="page-label"></span><button id="next">Næste →</button></nav></section>
+<section class="results"><div class="result-heading"><div><h2 id="result-count">Henter materialer…</h2><p id="result-detail" class="hint"></p></div><div class="view-switch" role="group" aria-label="Resultatvisning"><button id="view-files" aria-pressed="true">Filer</button><button id="view-pages" aria-pressed="false">Sider</button></div></div><div id="notice" role="status"></div><div id="cards" class="cards"></div><nav class="pagination" aria-label="Resultatsider"><button id="prev">← Forrige</button><span id="page-label" aria-live="polite"></span><button id="next">Næste →</button><label class="page-size-label" for="page-size">Materialer pr. side <select id="page-size"><option value="100" selected>100</option><option value="200">200</option><option value="300">300</option></select></label></nav></section>
 </div><details id="errors" class="panel"><summary>Import og filer med fejl</summary><div id="error-list"></div></details>
 </div>
 </main>

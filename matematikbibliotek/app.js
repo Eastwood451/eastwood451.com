@@ -5,6 +5,7 @@ const labels={pending:'Afventer analyse',review:'Kræver gennemgang',complete:'F
 const difficulty={let:'Let',middel:'Middel',svaer:'Svær'};
 const format = n => new Intl.NumberFormat('da-DK').format(n||0);
 let bootstrap,controller,offset=0,total=0,view='files',editing,adding,searchTimer,viewerPages=[],viewerIndex=0,viewerTitle='',viewerSession=0,viewerRender=0;
+const pageSize=()=>Number($('page-size').value);
 const objectUrls=new Set();
 const filters=()=>Object.fromEntries(['q','grade','topic','subtopic','difficulty','scope','status','collection'].map(id=>[id,$(id).value]).concat([['view',view]]));
 async function api(path,options={}){
@@ -80,12 +81,12 @@ function card(item){
 async function search(reset=true){
  if(reset)offset=0;controller?.abort();controller=new AbortController();const active=controller;
  $('notice').textContent='';$('result-count').setAttribute('aria-busy','true');
- try{const started=performance.now();const result=await api('search?'+new URLSearchParams({...filters(),offset}),{signal:active.signal});if(active!==controller)return;total=result.total;
+ try{const started=performance.now();const limit=pageSize();const result=await api('search?'+new URLSearchParams({...filters(),offset,limit}),{signal:active.signal});if(active!==controller)return;total=result.total;
  previewObserver.disconnect();for(const u of objectUrls)URL.revokeObjectURL(u);objectUrls.clear();$('cards').replaceChildren(...result.items.map(card));
  if(!result.items.length)$('cards').append(el('div','Ingen materialer matcher. Prøv færre filtre eller vis alle materialetyper.','empty'));
  $('result-count').textContent=format(total)+(view==='pages'?' sider':' materialer');
  $('result-detail').textContent=format(result.pages)+' matchende sider · '+Math.round(performance.now()-started)+' ms · '+format(bootstrap.stats.pending)+' afventer analyse';
- $('page-label').textContent=total?`${offset+1}–${Math.min(offset+30,total)} af ${format(total)}`:'0 resultater';$('prev').disabled=offset===0;$('next').disabled=offset+30>=total;
+ $('page-label').textContent=total?`${offset+1}–${Math.min(offset+limit,total)} af ${format(total)}`:'0 resultater';$('prev').disabled=offset===0;$('next').disabled=offset+limit>=total;
  $('subtopics').replaceChildren();for(const t of result.facets.subtopics||[])option($('subtopics'),t.value,t.value+' ('+format(t.count)+')');
  const gradeCurrent=$('grade').value;$('grade').replaceChildren();option($('grade'),'','Alle klassetrin');for(let g=0;g<=12;g++){const count=result.facets.grades.find(x=>Number(x.value)===g)?.count||0;option($('grade'),String(g),g+'. klasse'+(count?' ('+format(count)+')':''))}$('grade').value=gradeCurrent;
  const topicCurrent=$('topic').value;loadOptions($('topic'),bootstrap.topics.map(t=>({...t,label:t.label+(result.facets.topics.find(x=>x.value===t.id)?' ('+format(result.facets.topics.find(x=>x.value===t.id).count)+')':'')})),'Alle emner');$('topic').value=topicCurrent;
@@ -107,7 +108,7 @@ $('save-filter').onclick=async()=>{const name=prompt('Navn på den gemte søgnin
 $('new-collection').onclick=async()=>{const name=prompt('Navn på samlingen:');if(!name)return;try{await api('collections',{method:'POST',body:JSON.stringify({name})});await refreshBootstrap()}catch(e){$('notice').textContent=e.message}};
 for(const id of ['q','subtopic'])$(id).oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(search,250)};
 for(const id of ['grade','topic','difficulty','scope','status','collection'])$(id).onchange=()=>search();
-$('view-files').onclick=()=>{view='files';updateView();search()};$('view-pages').onclick=()=>{view='pages';updateView();search()};$('clear').onclick=()=>{applyFilters({});search()};$('prev').onclick=()=>{offset=Math.max(0,offset-30);search(false)};$('next').onclick=()=>{offset+=30;search(false)};
+$('view-files').onclick=()=>{view='files';updateView();search()};$('view-pages').onclick=()=>{view='pages';updateView();search()};$('clear').onclick=()=>{applyFilters({});search()};$('page-size').onchange=()=>search();$('prev').onclick=()=>{offset=Math.max(0,offset-pageSize());search(false)};$('next').onclick=()=>{offset+=pageSize();search(false)};
 $('close-preview').onclick=()=>$('preview-dialog').close();
 $('preview-prev').onclick=()=>showViewerPage(viewerIndex-1);
 $('preview-next').onclick=()=>showViewerPage(viewerIndex+1);

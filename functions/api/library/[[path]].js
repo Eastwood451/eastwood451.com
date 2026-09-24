@@ -41,7 +41,8 @@ export async function onRequest({request,env}) {
   if(route==='search' && request.method==='GET') {
    const f=validateFilters(Object.fromEntries(url.searchParams));
    const offset=Math.max(0,Math.min(Number(url.searchParams.get('offset'))||0,100000));
-   return reply(await db('rpc/math_search','POST',{p_filters:f,p_offset:Math.floor(offset),p_limit:30}));
+   const limit=Number(url.searchParams.get('limit'));
+   return reply(await db('rpc/math_search','POST',{p_filters:f,p_offset:Math.floor(offset),p_limit:[100,200,300].includes(limit)?limit:100}));
   }
   if(route==='bootstrap' && request.method==='GET') {
    const [stats,topics,filters,collections]=await Promise.all([db('rpc/math_stats','POST',{}),db('math_topics?select=*&order=label'),db('math_saved_filters?select=*&order=name'),db('math_collections?select=*&order=name')]);
