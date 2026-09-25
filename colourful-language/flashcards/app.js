@@ -3,6 +3,8 @@ import { DANISH_WORDS, LANGUAGES, fallbackRows } from "./vocabulary.js";
 
 const TOTAL_WORDS = DANISH_WORDS.length;
 const VOCABULARY_TIMEOUT_MS = 10000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const REVIEW_DAYS = [1, 3, 7, 14, 30];
 const STORAGE_PREFIX = "eastwood451:flashcards:v1:";
 const LANGUAGE_STORAGE_KEY = STORAGE_PREFIX + "language";
 const MODE_NAMES = {
@@ -36,6 +38,8 @@ let answerLocked = false;
 let answerTimer = null;
 let loadSequence = 0;
 let feedbackState = { text: "", kind: "" };
+let reviewSlots = [];
+let forceReview = false;
 
 languageSelect.innerHTML = LANGUAGES.map((language) =>
   '<option value="' + escapeHtml(language.code) + '">' +
@@ -53,7 +57,7 @@ typingButton.addEventListener("click", () => setAnswerMethod("typing"));
 resetButton.addEventListener("click", resetLanguage);
 
 function freshProgress() {
-  return { introduced: 3, learned: [], streaks: {} };
+  return { introduced: 3, learned: [], streaks: {}, answered: 0, reviews: {} };
 }
 
 function readStorage(key) {
@@ -106,11 +110,48 @@ function loadProgress(code) {
     ? Math.max(minimumIntroduced, Math.min(TOTAL_WORDS, stored.introduced))
     : minimumIntroduced;
 
-  return { introduced, learned, streaks };
+  const answered = Number.isSafeInteger(stored.answered) ? Math.max(0, stored.answered) : 0;
+  const reviews = {};
+  for (const id of learned) {
+    reviews[id] = normalizeReview(stored.reviews?.[id], answered);
+  }
+
+  return { introduced, learned, streaks, answered, reviews };
 }
 
 function clampStreak(value) {
   return Number.isInteger(value) ? Math.max(0, Math.min(3, value)) : 0;
+}
+
+function clampInteger(value, minimum, maximum, fallback) {
+  return Number.isSafeInteger(value)
+    ? Math.max(minimum, Math.min(maximum, value))
+    : fallback;
+}
+
+function normalizeReview(value, answered) {
+  if (!value || typeof value !== "object") {
+    return {
+      level: 0,
+      dueQuestion: answered,
+      dueAt: Date.now(),
+      failures: 0,
+      weakness: { recognition: 0, recall: 0 },
+      lastReviewed: 0
+    };
+  }
+
+  return {
+    level: clampInteger(value.level, 0, 4, 0),
+    dueQuestion: clampInteger(value.dueQuestion, 0, Number.MAX_SAFE_INTEGER, answered),
+    dueAt: Number.isFinite(value.dueAt) && value.dueAt >= 0 ? value.dueAt : Date.now(),
+    failures: clampInteger(value.failures, 0, 9, 0),
+    weakness: {
+      recognition: clampInteger(value.weakness?.recognition, 0, 5, 0),
+      recall: clampInteger(value.weakness?.recall, 0, 5, 0)
+    },
+    lastReviewed: clampInteger(value.lastReviewed, 0, answered, 0)
+  };
 }
 
 async function getVocabulary(code) {
@@ -170,6 +211,8 @@ async function changeLanguage(code) {
   question = null;
   revealedHintIndices = new Set();
   mode = "recognition";
+  reviewSlots = [];
+  forceReview = false;
   feedbackState = { text: "", kind: "" };
   vocabulary = [];
   progress = loadProgress(languageCode);
@@ -214,6 +257,50 @@ function getStreak(wordId) {
   return progress.streaks[wordId];
 }
 
+function getLearnedWords() {
+  const learned = new Set(progress.learned);
+  return vocabulary.filter((word) => learned.has(word.word_id));
+}
+
+function getReview(wordId) {
+  if (!progress.reviews[wordId]) {
+    progress.reviews[wordId] = normalizeReview(null, progress.answered);
+  }
+  return progress.reviews[wordId];
+}
+
+function reviewQuestionInterval(level) {
+  const count = Math.max(1, progress.learned.length);
+  return [6, 18, 45, Math.max(90, 2 * count), Math.max(90, 3 * count)][level];
+}
+
+function scheduleReview(review) {
+  review.dueQuestion = progress.answered + reviewQuestionInterval(review.level);
+  review.dueAt = Date.now() + REVIEW_DAYS[review.level] * DAY_MS;
+}
+
+function reviewIsDue(review) {
+  return progress.answered >= review.dueQuestion || Date.now() >= review.dueAt;
+}
+
+function chooseReviewWord(words) {
+  return shuffle(words).sort((first, second) => {
+    const a = getReview(first.word_id);
+    const b = getReview(second.word_id);
+    const urgencyA = a.failures * 100 + (a.weakness.recognition + a.weakness.recall) * 10;
+    const urgencyB = b.failures * 100 + (b.weakness.recognition + b.weakness.recall) * 10;
+    return urgencyB - urgencyA || a.lastReviewed - b.lastReviewed;
+  })[0] || null;
+}
+
+function chooseReviewMode(review) {
+  const recognitionWeight = 1 + 2 * review.weakness.recognition;
+  const recallWeight = 1 + 2 * review.weakness.recall;
+  return Math.random() * (recognitionWeight + recallWeight) < recognitionWeight
+    ? "recognition"
+    : "recall";
+}
+
 function readyWords(trainingMode) {
   return getActiveWords().filter((word) => getStreak(word.word_id)[trainingMode] < 3);
 }
@@ -225,14 +312,33 @@ function setAnswerMethod(nextMethod) {
   render();
 }
 
+function nextReviewSlot() {
+  if (!reviewSlots.length) reviewSlots = shuffle([false, false, true]);
+  return reviewSlots.shift();
+}
+
 function nextQuestion() {
+  const active = getActiveWords();
+  const learned = getLearnedWords();
+  const due = learned.filter((word) => reviewIsDue(getReview(word.word_id)));
+  const useReview = !active.length || forceReview || (due.length > 0 && nextReviewSlot());
+
+  if (useReview) {
+    const reviewWord = chooseReviewWord(due.length ? due : forceReview ? learned : []);
+    if (reviewWord) {
+      forceReview = false;
+      mode = chooseReviewMode(getReview(reviewWord.word_id));
+      return reviewWord;
+    }
+  }
+
+  if (!active.length) return null;
   const availableModes = ["recognition", "recall"]
     .filter((trainingMode) => readyWords(trainingMode).length > 0);
   if (!availableModes.length) return null;
 
   mode = availableModes[Math.floor(Math.random() * availableModes.length)];
   const candidates = readyWords(mode);
-  if (!candidates.length) return null;
   return candidates[Math.floor(Math.random() * candidates.length)];
 }
 
@@ -265,13 +371,13 @@ function renderProgress() {
   const activeCount = getActiveWords().length;
   deckCount.textContent = activeCount
     ? "Aktivt sæt · " + activeCount + " ord"
-    : "Hele sættet er gennemført";
+    : "Alle ord lært · repetition";
 }
 
 function renderActiveWords() {
   const active = getActiveWords();
   if (!active.length) {
-    activeWordsList.innerHTML = '<li class="word-row"><span class="word-row-name">Alle 21 ord er lært</span></li>';
+    activeWordsList.innerHTML = '<li class="word-row"><span class="word-row-name">Alle ' + TOTAL_WORDS + ' ord er lært</span></li>';
     return;
   }
 
@@ -301,30 +407,33 @@ function renderAnswerMethodToggle() {
 
 function renderQuiz() {
   const active = getActiveWords();
-  if (!active.length) {
-    quiz.innerHTML = '<div class="complete-message"><div><strong>Hele sættet er lært.</strong><span>Du har klaret alle 21 ord på ' +
-      escapeHtml(currentLanguage().label.toLowerCase()) +
-      ". Vælg et andet sprog, eller nulstil sættet for at begynde igen.</span></div></div>";
-    return;
-  }
-
-  if (!question || !active.some((word) => word.word_id === question.word_id)) {
+  if (!question || !vocabulary.some((word) => word.word_id === question.word_id)) {
     question = nextQuestion();
     revealedHintIndices = new Set();
   }
   if (!question) {
+    if (!active.length) {
+      modeStep.textContent = "AJOUR";
+      quiz.innerHTML = '<div class="complete-message"><div><strong>Du er ajour.</strong><span>De lærte ord vender tilbage, når de skal repeteres.</span><p><button class="submit-button" type="button">Øv et ord nu</button></p></div></div>';
+      quiz.querySelector("button").addEventListener("click", () => {
+        forceReview = true;
+        render();
+      });
+      return;
+    }
     quiz.innerHTML = '<p class="loading">Vælg en øvelse for at fortsætte.</p>';
     return;
   }
 
   const language = currentLanguage();
   const targetDirection = language.direction || "ltr";
+  const reviewing = progress.learned.includes(question.word_id);
   const streak = getStreak(question.word_id)[mode];
-  modeStep.textContent = "0" + (streak + 1) + " / 03";
+  modeStep.textContent = reviewing ? "REPETITION" : "0" + (streak + 1) + " / 03";
 
-  const questionLabel = mode === "recognition"
+  const questionLabel = (reviewing ? "Repetition · " : "") + (mode === "recognition"
     ? "Genkendelse · find det danske svar, der passer til " + language.label.toLowerCase() + "."
-    : "Genkaldelse · find ordet på " + language.label.toLowerCase() + ", der svarer til det danske ord.";
+    : "Genkaldelse · find ordet på " + language.label.toLowerCase() + ", der svarer til det danske ord.");
   const promptWord = mode === "recognition"
     ? '<span class="question-roman" lang="und-Latn" dir="ltr">' + escapeHtml(question.reading) + "</span>" +
       '<span class="question-target" lang="' + escapeHtml(language.code) + '" dir="' + escapeHtml(targetDirection) + '">' +
@@ -338,7 +447,9 @@ function renderQuiz() {
   "</div>";
 
   if (answerMethod === "multiple-choice") {
-    const answers = shuffle(active);
+    const otherWords = shuffle(vocabulary.slice(0, progress.introduced)
+      .filter((word) => word.word_id !== question.word_id)).slice(0, 2);
+    const answers = shuffle([question, ...otherWords]);
     const answerGrid = document.createElement("div");
     answerGrid.className = "answer-grid";
     answerGrid.setAttribute("role", "group");
@@ -549,36 +660,65 @@ function submitAnswer(answer, isTyped = false) {
       ? normalizeAnswer(answer, "da") === normalizeAnswer(testedWord.danish, "da")
       : isAcceptedAnswer(testedWord, answer)
     : answer === testedWord.word_id;
-  const streak = getStreak(testedWord.word_id);
+  const reviewing = progress.learned.includes(testedWord.word_id);
+  const clue = [testedWord.reading, testedWord.target].filter(Boolean).join(" · ");
+  progress.answered += 1;
+  answerLocked = true;
 
-  if (correct) {
-    streak[testedMode] = Math.min(3, streak[testedMode] + 1);
-    answerLocked = true;
-    const mastered = streak.recognition === 3 && streak.recall === 3;
-
-    if (mastered) {
-      const learned = new Set(progress.learned);
-      learned.add(testedWord.word_id);
-      progress.learned = [...learned];
-      const nextWord = vocabulary[progress.introduced];
-      if (nextWord) progress.introduced += 1;
-      const nextText = nextWord
-        ? " Nyt ord føjet til sættet: " + nextWord.danish + "."
-        : "";
-      const completedText = progress.learned.length === TOTAL_WORDS
-        ? "Du kan nu alle 21 ord."
-        : "Ordet er lært." + nextText;
-      setFeedback(completedText, "learned");
+  if (reviewing) {
+    const review = getReview(testedWord.word_id);
+    review.lastReviewed = progress.answered;
+    if (correct) {
+      review.failures = 0;
+      if (revealedHintIndices.size > 0) {
+        review.dueQuestion = progress.answered + 6;
+        review.dueAt = Date.now() + DAY_MS;
+        setFeedback("Rigtigt med hint. Ordet kommer snart igen.", "success");
+      } else {
+        review.level = Math.min(4, review.level + 1);
+        review.weakness[testedMode] = Math.max(0, review.weakness[testedMode] - 1);
+        scheduleReview(review);
+        setFeedback("Rigtigt. Ordet er planlagt til en senere repetition.", "success");
+      }
     } else {
-      setFeedback("Rigtigt. " + MODE_NAMES[testedMode] + ": " + streak[testedMode] +
-        "/3 i træk for dette ord.", "success");
+      review.level = Math.max(0, review.level - 2);
+      review.failures = Math.min(9, review.failures + 1);
+      review.weakness[testedMode] = Math.min(5, review.weakness[testedMode] + 1);
+      review.dueQuestion = progress.answered + Math.max(2, 6 - 2 * review.failures);
+      review.dueAt = Date.now() + DAY_MS;
+      setFeedback("Ikke helt. " + clue + " betyder " + testedWord.danish +
+        ". Ordet kommer snart igen.", "error");
     }
   } else {
-    streak[testedMode] = 0;
-    answerLocked = true;
-    const clue = [testedWord.reading, testedWord.target].filter(Boolean).join(" · ");
-    setFeedback("Ikke helt. " + clue + " betyder " + testedWord.danish +
-      ". " + MODE_NAMES[testedMode] + "-streaken starter forfra.", "error");
+    const streak = getStreak(testedWord.word_id);
+    if (correct) {
+      streak[testedMode] = Math.min(3, streak[testedMode] + 1);
+      const mastered = streak.recognition === 3 && streak.recall === 3;
+
+      if (mastered) {
+        progress.learned.push(testedWord.word_id);
+        const review = normalizeReview(null, progress.answered);
+        review.lastReviewed = progress.answered;
+        progress.reviews[testedWord.word_id] = review;
+        scheduleReview(review);
+        const nextWord = vocabulary[progress.introduced];
+        if (nextWord) progress.introduced += 1;
+        const nextText = nextWord
+          ? " Nyt ord føjet til sættet: " + nextWord.danish + "."
+          : "";
+        const completedText = progress.learned.length === TOTAL_WORDS
+          ? "Du kan nu alle " + TOTAL_WORDS + " ord. Repetition fortsætter."
+          : "Ordet er lært." + nextText;
+        setFeedback(completedText, "learned");
+      } else {
+        setFeedback("Rigtigt. " + MODE_NAMES[testedMode] + ": " + streak[testedMode] +
+          "/3 i træk for dette ord.", "success");
+      }
+    } else {
+      streak[testedMode] = 0;
+      setFeedback("Ikke helt. " + clue + " betyder " + testedWord.danish +
+        ". " + MODE_NAMES[testedMode] + "-streaken starter forfra.", "error");
+    }
   }
 
   saveProgress();
@@ -630,6 +770,8 @@ function resetLanguage() {
   question = null;
   revealedHintIndices = new Set();
   mode = "recognition";
+  reviewSlots = [];
+  forceReview = false;
   progress = freshProgress();
   feedbackState = { text: "Sættet er nulstillet. Vi begynder med de første tre ord.", kind: "" };
   saveProgress();
