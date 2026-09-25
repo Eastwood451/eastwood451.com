@@ -18,8 +18,6 @@ const deckCount = document.querySelector("#deck-count");
 const quiz = document.querySelector("#quiz");
 const feedback = document.querySelector("#feedback");
 const activeWordsList = document.querySelector("#active-words");
-const recognitionTab = document.querySelector("#recognition-tab");
-const recallTab = document.querySelector("#recall-tab");
 const multipleChoiceButton = document.querySelector("#multiple-choice-button");
 const typingButton = document.querySelector("#typing-button");
 const modeStep = document.querySelector("#mode-step");
@@ -36,7 +34,6 @@ let hintMode = "first";
 let answerLocked = false;
 let answerTimer = null;
 let loadSequence = 0;
-let questionCursors = { recognition: 0, recall: 0 };
 let feedbackState = { text: "", kind: "" };
 
 languageSelect.innerHTML = LANGUAGES.map((language) =>
@@ -50,8 +47,6 @@ languageSelect.addEventListener("change", () => {
   changeLanguage(languageSelect.value);
 });
 
-recognitionTab.addEventListener("click", () => setMode("recognition"));
-recallTab.addEventListener("click", () => setMode("recall"));
 multipleChoiceButton.addEventListener("click", () => setAnswerMethod("multiple-choice"));
 typingButton.addEventListener("click", () => setAnswerMethod("typing"));
 resetButton.addEventListener("click", resetLanguage);
@@ -162,7 +157,6 @@ async function changeLanguage(code) {
   question = null;
   revealedHintIndices = new Set();
   mode = "recognition";
-  questionCursors = { recognition: 0, recall: 0 };
   feedbackState = { text: "", kind: "" };
   vocabulary = [];
   progress = loadProgress(languageCode);
@@ -211,17 +205,6 @@ function readyWords(trainingMode) {
   return getActiveWords().filter((word) => getStreak(word.word_id)[trainingMode] < 3);
 }
 
-function setMode(nextMode) {
-  if (nextMode === mode || !readyWords(nextMode).length) return;
-  clearTimeout(answerTimer);
-  mode = nextMode;
-  question = null;
-  revealedHintIndices = new Set();
-  answerLocked = false;
-  feedbackState = { text: "", kind: "" };
-  render();
-}
-
 function setAnswerMethod(nextMethod) {
   if (nextMethod === answerMethod) return;
   answerMethod = nextMethod;
@@ -230,12 +213,14 @@ function setAnswerMethod(nextMethod) {
 }
 
 function nextQuestion() {
+  const availableModes = ["recognition", "recall"]
+    .filter((trainingMode) => readyWords(trainingMode).length > 0);
+  if (!availableModes.length) return null;
+
+  mode = availableModes[Math.floor(Math.random() * availableModes.length)];
   const candidates = readyWords(mode);
   if (!candidates.length) return null;
-
-  const index = questionCursors[mode] % candidates.length;
-  questionCursors[mode] += 1;
-  return candidates[index];
+  return candidates[Math.floor(Math.random() * candidates.length)];
 }
 
 function shuffle(values) {
@@ -249,14 +234,9 @@ function shuffle(values) {
 
 function render() {
   if (!vocabulary.length) return;
-  if (!readyWords(mode).length) {
-    const otherMode = mode === "recognition" ? "recall" : "recognition";
-    if (readyWords(otherMode).length) mode = otherMode;
-  }
-
   renderProgress();
   renderActiveWords();
-  renderModeTabs();
+  renderAnswerMethodToggle();
   renderQuiz();
   renderFeedback();
 }
@@ -301,16 +281,9 @@ function metric(label, value) {
   "</span>";
 }
 
-function renderModeTabs() {
-  const canRecognize = readyWords("recognition").length > 0;
-  const canRecall = readyWords("recall").length > 0;
-  recognitionTab.disabled = !canRecognize;
-  recallTab.disabled = !canRecall;
-  recognitionTab.setAttribute("aria-pressed", String(mode === "recognition"));
-  recallTab.setAttribute("aria-pressed", String(mode === "recall"));
+function renderAnswerMethodToggle() {
   multipleChoiceButton.setAttribute("aria-pressed", String(answerMethod === "multiple-choice"));
   typingButton.setAttribute("aria-pressed", String(answerMethod === "typing"));
-  modeStep.textContent = "0" + (mode === "recognition" ? "1" : "2") + " / 03";
 }
 
 function renderQuiz() {
@@ -337,20 +310,17 @@ function renderQuiz() {
   modeStep.textContent = "0" + (streak + 1) + " / 03";
 
   const questionLabel = mode === "recognition"
-    ? "Find det danske ord, der passer til dette ord på " + language.label.toLowerCase() + "."
-    : "Find ordet på " + language.label.toLowerCase() + ", der svarer til det danske ord.";
-  const promptWord = mode === "recognition" ? question.target : question.danish;
-  const promptLanguage = mode === "recognition" ? language.code : "da";
-  const promptDirection = mode === "recognition" ? targetDirection : "ltr";
-  const reading = mode === "recognition" && question.reading
-    ? '<span class="question-reading" lang="und-Latn" dir="ltr"><span class="reading-prefix">Udtale · </span>' +
-      escapeHtml(question.reading) + "</span>"
-    : "";
+    ? "Genkendelse · find det danske svar, der passer til " + language.label.toLowerCase() + "."
+    : "Genkaldelse · find ordet på " + language.label.toLowerCase() + ", der svarer til det danske ord.";
+  const promptWord = mode === "recognition"
+    ? '<span class="question-roman" lang="und-Latn" dir="ltr">' + escapeHtml(question.reading) + "</span>" +
+      '<span class="question-target" lang="' + escapeHtml(language.code) + '" dir="' + escapeHtml(targetDirection) + '">' +
+      escapeHtml(question.target) + "</span>"
+    : '<span class="question-danish" lang="da" dir="ltr">' + escapeHtml(question.danish) + "</span>";
 
   quiz.innerHTML = '<div class="question-card">' +
     '<p class="question-label">' + escapeHtml(questionLabel) + "</p>" +
-    '<p class="question-word" lang="' + escapeHtml(promptLanguage) + '" dir="' + escapeHtml(promptDirection) + '">' +
-      escapeHtml(promptWord) + reading +
+    '<p class="question-word">' + promptWord +
     "</p>" +
   "</div>";
 
@@ -372,12 +342,6 @@ function renderQuiz() {
       if (mode === "recognition") {
         button.textContent = word.danish;
       } else {
-        const target = document.createElement("span");
-        target.className = "answer-target";
-        target.textContent = word.target;
-        target.lang = language.code;
-        target.dir = targetDirection;
-        button.append(target);
         if (word.reading) {
           const pronunciation = document.createElement("span");
           pronunciation.className = "answer-reading";
@@ -386,6 +350,12 @@ function renderQuiz() {
           pronunciation.dir = "ltr";
           button.append(pronunciation);
         }
+        const target = document.createElement("span");
+        target.className = "answer-target";
+        target.textContent = word.target;
+        target.lang = language.code;
+        target.dir = targetDirection;
+        button.append(target);
       }
       answerGrid.append(button);
     });
@@ -443,7 +413,7 @@ function createHintPanel() {
   const label = document.createElement("p");
   label.className = "hint-label";
   label.textContent = mode === "recall"
-    ? "Hint · udtale med romerske bogstaver"
+    ? "Hint · romerske bogstaver"
     : "Hint · dansk svar";
 
   const revealButton = document.createElement("button");
@@ -593,18 +563,12 @@ function submitAnswer(answer, isTyped = false) {
   } else {
     streak[testedMode] = 0;
     answerLocked = true;
-    const clue = [testedWord.target, testedWord.reading ? "udtale: " + testedWord.reading : ""]
-      .filter(Boolean)
-      .join(" · ");
+    const clue = [testedWord.reading, testedWord.target].filter(Boolean).join(" · ");
     setFeedback("Ikke helt. " + clue + " betyder " + testedWord.danish +
       ". " + MODE_NAMES[testedMode] + "-streaken starter forfra.", "error");
   }
 
   saveProgress();
-  const alternateMode = mode === "recognition" ? "recall" : "recognition";
-  if (!readyWords(mode).length && readyWords(alternateMode).length) {
-    mode = alternateMode;
-  }
   render();
 
   clearTimeout(answerTimer);
