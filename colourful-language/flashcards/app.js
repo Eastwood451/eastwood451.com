@@ -2,6 +2,7 @@ import { getSupabaseClient } from "/supabase-client.js";
 import { DANISH_WORDS, LANGUAGES, fallbackRows } from "./vocabulary.js";
 
 const TOTAL_WORDS = DANISH_WORDS.length;
+const VOCABULARY_TIMEOUT_MS = 10000;
 const STORAGE_PREFIX = "eastwood451:flashcards:v1:";
 const LANGUAGE_STORAGE_KEY = STORAGE_PREFIX + "language";
 const MODE_NAMES = {
@@ -147,6 +148,18 @@ async function getVocabulary(code) {
   return { words: localWords, source: "local" };
 }
 
+function getVocabularyWithTimeout(code) {
+  let timeout;
+  return Promise.race([
+    getVocabulary(code),
+    new Promise((resolve) => {
+      timeout = setTimeout(() => {
+        resolve({ words: fallbackRows(code), source: "local" });
+      }, VOCABULARY_TIMEOUT_MS);
+    })
+  ]).finally(() => clearTimeout(timeout));
+}
+
 async function changeLanguage(code) {
   const sequence = ++loadSequence;
   languageCode = LANGUAGES.some((language) => language.code === code) ? code : LANGUAGES[0].code;
@@ -165,7 +178,7 @@ async function changeLanguage(code) {
   quiz.innerHTML = '<p class="loading">Gør ordkortene klar …</p>';
   renderProgress();
 
-  const result = await getVocabulary(languageCode);
+  const result = await getVocabularyWithTimeout(languageCode);
   if (sequence !== loadSequence) return;
 
   vocabulary = result.words;
