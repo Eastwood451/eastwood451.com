@@ -5,8 +5,8 @@ const TOTAL_WORDS = DANISH_WORDS.length;
 const STORAGE_PREFIX = "eastwood451:flashcards:v1:";
 const LANGUAGE_STORAGE_KEY = STORAGE_PREFIX + "language";
 const MODE_NAMES = {
-  recognition: "Genkend",
-  recall: "Genkald"
+  recognition: "Genkendelse",
+  recall: "Genkaldelse"
 };
 
 const languageSelect = document.querySelector("#language-select");
@@ -20,6 +20,8 @@ const feedback = document.querySelector("#feedback");
 const activeWordsList = document.querySelector("#active-words");
 const recognitionTab = document.querySelector("#recognition-tab");
 const recallTab = document.querySelector("#recall-tab");
+const multipleChoiceButton = document.querySelector("#multiple-choice-button");
+const typingButton = document.querySelector("#typing-button");
 const modeStep = document.querySelector("#mode-step");
 const resetButton = document.querySelector("#reset-progress");
 
@@ -27,7 +29,10 @@ let languageCode = readStorage(LANGUAGE_STORAGE_KEY) || LANGUAGES[0].code;
 let vocabulary = [];
 let progress = freshProgress();
 let mode = "recognition";
+let answerMethod = "multiple-choice";
 let question = null;
+let revealedHintIndices = new Set();
+let hintMode = "first";
 let answerLocked = false;
 let answerTimer = null;
 let loadSequence = 0;
@@ -47,6 +52,8 @@ languageSelect.addEventListener("change", () => {
 
 recognitionTab.addEventListener("click", () => setMode("recognition"));
 recallTab.addEventListener("click", () => setMode("recall"));
+multipleChoiceButton.addEventListener("click", () => setAnswerMethod("multiple-choice"));
+typingButton.addEventListener("click", () => setAnswerMethod("typing"));
 resetButton.addEventListener("click", resetLanguage);
 
 function freshProgress() {
@@ -153,6 +160,7 @@ async function changeLanguage(code) {
   clearTimeout(answerTimer);
   answerLocked = false;
   question = null;
+  revealedHintIndices = new Set();
   mode = "recognition";
   questionCursors = { recognition: 0, recall: 0 };
   feedbackState = { text: "", kind: "" };
@@ -208,8 +216,16 @@ function setMode(nextMode) {
   clearTimeout(answerTimer);
   mode = nextMode;
   question = null;
+  revealedHintIndices = new Set();
   answerLocked = false;
   feedbackState = { text: "", kind: "" };
+  render();
+}
+
+function setAnswerMethod(nextMethod) {
+  if (nextMethod === answerMethod) return;
+  answerMethod = nextMethod;
+  revealedHintIndices = new Set();
   render();
 }
 
@@ -290,8 +306,10 @@ function renderModeTabs() {
   const canRecall = readyWords("recall").length > 0;
   recognitionTab.disabled = !canRecognize;
   recallTab.disabled = !canRecall;
-  recognitionTab.setAttribute("aria-selected", String(mode === "recognition"));
-  recallTab.setAttribute("aria-selected", String(mode === "recall"));
+  recognitionTab.setAttribute("aria-pressed", String(mode === "recognition"));
+  recallTab.setAttribute("aria-pressed", String(mode === "recall"));
+  multipleChoiceButton.setAttribute("aria-pressed", String(answerMethod === "multiple-choice"));
+  typingButton.setAttribute("aria-pressed", String(answerMethod === "typing"));
   modeStep.textContent = "0" + (mode === "recognition" ? "1" : "2") + " / 03";
 }
 
@@ -306,6 +324,7 @@ function renderQuiz() {
 
   if (!question || !active.some((word) => word.word_id === question.word_id)) {
     question = nextQuestion();
+    revealedHintIndices = new Set();
   }
   if (!question) {
     quiz.innerHTML = '<p class="loading">Vælg en øvelse for at fortsætte.</p>';
@@ -318,14 +337,14 @@ function renderQuiz() {
   modeStep.textContent = "0" + (streak + 1) + " / 03";
 
   const questionLabel = mode === "recognition"
-    ? "Vælg det danske ord, der passer til dette ord på " + language.label.toLowerCase() + "."
-    : "Skriv ordet på " + language.label.toLowerCase() + ".";
+    ? "Find det danske ord, der passer til dette ord på " + language.label.toLowerCase() + "."
+    : "Find ordet på " + language.label.toLowerCase() + ", der svarer til det danske ord.";
   const promptWord = mode === "recognition" ? question.target : question.danish;
   const promptLanguage = mode === "recognition" ? language.code : "da";
   const promptDirection = mode === "recognition" ? targetDirection : "ltr";
-  const reading = mode === "recognition" && question.reading && question.reading !== question.target
-    ? '<span class="question-reading" lang="' + escapeHtml(language.code) + '" dir="' +
-      (language.code === "ar" ? "ltr" : "auto") + '">' + escapeHtml(question.reading) + "</span>"
+  const reading = mode === "recognition" && question.reading
+    ? '<span class="question-reading" lang="und-Latn" dir="ltr"><span class="reading-prefix">Udtale · </span>' +
+      escapeHtml(question.reading) + "</span>"
     : "";
 
   quiz.innerHTML = '<div class="question-card">' +
@@ -335,20 +354,39 @@ function renderQuiz() {
     "</p>" +
   "</div>";
 
-  if (mode === "recognition") {
+  if (answerMethod === "multiple-choice") {
     const answers = shuffle(active);
     const answerGrid = document.createElement("div");
     answerGrid.className = "answer-grid";
     answerGrid.setAttribute("role", "group");
-    answerGrid.setAttribute("aria-label", "Vælg den danske oversættelse");
+    answerGrid.setAttribute("aria-label", mode === "recognition"
+      ? "Vælg den danske oversættelse"
+      : "Vælg ordet på " + language.label.toLowerCase());
 
     answers.forEach((word) => {
       const button = document.createElement("button");
       button.className = "answer-choice";
       button.type = "button";
-      button.textContent = word.danish;
       button.disabled = answerLocked;
       button.addEventListener("click", () => submitAnswer(word.word_id));
+      if (mode === "recognition") {
+        button.textContent = word.danish;
+      } else {
+        const target = document.createElement("span");
+        target.className = "answer-target";
+        target.textContent = word.target;
+        target.lang = language.code;
+        target.dir = targetDirection;
+        button.append(target);
+        if (word.reading) {
+          const pronunciation = document.createElement("span");
+          pronunciation.className = "answer-reading";
+          pronunciation.textContent = word.reading;
+          pronunciation.lang = "und-Latn";
+          pronunciation.dir = "ltr";
+          button.append(pronunciation);
+        }
+      }
       answerGrid.append(button);
     });
     quiz.append(answerGrid);
@@ -363,11 +401,16 @@ function renderQuiz() {
   input.name = "answer";
   input.type = "text";
   input.autocomplete = "off";
+  input.autocapitalize = "off";
   input.spellcheck = false;
-  input.placeholder = "Skriv oversættelsen …";
-  input.setAttribute("aria-label", "Skriv ordet på " + language.label.toLowerCase());
-  input.lang = language.code;
-  input.dir = targetDirection;
+  input.placeholder = mode === "recognition"
+    ? "Skriv det danske svar …"
+    : "Skriv ordet på " + language.label.toLowerCase() + " …";
+  input.setAttribute("aria-label", mode === "recognition"
+    ? "Skriv det danske svar"
+    : "Skriv ordet på " + language.label.toLowerCase());
+  input.lang = mode === "recognition" ? "da" : language.code;
+  input.dir = mode === "recognition" ? "ltr" : "auto";
   input.disabled = answerLocked;
 
   const label = document.createElement("label");
@@ -384,10 +427,123 @@ function renderQuiz() {
   form.append(label, input, submit);
   form.addEventListener("submit", (event) => {
     event.preventDefault();
-    submitAnswer(input.value);
+    submitAnswer(input.value, true);
   });
-  quiz.append(form);
+  quiz.append(createHintPanel(), form);
   if (!answerLocked) input.focus({ preventScroll: true });
+}
+
+function createHintPanel() {
+  const panel = document.createElement("section");
+  panel.className = "hint-panel";
+  panel.setAttribute("aria-label", "Bogstavhint");
+
+  const heading = document.createElement("div");
+  heading.className = "hint-heading";
+  const label = document.createElement("p");
+  label.className = "hint-label";
+  label.textContent = mode === "recall"
+    ? "Hint · udtale med romerske bogstaver"
+    : "Hint · dansk svar";
+
+  const revealButton = document.createElement("button");
+  revealButton.className = "hint-button";
+  revealButton.type = "button";
+
+  const methods = document.createElement("div");
+  methods.className = "hint-methods";
+  methods.setAttribute("role", "group");
+  methods.setAttribute("aria-label", "Vælg hintmetode");
+  const description = document.createElement("p");
+  description.className = "hint-description";
+  description.textContent = hintMode === "random"
+    ? "Afslører ét tilfældigt bogstav, der stadig mangler."
+    : "Starter med første bogstav og fylder ud for hvert tryk.";
+  const methodButtons = [
+    { value: "first", label: "Giv et bogstav" },
+    { value: "random", label: "Giv random bogstav" }
+  ].map((method) => {
+    const button = document.createElement("button");
+    button.className = "hint-method";
+    button.type = "button";
+    button.textContent = method.label;
+    button.setAttribute("aria-pressed", String(hintMode === method.value));
+    button.addEventListener("click", () => {
+      hintMode = method.value;
+      methodButtons.forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
+      description.textContent = hintMode === "random"
+        ? "Afslører ét tilfældigt bogstav, der stadig mangler."
+        : "Starter med første bogstav og fylder ud for hvert tryk.";
+    });
+    methods.append(button);
+    return button;
+  });
+
+  const pattern = document.createElement("div");
+  pattern.className = "hint-pattern";
+  pattern.lang = mode === "recall" ? "und-Latn" : "da";
+  pattern.dir = "ltr";
+  pattern.setAttribute("aria-live", "polite");
+  const hintText = mode === "recall" ? (question.reading || question.target) : question.danish;
+  renderHintPattern(pattern, hintText);
+
+  function updateRevealButton() {
+    const letters = [...hintText].filter((character) => /\p{L}/u.test(character)).length;
+    const complete = revealedHintIndices.size >= letters;
+    revealButton.textContent = complete ? "Alle bogstaver vist" : "Hint";
+    revealButton.disabled = complete || answerLocked;
+  }
+
+  revealButton.addEventListener("click", () => {
+    const characters = [...hintText];
+    const remaining = characters
+      .map((character, index) => ({ character, index }))
+      .filter(({ character, index }) => /\p{L}/u.test(character) && !revealedHintIndices.has(index));
+    if (!remaining.length) {
+      updateRevealButton();
+      return;
+    }
+
+    const next = hintMode === "random"
+      ? remaining[Math.floor(Math.random() * remaining.length)]
+      : remaining[0];
+    revealedHintIndices.add(next.index);
+    renderHintPattern(pattern, hintText);
+    updateRevealButton();
+  });
+
+  updateRevealButton();
+  heading.append(label, revealButton);
+  panel.append(heading, methods, description, pattern);
+  return panel;
+}
+
+function renderHintPattern(pattern, hintText) {
+  const characters = [...hintText];
+  pattern.replaceChildren();
+  const accessibleCharacters = [];
+
+  characters.forEach((character, index) => {
+    if (/\p{L}/u.test(character)) {
+      const slot = document.createElement("span");
+      const revealed = revealedHintIndices.has(index);
+      slot.className = revealed ? "hint-letter is-revealed" : "hint-letter";
+      slot.textContent = revealed ? character : "·";
+      slot.setAttribute("aria-hidden", "true");
+      pattern.append(slot);
+      accessibleCharacters.push(revealed ? character : "tomt felt");
+    } else {
+      const symbol = document.createElement("span");
+      symbol.className = character.trim() ? "hint-symbol" : "hint-space";
+      symbol.textContent = character.trim() ? character : "\u00a0";
+      symbol.setAttribute("aria-hidden", "true");
+      pattern.append(symbol);
+      if (character.trim()) accessibleCharacters.push(character);
+      else if (character) accessibleCharacters.push("mellemrum");
+    }
+  });
+
+  pattern.setAttribute("aria-label", "Hint: " + accessibleCharacters.join(" "));
 }
 
 function renderFeedback() {
@@ -400,14 +556,16 @@ function setFeedback(text, kind) {
   renderFeedback();
 }
 
-function submitAnswer(answer) {
+function submitAnswer(answer, isTyped = false) {
   if (answerLocked || !question) return;
 
   const testedMode = mode;
   const testedWord = question;
-  const correct = testedMode === "recognition"
-    ? answer === testedWord.word_id
-    : isAcceptedAnswer(testedWord, answer);
+  const correct = isTyped
+    ? testedMode === "recognition"
+      ? normalizeAnswer(answer, "da") === normalizeAnswer(testedWord.danish, "da")
+      : isAcceptedAnswer(testedWord, answer)
+    : answer === testedWord.word_id;
   const streak = getStreak(testedWord.word_id);
 
   if (correct) {
@@ -435,7 +593,9 @@ function submitAnswer(answer) {
   } else {
     streak[testedMode] = 0;
     answerLocked = true;
-    const clue = [testedWord.target, testedWord.reading].filter(Boolean).join(" · ");
+    const clue = [testedWord.target, testedWord.reading ? "udtale: " + testedWord.reading : ""]
+      .filter(Boolean)
+      .join(" · ");
     setFeedback("Ikke helt. " + clue + " betyder " + testedWord.danish +
       ". " + MODE_NAMES[testedMode] + "-streaken starter forfra.", "error");
   }
@@ -451,6 +611,7 @@ function submitAnswer(answer) {
   answerTimer = window.setTimeout(() => {
     answerLocked = false;
     question = null;
+    revealedHintIndices = new Set();
     render();
   }, 850);
 }
@@ -490,6 +651,7 @@ function resetLanguage() {
   clearTimeout(answerTimer);
   answerLocked = false;
   question = null;
+  revealedHintIndices = new Set();
   mode = "recognition";
   progress = freshProgress();
   feedbackState = { text: "Sættet er nulstillet. Vi begynder med de første tre ord.", kind: "" };
