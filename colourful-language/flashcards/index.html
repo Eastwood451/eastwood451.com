@@ -50,9 +50,21 @@
             <span id="mode-step" class="mode-step">01 / 03</span>
           </div>
 
-          <div class="mode-tabs" role="tablist" aria-label="Vælg øvelse">
-            <button id="recognition-tab" class="mode-tab" type="button" role="tab" aria-selected="true">Genkend</button>
-            <button id="recall-tab" class="mode-tab" type="button" role="tab" aria-selected="false">Genkald</button>
+          <div class="practice-controls">
+            <div class="control-group">
+              <p id="direction-label" class="control-label">Øveretning</p>
+              <div class="mode-tabs" role="group" aria-labelledby="direction-label">
+                <button id="recognition-tab" class="mode-tab" type="button" aria-pressed="true">Genkendelse</button>
+                <button id="recall-tab" class="mode-tab" type="button" aria-pressed="false">Genkaldelse</button>
+              </div>
+            </div>
+            <div class="control-group">
+              <p id="answer-method-label" class="control-label">Svarform</p>
+              <div class="mode-tabs answer-method-tabs" role="group" aria-labelledby="answer-method-label">
+                <button id="multiple-choice-button" class="mode-tab" type="button" aria-pressed="true">Besvare som multiple choice</button>
+                <button id="typing-button" class="mode-tab" type="button" aria-pressed="false">Besvare som indtastning</button>
+              </div>
+            </div>
           </div>
 
           <div id="quiz" class="quiz" aria-live="polite">
