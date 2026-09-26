@@ -605,7 +605,10 @@ h1 span {
 }
 
 .feedback[data-kind="error"] {
-  color: var(--red);
+  color: var(--text);
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 .feedback[data-kind="learned"] {
