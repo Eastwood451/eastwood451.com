@@ -661,7 +661,13 @@ function submitAnswer(answer, isTyped = false) {
       : isAcceptedAnswer(testedWord, answer)
     : answer === testedWord.word_id;
   const reviewing = progress.learned.includes(testedWord.word_id);
-  const clue = [testedWord.reading, testedWord.target].filter(Boolean).join(" · ");
+  const rawReading = String(testedWord.reading || "").trim();
+  const displayReading = rawReading
+    ? rawReading.charAt(0).toLocaleUpperCase() + rawReading.slice(1)
+    : "";
+  const incorrectFeedback = displayReading
+    ? displayReading + " betyder " + testedWord.danish + ". Ordet kommer snart igen"
+    : testedWord.danish + ". Ordet kommer snart igen";
   progress.answered += 1;
   answerLocked = true;
 
@@ -686,8 +692,7 @@ function submitAnswer(answer, isTyped = false) {
       review.weakness[testedMode] = Math.min(5, review.weakness[testedMode] + 1);
       review.dueQuestion = progress.answered + Math.max(2, 6 - 2 * review.failures);
       review.dueAt = Date.now() + DAY_MS;
-      setFeedback("Ikke helt. " + clue + " betyder " + testedWord.danish +
-        ". Ordet kommer snart igen.", "error");
+      setFeedback(incorrectFeedback, "error");
     }
   } else {
     const streak = getStreak(testedWord.word_id);
@@ -716,8 +721,7 @@ function submitAnswer(answer, isTyped = false) {
       }
     } else {
       streak[testedMode] = 0;
-      setFeedback("Ikke helt. " + clue + " betyder " + testedWord.danish +
-        ". " + MODE_NAMES[testedMode] + "-streaken starter forfra.", "error");
+      setFeedback(incorrectFeedback, "error");
     }
   }
 
