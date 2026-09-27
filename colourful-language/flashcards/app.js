@@ -405,6 +405,11 @@ function renderAnswerMethodToggle() {
   typingButton.setAttribute("aria-pressed", String(answerMethod === "typing"));
 }
 
+function visibleReading(word) {
+  // Latin already uses the Roman alphabet; its reading field contains syllable breaks.
+  return languageCode === "la" ? "" : String(word.reading || "").trim();
+}
+
 function renderQuiz() {
   const active = getActiveWords();
   if (!question || !vocabulary.some((word) => word.word_id === question.word_id)) {
@@ -434,9 +439,10 @@ function renderQuiz() {
   const questionLabel = (reviewing ? "Repetition · " : "") + (mode === "recognition"
     ? "Genkendelse · find det danske svar, der passer til " + language.label.toLowerCase() + "."
     : "Genkaldelse · find ordet på " + language.label.toLowerCase() + ", der svarer til det danske ord.");
+  const reading = visibleReading(question);
   const promptWord = mode === "recognition"
-    ? '<span class="question-roman" lang="und-Latn" dir="ltr">' + escapeHtml(question.reading) + "</span>" +
-      '<span class="question-target" lang="' + escapeHtml(language.code) + '" dir="' + escapeHtml(targetDirection) + '">' +
+    ? (reading ? '<span class="question-roman" lang="und-Latn" dir="ltr">' + escapeHtml(reading) + "</span>" : "") +
+      '<span class="question-target' + (reading ? "" : " is-primary") + '" lang="' + escapeHtml(language.code) + '" dir="' + escapeHtml(targetDirection) + '">' +
       escapeHtml(question.target) + "</span>"
     : '<span class="question-danish" lang="da" dir="ltr">' + escapeHtml(question.danish) + "</span>";
 
@@ -466,16 +472,17 @@ function renderQuiz() {
       if (mode === "recognition") {
         button.textContent = word.danish;
       } else {
-        if (word.reading) {
+        const wordReading = visibleReading(word);
+        if (wordReading) {
           const pronunciation = document.createElement("span");
           pronunciation.className = "answer-reading";
-          pronunciation.textContent = word.reading;
+          pronunciation.textContent = wordReading;
           pronunciation.lang = "und-Latn";
           pronunciation.dir = "ltr";
           button.append(pronunciation);
         }
         const target = document.createElement("span");
-        target.className = "answer-target";
+        target.className = "answer-target" + (wordReading ? "" : " is-primary");
         target.textContent = word.target;
         target.lang = language.code;
         target.dir = targetDirection;
@@ -578,7 +585,7 @@ function createHintPanel() {
   pattern.lang = mode === "recall" ? "und-Latn" : "da";
   pattern.dir = "ltr";
   pattern.setAttribute("aria-live", "polite");
-  const hintText = mode === "recall" ? (question.reading || question.target) : question.danish;
+  const hintText = mode === "recall" ? (visibleReading(question) || question.target) : question.danish;
   renderHintPattern(pattern, hintText);
 
   function updateRevealButton() {
@@ -661,7 +668,7 @@ function submitAnswer(answer, isTyped = false) {
       : isAcceptedAnswer(testedWord, answer)
     : answer === testedWord.word_id;
   const reviewing = progress.learned.includes(testedWord.word_id);
-  const rawReading = String(testedWord.reading || "").trim();
+  const rawReading = visibleReading(testedWord) || testedWord.target;
   const displayReading = rawReading
     ? rawReading.charAt(0).toLocaleUpperCase() + rawReading.slice(1)
     : "";

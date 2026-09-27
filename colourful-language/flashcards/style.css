@@ -385,6 +385,15 @@ h1 span {
   line-height: 1.4;
 }
 
+.question-target.is-primary {
+  color: var(--text);
+  font-size: clamp(1.5rem, 5.5vw, 3.8rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  white-space: nowrap;
+}
+
 .question-card {
   min-height: 156px;
   display: flex;
@@ -428,6 +437,13 @@ h1 span {
   font-size: 0.78rem;
   font-weight: 600;
   line-height: 1.2;
+}
+
+.answer-target.is-primary {
+  color: var(--text);
+  font-size: 1.12rem;
+  font-weight: 720;
+  letter-spacing: -0.015em;
 }
 
 .answer-reading {
