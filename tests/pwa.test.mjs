@@ -86,7 +86,7 @@ test('API requests, saved data, child apps and resources are not intercepted', (
   assert.equal(navigate('/', { mode: 'cors' }), undefined);
 });
 
-function client({ href = 'https://eastwood451.com/', installed = false, secure = true } = {}) {
+function client({ href = 'https://eastwood451.com/', installed = false, secure = true, userAgent = '', platform = '', maxTouchPoints = 0 } = {}) {
   const events = {}, buttonEvents = {}, registrations = [], redirects = [];
   const button = { hidden: true, disabled: false, addEventListener: (name, fn) => { buttonEvents[name] = fn; } };
   const status = { textContent: '' };
@@ -94,10 +94,12 @@ function client({ href = 'https://eastwood451.com/', installed = false, secure =
   const location = new URL(href);
   location.replace = value => redirects.push(value);
   const window = { isSecureContext: secure, matchMedia: () => media, addEventListener: (name, fn) => { events[name] = fn; } };
-  const navigator = { serviceWorker: { register: async (...args) => { registrations.push(args); } } };
-  const document = { readyState: 'complete', getElementById: id => id === 'install-app' ? button : status };
+  const navigator = { userAgent, platform, maxTouchPoints, serviceWorker: { register: async (...args) => { registrations.push(args); } } };
+  const dialog = { open: false, showModal() { this.open = true; }, close() { this.open = false; } };
+  const instructions = { innerHTML: '' };
+  const document = { readyState: 'complete', getElementById: id => ({ 'install-app': button, 'install-status': status, 'install-help': dialog, 'install-instructions': instructions })[id] };
   vm.runInNewContext(clientSource, { window, navigator, document, location, URL, console: { warn: () => {} } });
-  return { events, buttonEvents, registrations, redirects, button, status };
+  return { events, buttonEvents, registrations, redirects, button, status, dialog, instructions };
 }
 
 test('HTTP production bookmarks are upgraded without losing query or fragment', () => {
@@ -116,9 +118,9 @@ test('service worker registration bypasses HTTP cache and requires a secure cont
   assert.equal(client({ secure: false }).registrations.length, 0);
 });
 
-test('install button is available only after a real browser install event', async () => {
+test('install button offers help initially and uses each real install event once', async () => {
   const c = client();
-  assert.equal(c.button.hidden, true);
+  assert.equal(c.button.hidden, false);
   let prompts = 0, prevented = 0;
   c.events.beforeinstallprompt({
     preventDefault: () => { prevented++; },
@@ -130,7 +132,7 @@ test('install button is available only after a real browser install event', asyn
   await c.buttonEvents.click();
   await c.buttonEvents.click();
   assert.equal(prompts, 1);
-  assert.equal(c.button.hidden, true);
+  assert.equal(c.button.hidden, false);
   assert.equal(c.button.disabled, false);
 });
 
@@ -143,7 +145,7 @@ test('dismissal, errors and successful installation cannot leave a stale install
       userChoice: Promise.resolve({ outcome: 'dismissed' })
     });
     await c.buttonEvents.click();
-    assert.equal(c.button.hidden, true);
+    assert.equal(c.button.hidden, false);
     assert.equal(c.button.disabled, false);
     if (failing) assert.match(c.status.textContent, /browserens menu/);
     c.events.appinstalled();
@@ -152,4 +154,21 @@ test('dismissal, errors and successful installation cannot leave a stale install
   const c = client({ installed: true });
   c.events.beforeinstallprompt({ preventDefault: () => assert.fail('Already installed') });
   assert.equal(c.button.hidden, true);
+});
+
+test('iPad desktop mode, iPhone and Samsung get actionable installation instructions', async () => {
+  for (const [options, expected] of [
+    [{ platform: 'MacIntel', maxTouchPoints: 5 }, /Føj til hjemmeskærm/],
+    [{ userAgent: 'iPhone' }, /Åbn som webapp/],
+    [{ userAgent: 'Android SamsungBrowser/25' }, /Føj side til/],
+    [{ userAgent: 'Android Chrome' }, /Installer app/]
+  ]) {
+    const c = client(options);
+    await c.buttonEvents.click();
+    assert.equal(c.dialog.open, true);
+    assert.match(c.instructions.innerHTML, expected);
+    c.events.appinstalled();
+    assert.equal(c.dialog.open, false);
+    assert.equal(c.button.hidden, true);
+  }
 });

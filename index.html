@@ -11,7 +11,7 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/eastwood451-192.png" />
     <link rel="apple-touch-icon" href="/icons/eastwood451-192.png" />
-    <script src="/pwa.js?v=20260921" defer></script>
+    <script src="/pwa.js?v=20260928-install" defer></script>
     <script src="/auth.js"></script>
     <link rel="stylesheet" href="/app-order.css?v=1" />
     <script type="module" src="/app-order.js?v=1"></script>
@@ -104,6 +104,13 @@
       }
 
       #install-status:empty { display: none; }
+      #install-help { box-sizing: border-box; width: min(460px, calc(100% - 32px)); max-height: calc(100dvh - 32px); overflow: auto; padding: 24px; background: #111821; color: var(--text); border: 1px solid var(--blue); border-radius: 16px; font: 1rem/1.6 system-ui, sans-serif; }
+      #install-help::backdrop { background: #000b; }
+      #install-help h2 { margin: 0 0 16px; font-size: 1.4rem; line-height: 1.3; }
+      #install-help ol { padding-left: 24px; }
+      #install-help li { margin: 12px 0; }
+      #install-help button { min-height: 44px; margin-top: 20px; padding: 10px 24px; background: var(--blue); color: #07090d; border: 0; border-radius: 8px; font: inherit; font-weight: 700; cursor: pointer; }
+      #install-help button:focus-visible { outline: 3px solid var(--orange); outline-offset: 4px; }
 
       .app-grid {
         display: grid;
@@ -239,7 +246,7 @@
     <main>
       <section class="intro" aria-labelledby="page-title">
         <h1 id="page-title">Eastwood451</h1>
-        <button id="install-app" type="button" hidden>Installér app</button>
+        <button id="install-app" type="button" hidden>Installer som app</button>
         <p id="install-status" role="status" aria-live="polite"></p>
       </section>
 
@@ -320,6 +327,12 @@
         </a>
       </nav>
     </main>
+  <dialog id="install-help" aria-labelledby="install-help-title">
+      <h2 id="install-help-title">Installer Eastwood451</h2>
+      <p>Få Eastwood451 som en app på din hjemmeskærm.</p>
+      <div id="install-instructions"></div>
+      <form method="dialog"><button autofocus>Luk</button></form>
+    </dialog>
   </body>
 </html>
 
