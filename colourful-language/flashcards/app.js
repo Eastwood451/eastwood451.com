@@ -491,10 +491,14 @@ function renderQuiz() {
       escapeHtml(question.target) + "</span>"
     : '<span class="question-danish" lang="da" dir="ltr">' + escapeHtml(question.danish) + "</span>";
 
+  const promptLanguage = mode === "recognition" ? language.label : "Dansk";
+  const answerLanguage = mode === "recognition" ? "Dansk" : language.label;
   quiz.innerHTML = '<div class="question-card">' +
     '<p class="question-label">' + escapeHtml(questionLabel) + "</p>" +
-    '<p class="question-word">' + promptWord +
-    "</p>" +
+    '<div class="word-pair question-pair">' +
+      '<span class="word-language">' + escapeHtml(promptLanguage) + "</span>" +
+      '<p class="question-word">' + promptWord + "</p>" +
+    "</div>" +
   "</div>";
 
   if (answerMethod === "multiple-choice") {
@@ -535,7 +539,13 @@ function renderQuiz() {
       }
       answerGrid.append(button);
     });
-    quiz.append(answerGrid);
+    const answerPair = document.createElement("div");
+    answerPair.className = "word-pair answer-pair";
+    const answerLanguageLabel = document.createElement("span");
+    answerLanguageLabel.className = "word-language";
+    answerLanguageLabel.textContent = answerLanguage;
+    answerPair.append(answerLanguageLabel, answerGrid);
+    quiz.append(answerPair);
     return;
   }
 
@@ -575,7 +585,13 @@ function renderQuiz() {
     event.preventDefault();
     submitAnswer(input.value, true);
   });
-  quiz.append(createHintPanel(), form);
+  const answerPair = document.createElement("div");
+  answerPair.className = "word-pair answer-pair";
+  const answerLanguageLabel = document.createElement("span");
+  answerLanguageLabel.className = "word-language";
+  answerLanguageLabel.textContent = answerLanguage;
+  answerPair.append(answerLanguageLabel, form);
+  quiz.append(createHintPanel(), answerPair);
   if (!answerLocked) input.focus({ preventScroll: true });
 }
 
