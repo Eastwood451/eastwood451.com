@@ -657,6 +657,10 @@ function setFeedback(text, kind) {
   renderFeedback();
 }
 
+function capitalize(value) {
+  return value ? value.charAt(0).toLocaleUpperCase() + value.slice(1) : "";
+}
+
 function submitAnswer(answer, isTyped = false) {
   if (answerLocked || !question) return;
 
@@ -668,13 +672,22 @@ function submitAnswer(answer, isTyped = false) {
       : isAcceptedAnswer(testedWord, answer)
     : answer === testedWord.word_id;
   const reviewing = progress.learned.includes(testedWord.word_id);
-  const rawReading = visibleReading(testedWord) || testedWord.target;
-  const displayReading = rawReading
-    ? rawReading.charAt(0).toLocaleUpperCase() + rawReading.slice(1)
+  const displayReading = capitalize(visibleReading(testedWord) || testedWord.target);
+  const correctFeedback = 'KORREKT! "' + displayReading + '" betyder "' + testedWord.danish + '"';
+  const selectedWord = correct ? null : vocabulary.find((word) => isTyped
+    ? testedMode === "recognition"
+      ? normalizeAnswer(answer, "da") === normalizeAnswer(word.danish, "da")
+      : isAcceptedAnswer(word, answer)
+    : word.word_id === answer);
+  const selectedReading = selectedWord
+    ? capitalize(visibleReading(selectedWord) || selectedWord.target)
     : "";
-  const incorrectFeedback = displayReading
-    ? displayReading + " betyder " + testedWord.danish + ". Ordet kommer snart igen"
-    : testedWord.danish + ". Ordet kommer snart igen";
+  const selectedExplanation = selectedWord && selectedReading
+    ? ' "' + selectedWord.danish + '" hedder "' + selectedReading + '".'
+    : "";
+  const incorrectFeedback = 'FORKERT! ' + displayReading + ' betyder "' +
+    testedWord.danish.toLocaleLowerCase("da-DK") + '".' + selectedExplanation +
+    " " + displayReading + " kommer snart igen.";
   progress.answered += 1;
   answerLocked = true;
 
@@ -686,12 +699,12 @@ function submitAnswer(answer, isTyped = false) {
       if (revealedHintIndices.size > 0) {
         review.dueQuestion = progress.answered + 6;
         review.dueAt = Date.now() + DAY_MS;
-        setFeedback("Rigtigt med hint. Ordet kommer snart igen.", "success");
+        setFeedback(correctFeedback, "success");
       } else {
         review.level = Math.min(4, review.level + 1);
         review.weakness[testedMode] = Math.max(0, review.weakness[testedMode] - 1);
         scheduleReview(review);
-        setFeedback("Rigtigt. Ordet er planlagt til en senere repetition.", "success");
+        setFeedback(correctFeedback, "success");
       }
     } else {
       review.level = Math.max(0, review.level - 2);
@@ -715,16 +728,9 @@ function submitAnswer(answer, isTyped = false) {
         scheduleReview(review);
         const nextWord = vocabulary[progress.introduced];
         if (nextWord) progress.introduced += 1;
-        const nextText = nextWord
-          ? " Nyt ord føjet til sættet: " + nextWord.danish + "."
-          : "";
-        const completedText = progress.learned.length === TOTAL_WORDS
-          ? "Du kan nu alle " + TOTAL_WORDS + " ord. Repetition fortsætter."
-          : "Ordet er lært." + nextText;
-        setFeedback(completedText, "learned");
+        setFeedback(correctFeedback, "success");
       } else {
-        setFeedback("Rigtigt. " + MODE_NAMES[testedMode] + ": " + streak[testedMode] +
-          "/3 i træk for dette ord.", "success");
+        setFeedback(correctFeedback, "success");
       }
     } else {
       streak[testedMode] = 0;
