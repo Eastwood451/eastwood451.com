@@ -616,19 +616,22 @@ h1 span {
   line-height: 1.5;
 }
 
-.feedback[data-kind="success"] {
+.feedback[data-kind="success"],
+.feedback[data-kind="error"],
+.feedback[data-kind="learned"] {
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.feedback[data-kind="success"],
+.feedback[data-kind="learned"] {
   color: var(--green);
 }
 
 .feedback[data-kind="error"] {
-  color: var(--text);
-  font-size: 1.1rem;
-  font-weight: 700;
-  line-height: 1.4;
-}
-
-.feedback[data-kind="learned"] {
-  color: var(--orange);
+  color: var(--red);
 }
 
 .deck-mark {
