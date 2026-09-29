@@ -33,6 +33,7 @@ let mode = "recognition";
 let answerMethod = "multiple-choice";
 let question = null;
 let revealedHintIndices = new Set();
+let hintUsedForQuestion = false;
 let hintMode = "first";
 let answerLocked = false;
 let answerTimer = null;
@@ -415,6 +416,7 @@ function renderQuiz() {
   if (!question || !vocabulary.some((word) => word.word_id === question.word_id)) {
     question = nextQuestion();
     revealedHintIndices = new Set();
+    hintUsedForQuestion = false;
   }
   if (!question) {
     if (!active.length) {
@@ -609,6 +611,7 @@ function createHintPanel() {
       ? remaining[Math.floor(Math.random() * remaining.length)]
       : remaining[0];
     revealedHintIndices.add(next.index);
+    hintUsedForQuestion = true;
     renderHintPattern(pattern, hintText);
     updateRevealButton();
   });
@@ -672,8 +675,12 @@ function submitAnswer(answer, isTyped = false) {
       : isAcceptedAnswer(testedWord, answer)
     : answer === testedWord.word_id;
   const reviewing = progress.learned.includes(testedWord.word_id);
+  const countsAsCorrect = correct && !hintUsedForQuestion;
   const displayReading = capitalize(visibleReading(testedWord) || testedWord.target);
   const correctFeedback = 'KORREKT! "' + displayReading + '" betyder "' + testedWord.danish + '"';
+  const shownCorrectFeedback = hintUsedForQuestion
+    ? correctFeedback + ". Hint brugt – ordet kommer snart igen."
+    : correctFeedback;
   const selectedWord = correct ? null : vocabulary.find((word) => isTyped
     ? testedMode === "recognition"
       ? normalizeAnswer(answer, "da") === normalizeAnswer(word.danish, "da")
@@ -694,29 +701,23 @@ function submitAnswer(answer, isTyped = false) {
   if (reviewing) {
     const review = getReview(testedWord.word_id);
     review.lastReviewed = progress.answered;
-    if (correct) {
+    if (countsAsCorrect) {
       review.failures = 0;
-      if (revealedHintIndices.size > 0) {
-        review.dueQuestion = progress.answered + 6;
-        review.dueAt = Date.now() + DAY_MS;
-        setFeedback(correctFeedback, "success");
-      } else {
-        review.level = Math.min(4, review.level + 1);
-        review.weakness[testedMode] = Math.max(0, review.weakness[testedMode] - 1);
-        scheduleReview(review);
-        setFeedback(correctFeedback, "success");
-      }
+      review.level = Math.min(4, review.level + 1);
+      review.weakness[testedMode] = Math.max(0, review.weakness[testedMode] - 1);
+      scheduleReview(review);
+      setFeedback(correctFeedback, "success");
     } else {
       review.level = Math.max(0, review.level - 2);
       review.failures = Math.min(9, review.failures + 1);
       review.weakness[testedMode] = Math.min(5, review.weakness[testedMode] + 1);
       review.dueQuestion = progress.answered + Math.max(2, 6 - 2 * review.failures);
       review.dueAt = Date.now() + DAY_MS;
-      setFeedback(incorrectFeedback, "error");
+      setFeedback(correct ? shownCorrectFeedback : incorrectFeedback, correct ? "success" : "error");
     }
   } else {
     const streak = getStreak(testedWord.word_id);
-    if (correct) {
+    if (countsAsCorrect) {
       streak[testedMode] = Math.min(3, streak[testedMode] + 1);
       const mastered = streak.recognition === 3 && streak.recall === 3;
 
@@ -734,7 +735,7 @@ function submitAnswer(answer, isTyped = false) {
       }
     } else {
       streak[testedMode] = 0;
-      setFeedback(incorrectFeedback, "error");
+      setFeedback(correct ? shownCorrectFeedback : incorrectFeedback, correct ? "success" : "error");
     }
   }
 
