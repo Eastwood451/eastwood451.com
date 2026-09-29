@@ -21,6 +21,11 @@ const deckCount = document.querySelector("#deck-count");
 const quiz = document.querySelector("#quiz");
 const feedback = document.querySelector("#feedback");
 const activeWordsList = document.querySelector("#active-words");
+const wordListToggle = document.querySelector("#word-list-toggle");
+const wordListPanel = document.querySelector("#word-list-panel");
+const wordListLanguage = document.querySelector("#word-list-language");
+const wordListSummary = document.querySelector("#word-list-summary");
+const wordListItems = document.querySelector("#word-list-items");
 const multipleChoiceButton = document.querySelector("#multiple-choice-button");
 const typingButton = document.querySelector("#typing-button");
 const modeStep = document.querySelector("#mode-step");
@@ -56,6 +61,13 @@ languageSelect.addEventListener("change", () => {
 multipleChoiceButton.addEventListener("click", () => setAnswerMethod("multiple-choice"));
 typingButton.addEventListener("click", () => setAnswerMethod("typing"));
 resetButton.addEventListener("click", resetLanguage);
+wordListToggle.addEventListener("click", () => {
+  const open = wordListPanel.hidden;
+  wordListPanel.hidden = !open;
+  wordListToggle.setAttribute("aria-expanded", String(open));
+  wordListToggle.textContent = open ? "Skjul ordlisten" : "Vis alle ord";
+  if (open) renderWordList();
+});
 
 function freshProgress() {
   return { introduced: 3, learned: [], streaks: {}, answered: 0, reviews: {} };
@@ -217,6 +229,9 @@ async function changeLanguage(code) {
   feedbackState = { text: "", kind: "" };
   vocabulary = [];
   progress = loadProgress(languageCode);
+  wordListLanguage.textContent = currentLanguage().label.toLowerCase();
+  wordListSummary.textContent = "Henter ordliste …";
+  wordListItems.replaceChildren();
   dataSource.dataset.source = "";
   dataSource.textContent = "Henter ordliste …";
   quiz.innerHTML = '<p class="loading">Gør ordkortene klar …</p>';
@@ -356,6 +371,7 @@ function render() {
   if (!vocabulary.length) return;
   renderProgress();
   renderActiveWords();
+  renderWordList();
   renderAnswerMethodToggle();
   renderQuiz();
   renderFeedback();
@@ -390,6 +406,33 @@ function renderActiveWords() {
         metric("Genkend", streak.recognition) +
         metric("Genkald", streak.recall) +
       "</span>" +
+    "</li>";
+  }).join("");
+}
+
+function renderWordList() {
+  if (wordListPanel.hidden || !vocabulary.length) return;
+
+  const learned = new Set(progress.learned);
+  const language = currentLanguage();
+  const direction = language.direction || "ltr";
+  wordListLanguage.textContent = language.label.toLowerCase();
+  wordListSummary.textContent = learned.size + " af " + TOTAL_WORDS + " ord lært";
+  wordListItems.innerHTML = vocabulary.map((word) => {
+    const isLearned = learned.has(word.word_id);
+    const reading = visibleReading(word);
+    const readingMarkup = reading
+      ? '<span class="word-list-reading" lang="und-Latn" dir="ltr">' + escapeHtml(reading) + "</span>"
+      : "";
+    return '<li class="word-list-item' + (isLearned ? " is-learned" : "") + '">' +
+      '<div class="word-list-terms">' +
+        '<span class="word-list-danish" lang="da">' + escapeHtml(word.danish) + "</span>" +
+        readingMarkup +
+        '<span class="word-list-target' + (reading ? "" : " is-primary") +
+          '" lang="' + escapeHtml(language.code) + '" dir="' + escapeHtml(direction) + '">' +
+          escapeHtml(word.target) + "</span>" +
+      "</div>" +
+      '<span class="word-list-status">' + (isLearned ? "Lært" : "Ikke lært") + "</span>" +
     "</li>";
   }).join("");
 }
