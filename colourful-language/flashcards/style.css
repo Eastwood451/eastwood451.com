@@ -535,6 +535,22 @@ h1 span {
     #0c121b;
 }
 
+.word-pair {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.word-language {
+  color: var(--blue);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
 .answer-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -974,6 +990,15 @@ h1 span {
 
   .word-row::before {
     top: 13px;
+  }
+
+  .word-pair {
+    grid-template-columns: 68px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .word-language {
+    font-size: 0.72rem;
   }
 
   .answer-grid {
