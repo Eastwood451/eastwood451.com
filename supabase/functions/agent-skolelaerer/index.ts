@@ -25,9 +25,29 @@ Deno.serve(async req=>{try{
  if(path==='/session')return json({ok:true});
  if(Number(req.headers.get('content-length'))>96*1024*1024)return json({error:'Filen er for stor.'},413);
  const {token,bypass}=await credentials();
+ const contentType=req.headers.get('content-type');
+
+ // Sync goes straight to the dedicated Supabase sync function. This guarantees
+ // a JSON response even when the private Google/Sites connection needs re-auth.
+ if(path==='/register/sync'){
+  const internal=Deno.env.get('SUPABASE_URL');
+  if(!internal)throw Error('Connection missing');
+  const headers=new Headers({'x-register-token':token});
+  if(contentType)headers.set('Content-Type',contentType);
+  const response=await fetch(internal+'/functions/v1/forberedelse-sync',{
+   method:'POST',headers,body:req.body,signal:AbortSignal.timeout(60000)
+  });
+  const type=response.headers.get('content-type')||'';
+  if(!/json/i.test(type))return json({ok:false,error:'Synkroniseringen svarede ikke korrekt. Prøv igen.'},502);
+  return new Response(response.body,{status:response.status,headers:{
+   'Content-Type':'application/json','Cache-Control':'no-store',
+   'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'
+  }});
+ }
+
  const target=path.startsWith('/assets/')?'/agent-skolelaerer/'+path.slice(8):'/api'+path;
  const headers=new Headers({'OAI-Sites-Authorization':'Bearer '+bypass,'x-eastwood-agent-token':token,'Origin':SOURCE});
- const contentType=req.headers.get('content-type');if(contentType)headers.set('Content-Type',contentType);
+ if(contentType)headers.set('Content-Type',contentType);
  const response=await fetch(SOURCE+target+url.search,{method:req.method,headers,body:req.method==='POST'?req.body:undefined,redirect:'manual',signal:AbortSignal.timeout(115000)});
  if(response.status>=300&&response.status<400)return json({error:'Appens private forbindelse kunne ikke åbnes.'},502);
  const type=response.headers.get('content-type')||'';
