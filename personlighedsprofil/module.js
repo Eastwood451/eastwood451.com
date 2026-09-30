@@ -90,7 +90,7 @@ window.ProfileModule={setPeople(people){profilePeople=people;personalityData=Obj
             otherMent: ['"Han er vred" (faktum)', '"Jeg tror han er vred"'],
             selfBoundary: ['Fusion', 'Klare grænser'],
             affectiveOpenness: ['Afskåret', 'Åben/tilgængelig'],
-            dominance: ['Flad orientering', 'Hierarkisøgende'],
+            dominance: ['submissiv', 'tyrannisk'],
             normative: ['Instrumentel', 'Intrinsisk bindende'],
             zeroSum: ['Der er nok til alle', 'Din gevinst er mit tab'],
             enemyInversion: ['Ingen ændring', 'Fuld spejlvending'],
