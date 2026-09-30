@@ -1,7 +1,6 @@
 <!doctype html>
-<html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0f172a"><title>SMFI Personlighedsprofil</title><link rel="icon" href="icon.svg"><link rel="stylesheet" href="module.css?v=1"><link rel="stylesheet" href="app.css?v=1"><script defer src="../auth.js"></script></head><body>
+<html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0f172a"><title>SMFI Personlighedsprofil</title><link rel="icon" href="icon.svg"><link rel="stylesheet" href="module.css?v=1"><link rel="stylesheet" href="app.css?v=2"><script defer src="../auth.js"></script></head><body>
 <header class="app-header"><a href="/">← Eastwood451.com</a><h1>SMFI Personlighedsprofil</h1><button id="theme-toggle" type="button">Lyst / mørkt</button><button id="logout" hidden>Log ud</button></header>
-<section id="login" class="login-card"><h2>Dine private profiler</h2><p>Log ind med din eksisterende Supabase-konto.</p><form id="login-form"><label>E-mail<input id="email" type="email" autocomplete="username" required></label><label>Adgangskode<input id="password" type="password" autocomplete="current-password" required></label><button id="login-submit">Log ind</button></form><p id="login-error" role="alert"></p></section>
 <p id="loading" class="status" role="status">Forbinder…</p>
 <main id="app" hidden><section class="people-bar"><label>Person<select id="person-select" aria-label="Vælg person"></select></label><form id="person-form"><label>Navn<input id="person-name" maxlength="100" required placeholder="Navn på ny person"></label><button>Tilføj person</button></form><button id="rename">Omdøb</button><button id="delete">Slet person</button><button id="import-file-button">Åbn profilfil</button><button id="import-library">Hent fra Nested Actor</button><input id="import-file" type="file" accept="application/json,.json" hidden></section>
 <div class="sync-bar"><p id="save-status" role="status" aria-live="polite"></p><button id="retry" hidden>Prøv igen</button><button id="load-cloud" hidden>Hent nyeste profiler</button></div><p id="empty" class="empty" hidden>Tilføj en person, eller hent dine gemte profiler fra Nested Actor.</p>
@@ -487,4 +486,4 @@
         </div>
     </div>
 
-</main><script src="module.js?v=1"></script><script type="module" src="app.js?v=1"></script></body></html>
+</main><script src="module.js?v=1"></script><script type="module" src="app.js?v=2"></script></body></html>

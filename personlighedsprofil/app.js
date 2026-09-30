@@ -1,9 +1,9 @@
 import {normalizePeople,normalizeProfile,readImport,mergePeople} from './data.js';
 const $=id=>document.getElementById(id), module=window.ProfileModule;
-let client,user,people=[],revision=0,changes=0,saved=0,busy=false,conflict=false,timer,cacheKey;
+let client,user,localMode=false,people=[],revision=0,changes=0,saved=0,busy=false,conflict=false,timer,cacheKey;
 const note=text=>{$('save-status').textContent=text;};
-function remember(){try{localStorage.setItem(cacheKey,JSON.stringify({revision,people,pending:changes!==saved}));}catch{note('Den lokale kopi kunne ikke gemmes. Hold siden åben til synkronisering er færdig.');}}
-function changed(){changes++;remember();note('Gemmer profiler…');clearTimeout(timer);timer=setTimeout(sync,500);}
+function remember(){try{localStorage.setItem(cacheKey,JSON.stringify({revision,people,pending:!localMode&&changes!==saved}));}catch{note('Den lokale kopi kunne ikke gemmes. Hold siden åben til synkronisering er færdig.');}}
+function changed(){changes++;remember();if(localMode){saved=changes;note('Profilerne er gemt på denne enhed.');return;}note('Gemmer profiler…');clearTimeout(timer);timer=setTimeout(sync,500);}
 function render(selected=module.currentId){
  module.setPeople(people);
  $('person-select').replaceChildren(...people.map(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name;return o;}));
@@ -46,16 +46,32 @@ $('theme-toggle').onclick=()=>{document.body.classList.toggle('theme-light');loc
 if(localStorage.getItem('smfi-profile-theme')==='light')document.body.classList.add('theme-light');
 $('logout').onclick=async()=>{await sync();if(changes!==saved){note('Gem eller eksportér dine ændringer, før du logger ud.');return;}await client.auth.signOut();location.reload();};
 window.addEventListener('beforeunload',event=>{if(changes!==saved){event.preventDefault();event.returnValue='';}});
-async function start(){
- $('login').hidden=true;
- await new Promise(resolve=>{const script=document.createElement('script');script.src='../tre-og-noget/supabase-2.57.4.js';script.onload=resolve;script.onerror=()=>{$('loading').textContent='Forbindelsen kunne ikke oprettes. Genindlæs siden.';};document.head.appendChild(script);});
- const response=await fetch('/api/config',{cache:'no-store'});if(!response.ok)throw new Error('Konfiguration mangler.');const config=await response.json();if(!config.supabaseUrl||!config.supabaseAnonKey)throw new Error('Konfiguration mangler.');client=window.supabase.createClient(config.supabaseUrl,config.supabaseAnonKey);
- const {data:{session}}=await client.auth.getSession();user=session?.user;
- if(!user){$('login').hidden=false;$('loading').hidden=true;await new Promise(resolve=>$('login-form').addEventListener('submit',async event=>{event.preventDefault();$('login-submit').disabled=true;try{const {data,error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error)throw error;user=data.user;$('password').value='';resolve();}catch{$('login-error').textContent='Login lykkedes ikke. Kontrollér e-mail, adgangskode og forbindelse.';}finally{$('login-submit').disabled=false;}}));}
- $('login').hidden=true;$('loading').hidden=false;cacheKey='smfi-profile-private-v1:'+user.id;
- client.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'||session&&session.user.id!==user.id)location.reload();});
- const data=await remote();people=data.people;revision=data.revision;
- try{const cached=JSON.parse(localStorage.getItem(cacheKey));if(cached?.pending){people=normalizePeople(cached.people);changes=1;if(cached.revision!==revision){conflict=true;$('load-cloud').hidden=false;}else revision=cached.revision;}}catch{}
- render();$('loading').hidden=true;$('app').hidden=false;$('logout').hidden=false;note(conflict?'Der er lokale ændringer og nyere profiler på kontoen. Eksportér din kopi, eller hent de nyeste profiler.':'Alle profiler er gemt på din konto.');await sync();
+function startLocal(){
+ localMode=true;cacheKey='smfi-profile-local-v1';
+ try{const cached=JSON.parse(localStorage.getItem(cacheKey)||'null');people=normalizePeople(cached?.people||[]);}catch{people=[];note('Den lokale kopi kunne ikke læses. Importér en eksporteret profilfil, hvis du har en.');}
+ render();$('loading').hidden=true;$('app').hidden=false;
+ if(!$('save-status').textContent)note('Profilerne gemmes på denne enhed. Brug Eksportér JSON som sikkerhedskopi.');
 }
-start().catch(()=>{$('loading').hidden=false;$('loading').textContent='Profilerne kunne ikke hentes. Kontrollér forbindelsen og genindlæs siden.';});
+async function start(){
+ // The site's shared password does not identify a Supabase user. Reuse an
+ // existing account session when present; otherwise keep profiles on-device.
+ const script=document.createElement('script');script.src='../tre-og-noget/supabase-2.57.4.js';
+ await new Promise(resolve=>{script.onload=resolve;script.onerror=resolve;document.head.appendChild(script);});
+ if(!window.supabase){startLocal();return;}
+ try{
+  const response=await fetch('/api/config',{cache:'no-store'});
+  if(!response.ok)throw new Error('Konfiguration mangler.');
+  const config=await response.json();
+  if(!config.supabaseUrl||!config.supabaseAnonKey)throw new Error('Konfiguration mangler.');
+  client=window.supabase.createClient(config.supabaseUrl,config.supabaseAnonKey);
+  const {data:{session}}=await client.auth.getSession();user=session?.user;
+  if(!user){startLocal();return;}
+  cacheKey='smfi-profile-private-v1:'+user.id;
+  client.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'||session&&session.user.id!==user.id)location.reload();});
+  const data=await remote();people=data.people;revision=data.revision;
+  try{const cached=JSON.parse(localStorage.getItem(cacheKey));if(cached?.pending){people=normalizePeople(cached.people);changes=1;if(cached.revision!==revision){conflict=true;$('load-cloud').hidden=false;}else revision=cached.revision;}}catch{}
+  render();$('loading').hidden=true;$('app').hidden=false;$('logout').hidden=false;
+  note(conflict?'Der er lokale ændringer og nyere profiler på kontoen. Eksportér din kopi, eller hent de nyeste profiler.':'Alle profiler er gemt på din konto.');await sync();
+ }catch{startLocal();}
+}
+start();
