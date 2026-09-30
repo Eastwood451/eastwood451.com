@@ -1,11 +1,11 @@
 import { getSupabaseClient } from "/supabase-client.js";
-import { DANISH_WORDS, LANGUAGES, fallbackRows } from "./vocabulary.js";
+import { DANISH_WORDS, LANGUAGES, fallbackRows } from "./vocabulary.js?v=20260930-1";
 
 const TOTAL_WORDS = DANISH_WORDS.length;
 const VOCABULARY_TIMEOUT_MS = 10000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const REVIEW_DAYS = [1, 3, 7, 14, 30];
-const STORAGE_PREFIX = "eastwood451:flashcards:v1:";
+const STORAGE_PREFIX = "eastwood451:flashcards:v2:";
 const LANGUAGE_STORAGE_KEY = STORAGE_PREFIX + "language";
 const MODE_NAMES = {
   recognition: "Genkendelse",

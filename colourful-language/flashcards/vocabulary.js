@@ -1,34 +1,94 @@
 export const LANGUAGES = [
-  { code: "el", label: "Græsk", native: "Ελληνικά" },
-  { code: "la", label: "Latin", native: "Lingua Latina" },
-  { code: "ar", label: "Arabisk", native: "العربية", direction: "rtl" },
-  { code: "ja", label: "Japansk", native: "日本語" },
-  { code: "sr", label: "Serbisk", native: "Српски" },
-  { code: "ru", label: "Russisk", native: "Русский" }
+  {
+    code: "el",
+    label: "Græsk",
+    native: "Ελληνικά"
+  },
+  {
+    code: "la",
+    label: "Latin",
+    native: "Lingua Latina"
+  },
+  {
+    code: "ar",
+    label: "Arabisk",
+    native: "العربية",
+    direction: "rtl"
+  },
+  {
+    code: "ja",
+    label: "Japansk",
+    native: "日本語"
+  },
+  {
+    code: "sr",
+    label: "Serbisk",
+    native: "Српски"
+  },
+  {
+    code: "ru",
+    label: "Russisk",
+    native: "Русский"
+  }
 ];
 
 export const DANISH_WORDS = [
-  ["chair", "Stol"],
-  ["table", "Bord"],
-  ["pencil", "Blyant"],
-  ["boy", "Dreng"],
-  ["girl", "Pige"],
-  ["man", "Mand"],
-  ["woman", "Kvinde"],
-  ["house", "Hus"],
-  ["stone", "Sten"],
-  ["iron", "Jern"],
-  ["car", "Bil"],
-  ["red", "Rød"],
-  ["blue", "Blå"],
-  ["green", "Grøn"],
-  ["yellow", "Gul"],
-  ["black", "Sort"],
-  ["white", "Hvid"],
-  ["big", "Stor"],
-  ["small", "Lille"],
-  ["warm", "Varm"],
-  ["cold", "Kold"]
+  [
+    "sword",
+    "Sværd"
+  ],
+  [
+    "knife",
+    "Kniv"
+  ],
+  [
+    "fork",
+    "Gaffel"
+  ],
+  [
+    "plate",
+    "Tallerken"
+  ],
+  [
+    "paper",
+    "Papir"
+  ],
+  [
+    "metal",
+    "Metal"
+  ],
+  [
+    "salt",
+    "Salt"
+  ],
+  [
+    "water",
+    "Vand"
+  ],
+  [
+    "food",
+    "Mad"
+  ],
+  [
+    "bear",
+    "Bjørn"
+  ],
+  [
+    "wolf",
+    "Ulv"
+  ],
+  [
+    "dog",
+    "Hund"
+  ],
+  [
+    "horse",
+    "Hest"
+  ],
+  [
+    "elephant",
+    "Elefant"
+  ]
 ];
 
 function row(word, target, reading = "", accepted = []) {
@@ -37,142 +97,100 @@ function row(word, target, reading = "", accepted = []) {
 
 export const FALLBACK_VOCABULARY = {
   el: [
-    row("chair", "καρέκλα", "karekla"),
-    row("table", "τραπέζι", "trapezi"),
-    row("pencil", "μολύβι", "molyvi"),
-    row("boy", "αγόρι", "agori"),
-    row("girl", "κορίτσι", "koritsi"),
-    row("man", "άνδρας", "andras"),
-    row("woman", "γυναίκα", "gynaika"),
-    row("house", "σπίτι", "spiti"),
-    row("stone", "πέτρα", "petra"),
-    row("iron", "σίδηρος", "sidiros", ["σίδερο", "sidero"]),
-    row("car", "αυτοκίνητο", "aftokinito"),
-    row("red", "κόκκινος", "kokkinos"),
-    row("blue", "μπλε", "ble"),
-    row("green", "πράσινος", "prasinos"),
-    row("yellow", "κίτρινος", "kitrinos"),
-    row("black", "μαύρος", "mavros"),
-    row("white", "λευκός", "lefkos", ["άσπρος", "aspros"]),
-    row("big", "μεγάλος", "megalos"),
-    row("small", "μικρός", "mikros"),
-    row("warm", "ζεστός", "zestos"),
-    row("cold", "κρύος", "kryos")
+    row("sword", "σπαθί", "spathi"),
+    row("knife", "μαχαίρι", "machairi"),
+    row("fork", "πιρούνι", "pirouni"),
+    row("plate", "πιάτο", "piato"),
+    row("paper", "χαρτί", "charti"),
+    row("metal", "μέταλλο", "metallo"),
+    row("salt", "αλάτι", "alati"),
+    row("water", "νερό", "nero"),
+    row("food", "φαγητό", "fagito"),
+    row("bear", "αρκούδα", "arkouda"),
+    row("wolf", "λύκος", "lykos"),
+    row("dog", "σκύλος", "skylos"),
+    row("horse", "άλογο", "alogo"),
+    row("elephant", "ελέφαντας", "elefantas")
   ],
   la: [
-    row("chair", "sella", "sel-la"),
-    row("table", "mensa", "men-sa", ["tabula"]),
-    row("pencil", "stilus", "sti-lus", ["graphium", "pencillum"]),
-    row("boy", "puer", "pu-er"),
-    row("girl", "puella", "pu-el-la"),
-    row("man", "vir", "wir"),
-    row("woman", "mulier", "mu-li-er"),
-    row("house", "domus", "do-mus"),
-    row("stone", "lapis", "la-pis"),
-    row("iron", "ferrum", "fer-rum"),
-    row("car", "autocinetum", "au-to-ki-ne-tum", ["currus automobilis", "automobilis"]),
-    row("red", "ruber", "ru-ber"),
-    row("blue", "caeruleus", "kai-ru-le-us"),
-    row("green", "viridis", "wi-ri-dis"),
-    row("yellow", "flavus", "fla-wus"),
-    row("black", "niger", "ni-ger"),
-    row("white", "albus", "al-bus"),
-    row("big", "magnus", "mag-nus"),
-    row("small", "parvus", "par-wus"),
-    row("warm", "calidus", "ka-li-dus"),
-    row("cold", "frigidus", "fri-gi-dus")
+    row("sword", "gladius", "gla-di-us", ["ensis"]),
+    row("knife", "culter", "cul-ter", ["cultellus"]),
+    row("fork", "furca", "fur-ca"),
+    row("plate", "catillus", "ca-til-lus", ["patina"]),
+    row("paper", "charta", "char-ta"),
+    row("metal", "metallum", "me-tal-lum"),
+    row("salt", "sal", "sal"),
+    row("water", "aqua", "a-qua"),
+    row("food", "cibus", "ci-bus"),
+    row("bear", "ursus", "ur-sus"),
+    row("wolf", "lupus", "lu-pus"),
+    row("dog", "canis", "ca-nis"),
+    row("horse", "equus", "e-quus"),
+    row("elephant", "elephantus", "e-le-phan-tus")
   ],
   ar: [
-    row("chair", "كرسي", "kursi"),
-    row("table", "طاولة", "tawila"),
-    row("pencil", "قلم رصاص", "qalam rasas"),
-    row("boy", "ولد", "walad"),
-    row("girl", "فتاة", "fata", ["بنت", "bint"]),
-    row("man", "رجل", "rajul"),
-    row("woman", "امرأة", "imraa"),
-    row("house", "بيت", "bayt"),
-    row("stone", "حجر", "hajar"),
-    row("iron", "حديد", "hadid"),
-    row("car", "سيارة", "sayyara"),
-    row("red", "أحمر", "ahmar"),
-    row("blue", "أزرق", "azraq"),
-    row("green", "أخضر", "akhdar"),
-    row("yellow", "أصفر", "asfar"),
-    row("black", "أسود", "aswad"),
-    row("white", "أبيض", "abyad"),
-    row("big", "كبير", "kabir"),
-    row("small", "صغير", "saghir"),
-    row("warm", "دافئ", "dafi"),
-    row("cold", "بارد", "barid")
+    row("sword", "سيف", "sayf"),
+    row("knife", "سكين", "sikkin"),
+    row("fork", "شوكة", "shawka"),
+    row("plate", "طبق", "tabaq"),
+    row("paper", "ورق", "waraq"),
+    row("metal", "معدن", "madin"),
+    row("salt", "ملح", "milh"),
+    row("water", "ماء", "maa"),
+    row("food", "طعام", "taam"),
+    row("bear", "دب", "dubb"),
+    row("wolf", "ذئب", "dhib"),
+    row("dog", "كلب", "kalb"),
+    row("horse", "حصان", "hisan"),
+    row("elephant", "فيل", "fil")
   ],
   ja: [
-    row("chair", "椅子", "isu", ["いす"]),
-    row("table", "テーブル", "teeburu", ["てーぶる"]),
-    row("pencil", "鉛筆", "enpitsu", ["えんぴつ"]),
-    row("boy", "男の子", "otokonoko", ["おとこのこ"]),
-    row("girl", "女の子", "onnanoko", ["おんなのこ"]),
-    row("man", "男性", "dansei", ["だんせい"]),
-    row("woman", "女性", "josei", ["じょせい"]),
-    row("house", "家", "ie", ["いえ", "uchi"]),
-    row("stone", "石", "ishi", ["いし"]),
-    row("iron", "鉄", "tetsu", ["てつ"]),
-    row("car", "車", "kuruma", ["くるま"]),
-    row("red", "赤い", "akai", ["あかい"]),
-    row("blue", "青い", "aoi", ["あおい"]),
-    row("green", "緑色", "midoriiro", ["みどりいろ", "緑"]),
-    row("yellow", "黄色", "kiiro", ["きいろ", "黄色い", "きいろい", "kiiroi"]),
-    row("black", "黒い", "kuroi", ["くろい"]),
-    row("white", "白い", "shiroi", ["しろい"]),
-    row("big", "大きい", "ookii", ["おおきい"]),
-    row("small", "小さい", "chiisai", ["ちいさい"]),
-    row("warm", "暖かい", "atatakai", ["あたたかい", "温かい"]),
-    row("cold", "冷たい", "tsumetai", ["つめたい", "寒い", "さむい", "samui"])
+    row("sword", "剣", "ken", ["けん","つるぎ","tsurugi"]),
+    row("knife", "ナイフ", "naifu", ["ないふ"]),
+    row("fork", "フォーク", "fooku", ["ふぉーく"]),
+    row("plate", "皿", "sara", ["さら"]),
+    row("paper", "紙", "kami", ["かみ"]),
+    row("metal", "金属", "kinzoku", ["きんぞく"]),
+    row("salt", "塩", "shio", ["しお"]),
+    row("water", "水", "mizu", ["みず"]),
+    row("food", "食べ物", "tabemono", ["たべもの","食物","shokumotsu","しょくもつ"]),
+    row("bear", "熊", "kuma", ["くま"]),
+    row("wolf", "狼", "ookami", ["おおかみ"]),
+    row("dog", "犬", "inu", ["いぬ"]),
+    row("horse", "馬", "uma", ["うま"]),
+    row("elephant", "象", "zou", ["ぞう"])
   ],
   sr: [
-    row("chair", "столица", "stolica"),
-    row("table", "сто", "sto"),
-    row("pencil", "оловка", "olovka"),
-    row("boy", "дечак", "dečak"),
-    row("girl", "девојчица", "devojčica"),
-    row("man", "мушкарац", "muškarac"),
-    row("woman", "жена", "žena"),
-    row("house", "кућа", "kuća"),
-    row("stone", "камен", "kamen"),
-    row("iron", "гвожђе", "gvožđe"),
-    row("car", "аутомобил", "automobil"),
-    row("red", "црвен", "crven"),
-    row("blue", "плав", "plav"),
-    row("green", "зелен", "zelen"),
-    row("yellow", "жут", "žut"),
-    row("black", "црн", "crn"),
-    row("white", "бео", "beo"),
-    row("big", "велики", "veliki", ["velik"]),
-    row("small", "мали", "mali"),
-    row("warm", "топао", "topao"),
-    row("cold", "хладан", "hladan")
+    row("sword", "мач", "mač"),
+    row("knife", "нож", "nož"),
+    row("fork", "виљушка", "viljuška"),
+    row("plate", "тањир", "tanjir"),
+    row("paper", "папир", "papir"),
+    row("metal", "метал", "metal"),
+    row("salt", "со", "so"),
+    row("water", "вода", "voda"),
+    row("food", "храна", "hrana"),
+    row("bear", "медвед", "medved"),
+    row("wolf", "вук", "vuk"),
+    row("dog", "пас", "pas"),
+    row("horse", "коњ", "konj"),
+    row("elephant", "слон", "slon")
   ],
   ru: [
-    row("chair", "стул", "stul"),
-    row("table", "стол", "stol"),
-    row("pencil", "карандаш", "karandash"),
-    row("boy", "мальчик", "malchik"),
-    row("girl", "девочка", "devochka"),
-    row("man", "мужчина", "muzhchina"),
-    row("woman", "женщина", "zhenshchina"),
-    row("house", "дом", "dom"),
-    row("stone", "камень", "kamen"),
-    row("iron", "железо", "zhelezo"),
-    row("car", "машина", "mashina", ["автомобиль", "avtomobil"]),
-    row("red", "красный", "krasnyy"),
-    row("blue", "синий", "siniy"),
-    row("green", "зелёный", "zelenyy"),
-    row("yellow", "жёлтый", "zheltyy"),
-    row("black", "чёрный", "chernyy"),
-    row("white", "белый", "belyy"),
-    row("big", "большой", "bolshoy"),
-    row("small", "маленький", "malenkiy"),
-    row("warm", "тёплый", "teplyy"),
-    row("cold", "холодный", "kholodnyy")
+    row("sword", "меч", "mech"),
+    row("knife", "нож", "nozh"),
+    row("fork", "вилка", "vilka"),
+    row("plate", "тарелка", "tarelka"),
+    row("paper", "бумага", "bumaga"),
+    row("metal", "металл", "metall"),
+    row("salt", "соль", "sol"),
+    row("water", "вода", "voda"),
+    row("food", "еда", "yeda"),
+    row("bear", "медведь", "medved"),
+    row("wolf", "волк", "volk"),
+    row("dog", "собака", "sobaka"),
+    row("horse", "лошадь", "loshad"),
+    row("elephant", "слон", "slon")
   ]
 };
 
@@ -183,4 +201,3 @@ export function fallbackRows(languageCode) {
     sort_order: index + 1
   }));
 }
-
