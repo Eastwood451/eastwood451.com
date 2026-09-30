@@ -42,3 +42,7 @@
 
 /pwa.js
   Cache-Control: no-cache
+
+/personlighedsprofil/*
+  Cache-Control: no-cache
+  Referrer-Policy: no-referrer

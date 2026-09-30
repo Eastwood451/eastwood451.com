@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0f172a"><title>SMFI Personlighedsprofil</title><link rel="icon" href="icon.svg"><link rel="stylesheet" href="module.css?v=1"><link rel="stylesheet" href="app.css?v=1"><script defer src="../auth.js"></script></head><body>
+<header class="app-header"><a href="/">← Eastwood451.com</a><h1>SMFI Personlighedsprofil</h1><button id="theme-toggle" type="button">Lyst / mørkt</button><button id="logout" hidden>Log ud</button></header>
+<section id="login" class="login-card"><h2>Dine private profiler</h2><p>Log ind med din eksisterende Supabase-konto.</p><form id="login-form"><label>E-mail<input id="email" type="email" autocomplete="username" required></label><label>Adgangskode<input id="password" type="password" autocomplete="current-password" required></label><button id="login-submit">Log ind</button></form><p id="login-error" role="alert"></p></section>
+<p id="loading" class="status" role="status">Forbinder…</p>
+<main id="app" hidden><section class="people-bar"><label>Person<select id="person-select" aria-label="Vælg person"></select></label><form id="person-form"><label>Navn<input id="person-name" maxlength="100" required placeholder="Navn på ny person"></label><button>Tilføj person</button></form><button id="rename">Omdøb</button><button id="delete">Slet person</button><button id="import-file-button">Åbn profilfil</button><button id="import-library">Hent fra Nested Actor</button><input id="import-file" type="file" accept="application/json,.json" hidden></section>
+<div class="sync-bar"><p id="save-status" role="status" aria-live="polite"></p><button id="retry" hidden>Prøv igen</button><button id="load-cloud" hidden>Hent nyeste profiler</button></div><p id="empty" class="empty" hidden>Tilføj en person, eller hent dine gemte profiler fra Nested Actor.</p>
+    <!-- Personality Modal -->
+    <div class="pm-overlay" id="pmOverlay">
+        <div class="pm-container">
+            <div class="pm-header">
+                <div>
+                    <div class="pm-header-title" id="pmTitle">Personlighedsprofil</div>
+                    <div class="pm-header-sub">26 strukturelle dimensioner · <span class="rest-key">R = i ro</span> & <span class="stress-key">S = under pres</span> · Jacob Elgaard</div>
+                </div>
+                <div style="display:flex;gap:0.5rem;">
+                    <button class="pm-preset-btn" id="pmSavePersonBtn" onclick="saveCurrentPersonToLibrary()">Gem
+                        person</button>
+                    <button class="pm-preset-btn" onclick="pmShowImportDialog()">Importér JSON</button>
+                    <button class="pm-preset-btn" id="pmCompareOpen" onclick="pmOpenCompare()">Sammenlign</button>
+                    <button class="pm-close" onclick="exportProfiles()">Eksportér JSON</button>
+                </div>
+            </div>
+
+            <div class="pm-layout">
+                <!-- PRESETS -->
+                <div class="pm-panel pm-full">
+                    <div class="pm-panel-title">Personlighedstyper & Forstyrrelser</div>
+                    <div class="pm-presets-grid" id="pmPresetsGrid"></div>
+                </div>
+
+                <!-- PANEL 1: FUNDAMENT + SELVSYSTEM -->
+                <div class="pm-panel">
+                    <div class="pm-panel-title">Fundament & Selvsystem</div>
+                    <div class="pm-dim-group">
+                        <div class="pm-dim-group-label" style="color:#4a7c6f">Fundament</div>
+                        <div class="pm-slider-row" id="pm-row-attachment">
+                            <div class="pm-slider-header"><span
+                                    class="pm-slider-label">Tilknytningssikkerhed</span><span class="pm-slider-value"
+                                    id="pm-val-attachment">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-attachment"
+                                data-dim="attachment">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">"Alle forlader mig"</span><span
+                                    class="pm-slider-end right">"Jeg er okay alene"</span></div>
+                        </div>
+                        <div class="pm-slider-row" id="pm-row-affect">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Affektiv grundtone</span><span
+                                    class="pm-slider-value" id="pm-val-affect">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-affect"
+                                data-dim="affect">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">Skam / frygt / tomhed</span><span
+                                    class="pm-slider-end right">Grundlæggende ro</span></div>
+                        </div>
+                        <div class="pm-slider-row" id="pm-row-activation">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Aktiveringsøkonomi</span><span
+                                    class="pm-slider-value" id="pm-val-activation">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-activation"
+                                data-dim="activation">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">Social udtømning</span><span
+                                    class="pm-slider-end right">Social genopladning</span></div>
+                        </div>
+                    </div>
+                    <div class="pm-dim-group">
+                        <div class="pm-dim-group-label" style="color:#7a5c8a">Selvsystem</div>
+                        <div class="pm-slider-row" id="pm-row-selfworth">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Selvværdsbaseline</span><span
+                                    class="pm-slider-value" id="pm-val-selfworth">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-selfworth"
+                                data-dim="selfworth">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">"Jeg er ingenting"</span><span
+                                    class="pm-slider-end right">"Jeg er nok"</span></div>
+                        </div>
+                        <div class="pm-slider-row" id="pm-row-identity">
+                            <div class="pm-slider-header"><span
+                                    class="pm-slider-label">Identitetskontinuitet</span><span class="pm-slider-value"
+                                    id="pm-val-identity">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-identity"
+                                data-dim="identity">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">"Hvem er jeg egentlig?"</span><span
+                                    class="pm-slider-end right">"Jeg er mig over tid"</span></div>
+                        </div>
+                        <div class="pm-slider-row" id="pm-row-changeTol">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Forandringstolerance</span><span
+                                    class="pm-slider-value" id="pm-val-changeTol">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-changeTol"
+                                data-dim="changeTol">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">Stabilitetssøgning</span><span
+                                    class="pm-slider-end right">Novitetssøgning</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL 2: EMPATI + MENTALISERING -->
+                <div class="pm-panel">
+                    <div class="pm-panel-title">Empati & Mentalisering</div>
+                    <div class="pm-dim-group">
+                        <div class="pm-dim-group-label" style="color:#8a5c3a">Empati — bipolare akser (midten =
+                            ligegyldighed)</div>
+                        <div class="pm-slider-row bipolar" id="pm-row-sufferResponse">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Respons på andres
+                                    lidelse</span><span class="pm-slider-value" id="pm-val-sufferResponse">R5 |
+                                    S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-sufferResponse"
+                                data-dim="sufferResponse">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">Fryd / Schadenfreude</span><span
+                                    class="pm-slider-end right">Medfølende sorg</span></div>
+                        </div>
+                        <div class="pm-slider-row bipolar" id="pm-row-joyResponse">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Respons på andres
+                                    lykke</span><span class="pm-slider-value" id="pm-val-joyResponse">R5 | S5</span>
+                            </div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-joyResponse"
+                                data-dim="joyResponse">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">Misundelse /
+                                    Gluckschmerz</span><span class="pm-slider-end right">Empatisk glæde / Mudita</span>
+                            </div>
+                        </div>
+                        <div class="pm-slider-row" id="pm-row-cogEmpathy">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Kognitiv empati</span><span
+                                    class="pm-slider-value" id="pm-val-cogEmpathy">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-cogEmpathy"
+                                data-dim="cogEmpathy">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">Forstår ikke andres
+                                    logik</span><span class="pm-slider-end right">Modellerer andres perspektiv
+                                    præcist</span></div>
+                        </div>
+                    </div>
+                    <div class="pm-dim-group">
+                        <div class="pm-dim-group-label" style="color:#3d5e8a">Mentalisering</div>
+                        <div class="pm-slider-row" id="pm-row-selfMent">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Selv-mentalisering</span><span
+                                    class="pm-slider-value" id="pm-val-selfMent">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-selfMent"
+                                data-dim="selfMent">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">"Jeg er bare sådan"</span><span
+                                    class="pm-slider-end right">"Jeg tror jeg føler X fordi..."</span></div>
+                        </div>
+                        <div class="pm-slider-row" id="pm-row-otherMent">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Andre-mentalisering</span><span
+                                    class="pm-slider-value" id="pm-val-otherMent">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-otherMent"
+                                data-dim="otherMent">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">"Han er vred" (faktum)</span><span
+                                    class="pm-slider-end right">"Jeg tror han er vred"</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL 3: RELATIONEL STRUKTUR -->
+                <div class="pm-panel">
+                    <div class="pm-panel-title">Relationel Struktur</div>
+                    <div class="pm-dim-group">
+                        <div class="pm-dim-group-label" style="color:#4a7c6f">Relationel struktur</div>
+                        <div class="pm-slider-row" id="pm-row-selfBoundary">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Selvafgrænsning</span><span
+                                    class="pm-slider-value" id="pm-val-selfBoundary">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-selfBoundary"
+                                data-dim="selfBoundary">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">Sammensmeltning / fusion</span><span
+                                    class="pm-slider-end right">Klare grænser / adskilt selv</span></div>
+                        </div>
+                        <div class="pm-slider-row" id="pm-row-affectiveOpenness">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Affektiv åbenhed</span><span
+                                    class="pm-slider-value" id="pm-val-affectiveOpenness">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-affectiveOpenness"
+                                data-dim="affectiveOpenness">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">Afskåret / lukket</span><span
+                                    class="pm-slider-end right">Åben / tilgængelig</span></div>
+                        </div>
+                        <p class="pm-slider-note" style="margin-bottom:0.6rem;">Høj selvafgrænsning + høj affektiv
+                            åbenhed = sund synergi. Lav + høj = sammensmeltning.</p>
+                        <div class="pm-slider-row" id="pm-row-dominance">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Dominansorientering</span><span
+                                    class="pm-slider-value" id="pm-val-dominance">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-dominance"
+                                data-dim="dominance">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">Flad orientering</span><span
+                                    class="pm-slider-end right">Hierarkisøgende</span></div>
+                        </div>
+                        <div class="pm-slider-row" id="pm-row-normative">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Normativ orientering</span><span
+                                    class="pm-slider-value" id="pm-val-normative">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-normative"
+                                data-dim="normative">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">Instrumentel</span><span
+                                    class="pm-slider-end right">Intrinsisk bindende</span></div>
+                        </div>
+                        <div class="pm-slider-row" id="pm-row-zeroSum">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Nulsums-perception</span><span
+                                    class="pm-slider-value" id="pm-val-zeroSum">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-zeroSum"
+                                data-dim="zeroSum">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">Der er nok til alle</span><span
+                                    class="pm-slider-end right">Din gevinst er mit tab</span></div>
+                        </div>
+                        <div class="pm-slider-row" id="pm-row-enemyInversion">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Fjendskabs-inversion</span><span
+                                    class="pm-slider-value" id="pm-val-enemyInversion">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-enemyInversion"
+                                data-dim="enemyInversion">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">Matricen ændres ikke</span><span
+                                    class="pm-slider-end right">Fuld spejlvending for fjender</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL 4: REGULERING -->
+                <div class="pm-panel">
+                    <div class="pm-panel-title">Regulering & Kapacitet</div>
+                    <div class="pm-dim-group">
+                        <div class="pm-dim-group-label" style="color:#3d5e8a">Regulering og kapacitet</div>
+                        <div class="pm-slider-row" id="pm-row-regulation">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Emotionel regulering</span><span
+                                    class="pm-slider-value" id="pm-val-regulation">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-regulation"
+                                data-dim="regulation">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">"Tsunami"</span><span
+                                    class="pm-slider-end right">"Føler det, men styret"</span></div>
+                        </div>
+                        <div class="pm-slider-row" id="pm-row-ambivalence">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Ambivalenstolerance</span><span
+                                    class="pm-slider-value" id="pm-val-ambivalence">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-ambivalence"
+                                data-dim="ambivalence">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">"Alt eller intet"</span><span
+                                    class="pm-slider-end right">"Godt og skidt på én gang"</span></div>
+                        </div>
+                        <div class="pm-slider-row" id="pm-row-agency">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Agency</span><span
+                                    class="pm-slider-value" id="pm-val-agency">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-agency"
+                                data-dim="agency">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">"Livet sker for mig"</span><span
+                                    class="pm-slider-end right">"Jeg former det næste"</span></div>
+                        </div>
+                        <div class="pm-slider-row" id="pm-row-temporal">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Temporal orientering</span><span
+                                    class="pm-slider-value" id="pm-val-temporal">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-temporal"
+                                data-dim="temporal">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">Øjeblikkelig
+                                    tilfredsstillelse</span><span class="pm-slider-end right">Langsigtet
+                                    planlægning</span></div>
+                        </div>
+                    </div>
+                    <div class="pm-dim-group">
+                        <div class="pm-dim-group-label" style="color:#c4553a">MOF/LOF meta-dimension</div>
+                        <div class="pm-slider-row" id="pm-row-mofLof">
+                            <div class="pm-slider-header"><span class="pm-slider-label">MOF–LOF kongruens</span><span
+                                    class="pm-slider-value" id="pm-val-mofLof">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-mofLof"
+                                data-dim="mofLof">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">Narrativ ≠ drivkraft</span><span
+                                    class="pm-slider-end right">Selvmodel matcher adfærd</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL 5: AFFEKTIVE TILSTANDSPARAMETRE -->
+                <div class="pm-panel">
+                    <div class="pm-panel-title">Affektive Tilstandsparametre</div>
+                    <p class="pm-slider-note" style="margin-bottom:0.8rem;">Disse er tilstande — ikke strukturelle
+                        kapaciteter. De svinger med energitilførsel og baseline-konfiguration.</p>
+                    <div class="pm-dim-group">
+                        <div class="pm-dim-group-label" style="color:#5a6e3a">Affektive tilstande</div>
+                        <div class="pm-slider-row bipolar" id="pm-row-valence">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Valens</span><span
+                                    class="pm-slider-value" id="pm-val-valence">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-valence"
+                                data-dim="valence">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">Lidelse</span><span
+                                    class="pm-slider-end right">Eufori</span></div>
+                        </div>
+                        <div class="pm-slider-row bipolar" id="pm-row-satisfaction">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Tilfredshed</span><span
+                                    class="pm-slider-value" id="pm-val-satisfaction">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-satisfaction"
+                                data-dim="satisfaction">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">"Jeg mangler alt"</span><span
+                                    class="pm-slider-end right">"Jeg har nok"</span></div>
+                        </div>
+                        <div class="pm-slider-row" id="pm-row-arousal">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Arousal</span><span
+                                    class="pm-slider-value" id="pm-val-arousal">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-arousal"
+                                data-dim="arousal">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">Lav aktivering</span><span
+                                    class="pm-slider-end right">Høj aktivering</span></div>
+                        </div>
+                        <div class="pm-slider-row" id="pm-row-returnSpeed">
+                            <div class="pm-slider-header"><span class="pm-slider-label">Return to baseline</span><span
+                                    class="pm-slider-value" id="pm-val-returnSpeed">R5 | S5</span></div>
+                            <input type="range" min="0" max="10" value="5" class="pm-range" id="pm-returnSpeed"
+                                data-dim="returnSpeed">
+                            <div class="pm-slider-ends"><span class="pm-slider-end">Minutter</span><span
+                                    class="pm-slider-end right">Døgn</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL 6: DARK TRIAD + MATRICE -->
+                <div class="pm-panel">
+                    <div class="pm-panel-title">Dark Triad & Relationel Matrice</div>
+                    <div style="margin-bottom:1rem;">
+                        <div class="pm-dim-group-label" style="color:#c4553a; margin-bottom:0.5rem;">Dark Triad —
+                            beregnet fra konfigurationen</div>
+                        <div class="pm-dark-triad">
+                            <div class="pm-dt-item">
+                                <div class="pm-dt-label">Narcissisme</div>
+                                <div class="pm-dt-score" id="pm-dt-narc">–</div>
+                                <div class="pm-dt-bar-track">
+                                    <div class="pm-dt-bar-fill" id="pm-dt-narc-bar" style="width:0%"></div>
+                                </div>
+                            </div>
+                            <div class="pm-dt-item">
+                                <div class="pm-dt-label">Machiavell.</div>
+                                <div class="pm-dt-score" id="pm-dt-mach">–</div>
+                                <div class="pm-dt-bar-track">
+                                    <div class="pm-dt-bar-fill" id="pm-dt-mach-bar" style="width:0%"></div>
+                                </div>
+                            </div>
+                            <div class="pm-dt-item">
+                                <div class="pm-dt-label">Psykopati</div>
+                                <div class="pm-dt-score" id="pm-dt-psyc">–</div>
+                                <div class="pm-dt-bar-track">
+                                    <div class="pm-dt-bar-fill" id="pm-dt-psyc-bar" style="width:0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="pm-dim-group-label" style="color:#8a5c3a; margin-bottom:0.5rem;">Relationel matrice
+                            — allieret</div>
+                        <div class="pm-matrix-container">
+                            <table class="pm-matrix">
+                                <tr>
+                                    <td class="corner"></td>
+                                    <th>Empatisk glæde</th>
+                                    <th>Ligegyldighed</th>
+                                    <th>Misundelse</th>
+                                </tr>
+                                <tr>
+                                    <th class="row-header">Sorg</th>
+                                    <td id="pm-m-sorg-glad">Sund person</td>
+                                    <td id="pm-m-sorg-lig">Depressiv</td>
+                                    <td id="pm-m-sorg-mis">Bitter / Ressentiment</td>
+                                </tr>
+                                <tr>
+                                    <th class="row-header">Ligegyldighed</th>
+                                    <td id="pm-m-lig-glad">Pollyanna</td>
+                                    <td id="pm-m-lig-lig">Skizoid</td>
+                                    <td id="pm-m-lig-mis">Kompetitiv</td>
+                                </tr>
+                                <tr>
+                                    <th class="row-header">Fryd</th>
+                                    <td id="pm-m-fryd-glad">Affektiv smitte</td>
+                                    <td id="pm-m-fryd-lig">Psykopat</td>
+                                    <td id="pm-m-fryd-mis">Malignant narcissist</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <p class="pm-matrix-note" id="pm-matrix-position-text">Justér sliders for at se aktiv position.
+                        </p>
+                    </div>
+                    <div style="margin-top:1rem;">
+                        <div class="pm-dim-group-label" style="color:#3d5e8a; margin-bottom:0.5rem;">Relationel matrice
+                            — fjende <span style="font-size:0.58rem; color:#8a7d68; font-style:italic;">(moduleret af
+                                fjendskabs-inversion)</span></div>
+                        <div class="pm-matrix-container">
+                            <table class="pm-matrix">
+                                <tr>
+                                    <td class="corner"></td>
+                                    <th>Empatisk glæde</th>
+                                    <th>Ligegyldighed</th>
+                                    <th>Misundelse</th>
+                                </tr>
+                                <tr>
+                                    <th class="row-header">Sorg</th>
+                                    <td id="pm-e-sorg-glad">Stockholm / Dalai Lama</td>
+                                    <td id="pm-e-sorg-lig">Tilgivelse uden glemsel</td>
+                                    <td id="pm-e-sorg-mis">Misundelig ressentiment</td>
+                                </tr>
+                                <tr>
+                                    <th class="row-header">Ligegyldighed</th>
+                                    <td id="pm-e-lig-glad">Tilgivet fjende</td>
+                                    <td id="pm-e-lig-lig">Sund distance</td>
+                                    <td id="pm-e-lig-mis">Konkurrencementalitet</td>
+                                </tr>
+                                <tr>
+                                    <th class="row-header">Fryd</th>
+                                    <td id="pm-e-fryd-glad">Affektiv dissociation</td>
+                                    <td id="pm-e-fryd-lig">Dracula</td>
+                                    <td id="pm-e-fryd-mis">Nulsums-tribalisme</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <p class="pm-matrix-note" id="pm-enemy-matrix-text">Fjende-position beregnes fra
+                            allieret-position + fjendskabs-inversion.</p>
+                    </div>
+                </div>
+
+                <!-- RAPPORT -->
+                <div class="pm-panel pm-full">
+                    <div class="pm-panel-title">Rapport</div>
+                    <div class="pm-report-content">
+                        <div class="pm-radar-wrapper">
+                            <canvas id="pmRadar" width="300" height="300"></canvas>
+                            <div style="margin-top:0.8rem; width:100%;" id="pmDimBars"></div>
+                        </div>
+                        <div class="pm-report-text">
+                            <div class="pm-profile-label" id="pmProfileLabel">Manuelt konfigureret</div>
+                            <h2 id="pmReportTitle">Profil</h2>
+                            <div class="pm-divider"></div>
+                            <div id="pmReportBody"></div>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- end pm-layout -->
+        </div><!-- end pm-container -->
+    </div><!-- end pm-overlay -->
+
+    <!-- PM Compare Modal -->
+    <div class="pm-compare-modal" id="pmCompareModal">
+        <div class="pm-compare-card">
+            <div class="pm-compare-card-header">
+                <div class="pm-compare-card-title">Sammenlign profiler</div>
+                <div class="pm-compare-controls">
+                    <span class="pm-compare-hint">Vis:</span>
+                    <select id="pmCompareMode">
+                        <option value="rest">Rest (grøn)</option>
+                        <option value="stress">Stress (rød)</option>
+                    </select>
+                    <span class="pm-compare-hint">Layout:</span>
+                    <select id="pmCompareLayout">
+                        <option value="grid">Side om side</option>
+                        <option value="overlay">Ovenpå hinanden</option>
+                    </select>
+                    <button class="pm-preset-btn" onclick="pmCloseCompare()">Luk</button>
+                </div>
+            </div>
+            <div class="pm-compare-hint" style="margin-bottom:0.6rem;">Vælg personer at sammenligne. Vælg præcis
+                2 for en natursproglig analyse.</div>
+            <div class="pm-compare-analysis" id="pmCompareAnalysis" style="display:none; margin-bottom:0.9rem;">
+                <div
+                    style="display:flex; align-items:center; justify-content:space-between; gap:0.8rem; flex-wrap:wrap;">
+                    <div class="pm-compare-card-title" style="border:0; margin:0; padding:0;">Analyse (2 profiler)</div>
+                    <button class="pm-preset-btn" id="pmCompareAnalyzeBtn" onclick="pmRenderCompareAnalysis()"
+                        disabled>Analyser valgte</button>
+                </div>
+                <div class="pm-compare-hint" id="pmCompareAnalysisHint" style="margin-top:0.35rem;">Vælg præcis 2
+                    profiler.</div>
+                <div id="pmCompareAnalysisBody" style="margin-top:0.65rem;"></div>
+            </div>
+            <div class="pm-compare-list" id="pmCompareList"></div>
+            <div class="pm-compare-grid" id="pmCompareGrid"></div>
+            <div class="pm-compare-overlay" id="pmCompareOverlay" style="display:none;">
+                <div
+                    style="display:flex; align-items:flex-start; justify-content:space-between; gap:0.8rem; flex-wrap:wrap; margin-bottom:0.55rem;">
+                    <div class="pm-compare-card-title" id="pmCompareOverlayTitle">Overlay</div>
+                    <div id="pmCompareLegend" style="display:flex; flex-wrap:wrap; gap:0.35rem 0.55rem;"></div>
+                </div>
+                <div class="pm-compare-overlay-canvaswrap">
+                    <canvas id="pmCompareOverlayCanvas" width="720" height="420"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JSON Import Dialog -->
+    <div class="pm-compare-modal" id="pmImportDialog">
+        <div class="pm-compare-card" style="max-width:600px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                <h3 style="margin:0;font-size:1rem;color:#e2e8f0;">Importér personlighedsprofiler (JSON)</h3>
+                <button class="pm-close" onclick="pmCloseImport()">Luk</button>
+            </div>
+            <p style="font-size:0.8rem;color:#94a3b8;margin:0 0 0.75rem;">Indsæt smfi-profile-import-v1 JSON herunder.
+                Importér profil-JSON eller en gemt Nested Actor-/SMFI Suite-fil.</p>
+            <textarea id="pmImportText"
+                style="width:100%;height:200px;font-family:monospace;font-size:0.75rem;border:1px solid #d4c9b0;border-radius:6px;padding:0.5rem;background:#fffdf8;color:#e2e8f0;resize:vertical;"
+                placeholder='{ "schema": "smfi-profile-import-v1", "profiles": [...] }'></textarea>
+            <div id="pmImportError" style="color:#c0392b;font-size:0.75rem;margin-top:0.5rem;display:none;"></div>
+            <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.75rem;">
+                <button class="pm-close" onclick="pmCloseImport()">Annullér</button>
+                <button class="pm-preset-btn" onclick="pmDoImport()"
+                    style="background:#5a6e3a;color:#fff;">Importér</button>
+            </div>
+        </div>
+    </div>
+
+</main><script src="module.js?v=1"></script><script type="module" src="app.js?v=1"></script></body></html>
