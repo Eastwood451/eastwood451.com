@@ -480,7 +480,10 @@ function renderActiveWords() {
   activeWordsList.innerHTML = active.map((word) => {
     const streak = getStreak(word.word_id);
     return '<li class="word-row">' +
-      '<span class="word-row-name">' + escapeHtml(word.danish) + "</span>" +
+      '<div class="word-row-heading">' +
+        '<span class="word-row-name">' + escapeHtml(word.danish) + "</span>" +
+        mirarisLinkMarkup(word.danish, "da") +
+      "</div>" +
       '<span class="word-metrics">' +
         metric("Genkend", streak.recognition) +
         metric("Genkald", streak.recall) +
@@ -510,13 +513,19 @@ function renderWordList() {
       return '<li class="word-list-item' + (isLearned ? " is-learned" : "") + '">' +
         '<div class="word-list-terms">' +
           '<span class="word-list-language">' + escapeHtml(language.label) + "</span>" +
-          '<span class="word-list-danish" lang="da">' + escapeHtml(word.danish) + "</span>" +
+          '<div class="word-list-danish-line">' +
+            '<span class="word-list-danish" lang="da">' + escapeHtml(word.danish) + "</span>" +
+            mirarisLinkMarkup(word.danish, "da") +
+          "</div>" +
           readingMarkup +
           '<span class="word-list-target' + (reading ? "" : " is-primary") +
             '" lang="' + escapeHtml(language.code) + '" dir="' + escapeHtml(direction) + '">' +
             escapeHtml(word.target) + "</span>" +
         "</div>" +
-        '<span class="word-list-status">' + (isLearned ? "Lært" : "Ikke lært") + "</span>" +
+        '<div class="word-list-actions">' +
+          '<span class="word-list-status">' + (isLearned ? "Lært" : "Ikke lært") + "</span>" +
+          mirarisLinkMarkup(word.target, language.code) +
+        "</div>" +
       "</li>";
     }).join("");
   }).join("");
@@ -532,6 +541,34 @@ function metric(label, value) {
 function renderAnswerMethodToggle() {
   multipleChoiceButton.setAttribute("aria-pressed", String(answerMethod === "multiple-choice"));
   typingButton.setAttribute("aria-pressed", String(answerMethod === "typing"));
+}
+
+function mirarisUrl(term, code) {
+  const query = code === "da" ? term.toLocaleLowerCase("da-DK") : term;
+  return "https://miraris.app/search?q=" + encodeURIComponent(query) +
+    "&lang=" + encodeURIComponent(code) + "&pos=noun";
+}
+
+function mirarisDescription(term, code) {
+  const language = code === "da" ? "Dansk" : LANGUAGES.find((item) => item.code === code)?.label || code;
+  return "Slå " + term + " op på Miraris (" + language + ") – åbner i ny fane";
+}
+
+function mirarisLinkMarkup(term, code, label = "Miraris ↗") {
+  return '<a class="miraris-link" href="' + escapeHtml(mirarisUrl(term, code)) +
+    '" target="_blank" rel="noopener noreferrer" aria-label="' +
+    escapeHtml(mirarisDescription(term, code)) + '">' + escapeHtml(label) + "</a>";
+}
+
+function createMirarisLink(term, code, label = "Miraris ↗") {
+  const link = document.createElement("a");
+  link.className = "miraris-link";
+  link.href = mirarisUrl(term, code);
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.setAttribute("aria-label", mirarisDescription(term, code));
+  link.textContent = label;
+  return link;
 }
 
 function visibleReading(word, code = languageCode) {
@@ -577,7 +614,11 @@ function renderQuiz() {
     '<p class="question-label">' + escapeHtml(questionLabel) + "</p>" +
     '<div class="word-pair question-pair">' +
       '<span class="word-language">' + escapeHtml(promptLanguage) + "</span>" +
-      '<p class="question-word">' + promptWord + "</p>" +
+      '<div class="question-content">' +
+        '<p class="question-word">' + promptWord + "</p>" +
+        mirarisLinkMarkup(mode === "recognition" ? question.target : question.danish,
+          mode === "recognition" ? language.code : "da") +
+      "</div>" +
     "</div>" +
   "</div>";
 
@@ -617,7 +658,13 @@ function renderQuiz() {
         target.dir = targetDirection;
         button.append(target);
       }
-      answerGrid.append(button);
+      const option = document.createElement("div");
+      option.className = "answer-option";
+      option.append(button, createMirarisLink(
+        mode === "recognition" ? word.danish : word.target,
+        mode === "recognition" ? "da" : language.code
+      ));
+      answerGrid.append(option);
     });
     const answerPair = document.createElement("div");
     answerPair.className = "word-pair answer-pair";
@@ -794,6 +841,14 @@ function renderFeedback() {
   feedback.dataset.kind = feedbackState.kind;
   if (feedbackState.kind !== "error" || !feedbackState.correction) {
     feedback.textContent = feedbackState.text;
+    if (feedbackState.kind === "success" && feedbackState.lookup) {
+      const { word, language } = feedbackState.lookup;
+      const links = document.createElement("span");
+      links.className = "feedback-word-links";
+      links.append(createMirarisLink(word.target, language.code, "Miraris · " + language.label + " ↗"),
+        createMirarisLink(word.danish, "da", "Miraris · Dansk ↗"));
+      feedback.append(links);
+    }
     return;
   }
 
@@ -830,6 +885,14 @@ function renderFeedback() {
     target.dir = word && reading ? "ltr" : (language.direction || "ltr");
     danish.textContent = word ? word.danish : (testedMode === "recognition" ? entered : "—");
     danish.lang = "da";
+    if (word) {
+      target.append(createMirarisLink(word.target, language.code));
+      danish.append(createMirarisLink(word.danish, "da"));
+    } else if (entered) {
+      (testedMode === "recall" ? target : danish).append(
+        createMirarisLink(entered, testedMode === "recall" ? language.code : "da")
+      );
+    }
     row.append(target, danish);
     body.append(row);
   }
@@ -849,7 +912,10 @@ function renderFeedback() {
 }
 
 function setFeedback(text, kind, correction = null) {
-  feedbackState = { text, kind, correction };
+  feedbackState = {
+    text, kind, correction,
+    lookup: question ? { word: question, language: currentLanguage() } : null
+  };
   renderFeedback();
 }
 
