@@ -7,12 +7,14 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const REVIEW_DAYS = [1, 3, 7, 14, 30];
 const STORAGE_PREFIX = "eastwood451:flashcards:v2:";
 const LANGUAGE_STORAGE_KEY = STORAGE_PREFIX + "language";
+const LANGUAGES_STORAGE_KEY = STORAGE_PREFIX + "languages";
 const MODE_NAMES = {
   recognition: "Genkendelse",
   recall: "Genkaldelse"
 };
 
-const languageSelect = document.querySelector("#language-select");
+const languageChoices = document.querySelector("#language-choices");
+const deckTitle = document.querySelector("#deck-title");
 const dataSource = document.querySelector("#data-source");
 const learnedCount = document.querySelector("#learned-count");
 const progressTrack = document.querySelector(".progress-track");
@@ -31,7 +33,9 @@ const typingButton = document.querySelector("#typing-button");
 const modeStep = document.querySelector("#mode-step");
 const resetButton = document.querySelector("#reset-progress");
 
-let languageCode = readStorage(LANGUAGE_STORAGE_KEY) || LANGUAGES[0].code;
+let selectedLanguageCodes = readLanguageSelection();
+let languageCode = selectedLanguageCodes[0] || LANGUAGES[0].code;
+const languageSessions = new Map();
 let vocabulary = [];
 let progress = freshProgress();
 let mode = "recognition";
@@ -47,15 +51,17 @@ let feedbackState = { text: "", kind: "" };
 let reviewSlots = [];
 let forceReview = false;
 
-languageSelect.innerHTML = LANGUAGES.map((language) =>
-  '<option value="' + escapeHtml(language.code) + '">' +
-    escapeHtml(language.label + " · " + language.native) +
-  "</option>"
+languageChoices.innerHTML = LANGUAGES.map((language) =>
+  '<label class="language-choice">' +
+    '<input type="checkbox" name="languages" value="' + escapeHtml(language.code) + '"' +
+      (selectedLanguageCodes.includes(language.code) ? " checked" : "") + ">" +
+    '<span>' + escapeHtml(language.label) + "</span>" +
+  "</label>"
 ).join("");
-languageSelect.value = languageCode;
 
-languageSelect.addEventListener("change", () => {
-  changeLanguage(languageSelect.value);
+languageChoices.addEventListener("change", () => {
+  const codes = [...languageChoices.querySelectorAll("input:checked")].map((input) => input.value);
+  changeLanguages(codes);
 });
 
 multipleChoiceButton.addEventListener("click", () => setAnswerMethod("multiple-choice"));
@@ -81,10 +87,22 @@ function readStorage(key) {
   }
 }
 
+function readLanguageSelection() {
+  try {
+    const stored = JSON.parse(readStorage(LANGUAGES_STORAGE_KEY) || "null");
+    if (Array.isArray(stored)) {
+      return LANGUAGES.filter((language) => stored.includes(language.code)).map((language) => language.code);
+    }
+  } catch {
+    // Fall back to the previously selected single language.
+  }
+  const previous = readStorage(LANGUAGE_STORAGE_KEY);
+  return [LANGUAGES.some((language) => language.code === previous) ? previous : LANGUAGES[0].code];
+}
+
 function saveProgress() {
   try {
     window.localStorage.setItem(STORAGE_PREFIX + languageCode, JSON.stringify(progress));
-    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, languageCode);
   } catch {
     dataSource.dataset.source = "local";
     dataSource.textContent = "Fremgang kun i denne fane";
@@ -214,42 +232,78 @@ function getVocabularyWithTimeout(code) {
   ]).finally(() => clearTimeout(timeout));
 }
 
-async function changeLanguage(code) {
+async function changeLanguages(codes) {
   const sequence = ++loadSequence;
-  languageCode = LANGUAGES.some((language) => language.code === code) ? code : LANGUAGES[0].code;
-  languageSelect.value = languageCode;
+  selectedLanguageCodes = LANGUAGES.filter((language) => codes.includes(language.code)).map((language) => language.code);
   writeLanguagePreference();
   clearTimeout(answerTimer);
   answerLocked = false;
   question = null;
   revealedHintIndices = new Set();
-  mode = "recognition";
-  reviewSlots = [];
+  hintUsedForQuestion = false;
   forceReview = false;
   feedbackState = { text: "", kind: "" };
-  vocabulary = [];
-  progress = loadProgress(languageCode);
-  wordListLanguage.textContent = currentLanguage().label.toLowerCase();
-  wordListSummary.textContent = "Henter ordliste …";
+  feedback.replaceChildren();
+  feedback.dataset.kind = "";
   wordListItems.replaceChildren();
-  dataSource.dataset.source = "";
-  dataSource.textContent = "Henter ordliste …";
-  quiz.innerHTML = '<p class="loading">Gør ordkortene klar …</p>';
-  renderProgress();
+  resetButton.disabled = true;
 
-  const result = await getVocabularyWithTimeout(languageCode);
+  if (!selectedLanguageCodes.length) {
+    learnedCount.innerHTML = '0 <span>/ 0</span>';
+    overallProgress.style.width = "0%";
+    progressTrack.setAttribute("aria-valuemax", "0");
+    progressTrack.setAttribute("aria-valuenow", "0");
+    deckCount.textContent = "Ingen sprog valgt";
+    deckTitle.textContent = "Tre ord i spil";
+    activeWordsList.replaceChildren();
+    wordListLanguage.textContent = "de valgte sprog";
+    wordListSummary.textContent = "Vælg mindst ét sprog";
+    modeStep.textContent = "—";
+    quiz.innerHTML = '<p class="loading">Vælg mindst ét sprog ovenfor for at begynde.</p>';
+    dataSource.textContent = "Ingen sprog valgt";
+    dataSource.dataset.source = "";
+    return;
+  }
+
+  dataSource.dataset.source = "";
+  dataSource.textContent = "Henter ordlister …";
+  quiz.innerHTML = '<p class="loading">Gør ordkortene klar …</p>';
+  const missing = selectedLanguageCodes.filter((code) => !languageSessions.has(code));
+  await Promise.all(missing.map(async (code) => {
+    const result = await getVocabularyWithTimeout(code);
+    if (!languageSessions.has(code)) {
+      languageSessions.set(code, {
+        words: result.words,
+        progress: loadProgress(code),
+        source: result.source,
+        reviewSlots: []
+      });
+    }
+  }));
   if (sequence !== loadSequence) return;
 
-  vocabulary = result.words;
-  dataSource.dataset.source = result.source;
-  dataSource.textContent = result.source === "supabase" ? "Ord fra Supabase" : "Lokal ordliste";
-  question = null;
+  activateLanguage(selectedLanguageCodes[0]);
   render();
+}
+
+function activateLanguage(code) {
+  const previous = languageSessions.get(languageCode);
+  if (previous) previous.reviewSlots = reviewSlots;
+  const session = languageSessions.get(code);
+  languageCode = code;
+  vocabulary = session.words;
+  progress = session.progress;
+  reviewSlots = session.reviewSlots;
+  dataSource.dataset.source = session.source;
+  dataSource.textContent = currentLanguage().label + " · " +
+    (session.source === "supabase" ? "Ord fra Supabase" : "Lokal ordliste");
+  resetButton.disabled = false;
+  resetButton.textContent = "Nulstil " + currentLanguage().label.toLowerCase();
 }
 
 function writeLanguagePreference() {
   try {
-    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, languageCode);
+    window.localStorage.setItem(LANGUAGES_STORAGE_KEY, JSON.stringify(selectedLanguageCodes));
   } catch {
     // The app remains usable when browser storage is disabled.
   }
@@ -334,6 +388,26 @@ function nextReviewSlot() {
 }
 
 function nextQuestion() {
+  const available = selectedLanguageCodes.filter((code) => {
+    const session = languageSessions.get(code);
+    if (!session) return false;
+    const learned = new Set(session.progress.learned);
+    const active = session.words.slice(0, session.progress.introduced).some((word) => !learned.has(word.word_id));
+    const due = session.progress.learned.some((id) => {
+      const review = session.progress.reviews[id];
+      return review && (session.progress.answered >= review.dueQuestion || Date.now() >= review.dueAt);
+    });
+    return active || due || (forceReview && learned.size > 0);
+  });
+  for (const code of shuffle(available)) {
+    activateLanguage(code);
+    const word = nextQuestionForLanguage();
+    if (word) return word;
+  }
+  return null;
+}
+
+function nextQuestionForLanguage() {
   const active = getActiveWords();
   const learned = getLearnedWords();
   const due = learned.filter((word) => reviewIsDue(getReview(word.word_id)));
@@ -368,7 +442,12 @@ function shuffle(values) {
 }
 
 function render() {
-  if (!vocabulary.length) return;
+  if (!selectedLanguageCodes.length || !selectedLanguageCodes.every((code) => languageSessions.has(code))) return;
+  if (!question) {
+    question = nextQuestion();
+    revealedHintIndices = new Set();
+    hintUsedForQuestion = false;
+  }
   renderProgress();
   renderActiveWords();
   renderWordList();
@@ -378,17 +457,17 @@ function render() {
 }
 
 function renderProgress() {
-  const learned = new Set(progress.learned);
-  const learnedTotal = Math.min(TOTAL_WORDS, learned.size);
-  learnedCount.innerHTML = learnedTotal + " <span>/ " + TOTAL_WORDS + "</span>";
-  overallProgress.style.width = (learnedTotal / TOTAL_WORDS * 100) + "%";
-  progressTrack.setAttribute("aria-valuemax", String(TOTAL_WORDS));
+  const sessions = selectedLanguageCodes.map((code) => languageSessions.get(code));
+  const learnedTotal = sessions.reduce((sum, session) => sum + session.progress.learned.length, 0);
+  const total = TOTAL_WORDS * sessions.length;
+  learnedCount.innerHTML = learnedTotal + " <span>/ " + total + "</span>";
+  overallProgress.style.width = (total ? learnedTotal / total * 100 : 0) + "%";
+  progressTrack.setAttribute("aria-valuemax", String(total));
   progressTrack.setAttribute("aria-valuenow", String(learnedTotal));
-
   const activeCount = getActiveWords().length;
-  deckCount.textContent = activeCount
-    ? "Aktivt sæt · " + activeCount + " ord"
-    : "Alle ord lært · repetition";
+  deckCount.textContent = currentLanguage().label + " · " +
+    (activeCount ? "Aktivt sæt · " + activeCount + " ord" : "Alle ord lært · repetition");
+  deckTitle.textContent = currentLanguage().label + " · tre ord i spil";
 }
 
 function renderActiveWords() {
@@ -411,29 +490,35 @@ function renderActiveWords() {
 }
 
 function renderWordList() {
-  if (wordListPanel.hidden || !vocabulary.length) return;
-
-  const learned = new Set(progress.learned);
-  const language = currentLanguage();
-  const direction = language.direction || "ltr";
-  wordListLanguage.textContent = language.label.toLowerCase();
-  wordListSummary.textContent = learned.size + " af " + TOTAL_WORDS + " ord lært";
-  wordListItems.innerHTML = vocabulary.map((word) => {
-    const isLearned = learned.has(word.word_id);
-    const reading = visibleReading(word);
-    const readingMarkup = reading
-      ? '<span class="word-list-reading" lang="und-Latn" dir="ltr">' + escapeHtml(reading) + "</span>"
-      : "";
-    return '<li class="word-list-item' + (isLearned ? " is-learned" : "") + '">' +
-      '<div class="word-list-terms">' +
-        '<span class="word-list-danish" lang="da">' + escapeHtml(word.danish) + "</span>" +
-        readingMarkup +
-        '<span class="word-list-target' + (reading ? "" : " is-primary") +
-          '" lang="' + escapeHtml(language.code) + '" dir="' + escapeHtml(direction) + '">' +
-          escapeHtml(word.target) + "</span>" +
-      "</div>" +
-      '<span class="word-list-status">' + (isLearned ? "Lært" : "Ikke lært") + "</span>" +
-    "</li>";
+  if (wordListPanel.hidden) return;
+  const languages = LANGUAGES.filter((language) => selectedLanguageCodes.includes(language.code));
+  wordListLanguage.textContent = languages.map((language) => language.label.toLowerCase()).join(", ");
+  const learnedTotal = languages.reduce((sum, language) => sum +
+    (languageSessions.get(language.code)?.progress.learned.length || 0), 0);
+  wordListSummary.textContent = learnedTotal + " af " + (TOTAL_WORDS * languages.length) + " ord lært";
+  wordListItems.innerHTML = languages.map((language) => {
+    const session = languageSessions.get(language.code);
+    if (!session) return "";
+    const learned = new Set(session.progress.learned);
+    const direction = language.direction || "ltr";
+    return session.words.map((word) => {
+      const isLearned = learned.has(word.word_id);
+      const reading = visibleReading(word, language.code);
+      const readingMarkup = reading
+        ? '<span class="word-list-reading" lang="und-Latn" dir="ltr">' + escapeHtml(reading) + "</span>"
+        : "";
+      return '<li class="word-list-item' + (isLearned ? " is-learned" : "") + '">' +
+        '<div class="word-list-terms">' +
+          '<span class="word-list-language">' + escapeHtml(language.label) + "</span>" +
+          '<span class="word-list-danish" lang="da">' + escapeHtml(word.danish) + "</span>" +
+          readingMarkup +
+          '<span class="word-list-target' + (reading ? "" : " is-primary") +
+            '" lang="' + escapeHtml(language.code) + '" dir="' + escapeHtml(direction) + '">' +
+            escapeHtml(word.target) + "</span>" +
+        "</div>" +
+        '<span class="word-list-status">' + (isLearned ? "Lært" : "Ikke lært") + "</span>" +
+      "</li>";
+    }).join("");
   }).join("");
 }
 
@@ -449,18 +534,13 @@ function renderAnswerMethodToggle() {
   typingButton.setAttribute("aria-pressed", String(answerMethod === "typing"));
 }
 
-function visibleReading(word) {
+function visibleReading(word, code = languageCode) {
   // Latin already uses the Roman alphabet; its reading field contains syllable breaks.
-  return languageCode === "la" ? "" : String(word.reading || "").trim();
+  return code === "la" ? "" : String(word.reading || "").trim();
 }
 
 function renderQuiz() {
   const active = getActiveWords();
-  if (!question || !vocabulary.some((word) => word.word_id === question.word_id)) {
-    question = nextQuestion();
-    revealedHintIndices = new Set();
-    hintUsedForQuestion = false;
-  }
   if (!question) {
     if (!active.length) {
       modeStep.textContent = "AJOUR";
@@ -717,7 +797,7 @@ function renderFeedback() {
     return;
   }
 
-  const { correctWord, selectedWord, submitted, testedMode } = feedbackState.correction;
+  const { correctWord, selectedWord, submitted, testedMode, language } = feedbackState.correction;
   const title = document.createElement("strong");
   title.className = "feedback-title";
   title.textContent = "FORKERT";
@@ -728,7 +808,7 @@ function renderFeedback() {
   caption.className = "sr-only";
   caption.textContent = "Det rigtige ordpar øverst og dit svar nedenunder";
   const header = document.createElement("tr");
-  for (const label of [currentLanguage().label, "Dansk"]) {
+  for (const label of [language.label, "Dansk"]) {
     const cell = document.createElement("th");
     cell.scope = "col";
     cell.textContent = label;
@@ -744,10 +824,10 @@ function renderFeedback() {
     row.setAttribute("aria-label", rowClass === "is-correct" ? "Rigtigt ordpar" : "Dit svar");
     const target = document.createElement("td");
     const danish = document.createElement("td");
-    const reading = word ? visibleReading(word) : "";
+    const reading = word ? visibleReading(word, language.code) : "";
     target.textContent = word ? capitalize(reading || word.target) : (testedMode === "recall" ? entered : "—");
-    target.lang = word && reading ? "und-Latn" : currentLanguage().code;
-    target.dir = word && reading ? "ltr" : (currentLanguage().direction || "ltr");
+    target.lang = word && reading ? "und-Latn" : language.code;
+    target.dir = word && reading ? "ltr" : (language.direction || "ltr");
     danish.textContent = word ? word.danish : (testedMode === "recognition" ? entered : "—");
     danish.lang = "da";
     row.append(target, danish);
@@ -803,7 +883,8 @@ function submitAnswer(answer, isTyped = false) {
     correctWord: testedWord,
     selectedWord,
     submitted: isTyped ? String(answer).trim() : "",
-    testedMode
+    testedMode,
+    language: currentLanguage()
   };
   progress.answered += 1;
   answerLocked = true;
@@ -889,6 +970,7 @@ function normalizeAnswer(value, code) {
 }
 
 function resetLanguage() {
+  if (!selectedLanguageCodes.includes(languageCode) || !languageSessions.has(languageCode)) return;
   const language = currentLanguage();
   const confirmed = window.confirm("Nulstille alle kort og streaks for " + language.label + "?");
   if (!confirmed) return;
@@ -901,6 +983,8 @@ function resetLanguage() {
   reviewSlots = [];
   forceReview = false;
   progress = freshProgress();
+  languageSessions.get(languageCode).progress = progress;
+  languageSessions.get(languageCode).reviewSlots = reviewSlots;
   feedbackState = { text: "Sættet er nulstillet. Vi begynder med de første tre ord.", kind: "" };
   saveProgress();
   render();
@@ -915,5 +999,5 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
-changeLanguage(languageCode);
+changeLanguages(selectedLanguageCodes);
 
