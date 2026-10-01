@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#080b12">
     <meta name="description" content="Lær 14 danske ord på græsk, latin, arabisk, japansk, serbisk eller russisk. Tre ord ad gangen.">
     <title>Sprogkort · Eastwood451</title>
-    <link rel="stylesheet" href="./style.css?v=20261001-1">
+    <link rel="stylesheet" href="./style.css?v=20261001-2">
   </head>
   <body>
     <main class="shell">
@@ -18,14 +18,14 @@
       <section class="intro" aria-labelledby="page-title">
         <p class="eyebrow">COLOURFUL LANGUAGE · SPROGKORT</p>
         <h1 id="page-title">Lær <span>ét ord ad gangen.</span></h1>
-        <p class="lede">Vælg et sprog. Vi øver tre ord ad gangen, både genkendelse og genkaldelse.</p>
+        <p class="lede">Vælg ét eller flere sprog. Vi øver tre ord ad gangen på hvert sprog, både genkendelse og genkaldelse.</p>
       </section>
 
-      <section class="language-bar" aria-label="Vælg sprog">
-        <label for="language-select">Jeg øver</label>
-        <select id="language-select" name="language"></select>
-        <p class="language-note">Et ord er først lært efter tre rigtige svar i træk i begge øvelser. Lærte ord vender tilbage til repetition.</p>
-      </section>
+      <fieldset class="language-bar">
+        <legend>Jeg øver</legend>
+        <div id="language-choices" class="language-choices"></div>
+        <p class="language-note">Vælg ét eller flere sprog. Vi blander øvelserne og øver tre ord ad gangen på hvert sprog. Et ord er lært efter tre rigtige svar i træk i både genkendelse og genkaldelse. Lærte ord vender tilbage til repetition.</p>
+      </fieldset>
 
       <section class="progress-overview" aria-label="Din fremgang">
         <div class="progress-copy">
@@ -99,7 +99,7 @@
         </div>
       </footer>
     </main>
-    <script type="module" src="./app.js?v=20261001-1"></script>
+    <script type="module" src="./app.js?v=20261001-2"></script>
   </body>
 </html>
 

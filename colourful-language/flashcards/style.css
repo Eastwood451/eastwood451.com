@@ -155,39 +155,69 @@ h1 span {
 }
 
 .language-bar {
-  display: grid;
-  grid-template-columns: auto minmax(180px, 300px) 1fr;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
+  min-width: 0;
+  margin: 0;
+  padding: 12px 16px 16px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: rgba(17, 23, 33, 0.86);
 }
 
-.language-bar label {
+.language-bar legend {
+  padding: 0 6px;
   color: var(--muted);
   font-size: 0.86rem;
   font-weight: 700;
 }
 
-.language-bar select {
-  width: 100%;
+.language-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.language-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
   min-height: 44px;
-  padding: 0 40px 0 13px;
-  border: 1px solid rgba(30, 183, 255, 0.42);
+  padding: 9px 13px;
+  border: 1px solid var(--line);
   border-radius: 8px;
   background: #0b111a;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.language-choice:has(input:checked) {
+  border-color: var(--blue);
+  background: #203044;
+  color: var(--text);
+}
+
+.language-choice input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--blue);
   cursor: pointer;
 }
 
 .language-note {
-  margin: 0;
+  margin: 12px 0 0;
   color: var(--muted);
   font-size: 0.78rem;
   line-height: 1.45;
-  text-align: right;
 }
+
+.word-list-language {
+  color: var(--blue);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
 
 .progress-overview {
   gap: 26px;
@@ -1014,14 +1044,13 @@ h1 span {
     padding: 42px 0 22px;
   }
 
-  .language-bar {
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 8px 12px;
+  .language-choices {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .language-note {
-    grid-column: 1 / -1;
-    text-align: left;
+  .language-choice {
+    padding: 9px 10px;
   }
 
   .progress-overview {
