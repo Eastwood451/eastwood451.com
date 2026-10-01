@@ -775,6 +775,71 @@ h1 span {
 
 .feedback[data-kind="error"] {
   color: var(--red);
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.feedback-title {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--red);
+  font-size: 1.15rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+}
+
+.correction-matrix {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  border: 1px solid rgba(255, 138, 122, 0.5);
+  border-radius: 10px;
+  overflow: hidden;
+  color: var(--text);
+}
+
+.correction-matrix th,
+.correction-matrix td {
+  width: 50%;
+  padding: 10px 13px;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.correction-matrix th {
+  background: rgba(255, 138, 122, 0.12);
+  color: var(--red);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.correction-matrix th + th,
+.correction-matrix td + td {
+  border-left: 1px solid rgba(255, 138, 122, 0.3);
+}
+
+.correction-matrix tbody tr + tr td {
+  border-top: 1px solid rgba(255, 138, 122, 0.3);
+}
+
+.correction-matrix td {
+  background: rgba(255, 138, 122, 0.04);
+  font-size: clamp(1rem, 2.5vw, 1.35rem);
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.correction-matrix .is-correct td {
+  background: rgba(104, 217, 165, 0.09);
+}
+
+.feedback-note {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 500;
 }
 
 .deck-mark {

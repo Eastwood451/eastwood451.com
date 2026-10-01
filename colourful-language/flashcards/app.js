@@ -710,12 +710,66 @@ function renderHintPattern(pattern, hintText) {
 }
 
 function renderFeedback() {
-  feedback.textContent = feedbackState.text;
+  feedback.replaceChildren();
   feedback.dataset.kind = feedbackState.kind;
+  if (feedbackState.kind !== "error" || !feedbackState.correction) {
+    feedback.textContent = feedbackState.text;
+    return;
+  }
+
+  const { correctWord, selectedWord, submitted, testedMode } = feedbackState.correction;
+  const title = document.createElement("strong");
+  title.className = "feedback-title";
+  title.textContent = "FORKERT";
+
+  const matrix = document.createElement("table");
+  matrix.className = "correction-matrix";
+  const caption = document.createElement("caption");
+  caption.className = "sr-only";
+  caption.textContent = "Det rigtige ordpar øverst og dit svar nedenunder";
+  const header = document.createElement("tr");
+  for (const label of [currentLanguage().label, "Dansk"]) {
+    const cell = document.createElement("th");
+    cell.scope = "col";
+    cell.textContent = label;
+    header.append(cell);
+  }
+  const head = document.createElement("thead");
+  head.append(header);
+  const body = document.createElement("tbody");
+
+  function addRow(word, rowClass, entered = "") {
+    const row = document.createElement("tr");
+    row.className = rowClass;
+    row.setAttribute("aria-label", rowClass === "is-correct" ? "Rigtigt ordpar" : "Dit svar");
+    const target = document.createElement("td");
+    const danish = document.createElement("td");
+    const reading = word ? visibleReading(word) : "";
+    target.textContent = word ? capitalize(reading || word.target) : (testedMode === "recall" ? entered : "—");
+    target.lang = word && reading ? "und-Latn" : currentLanguage().code;
+    target.dir = word && reading ? "ltr" : (currentLanguage().direction || "ltr");
+    danish.textContent = word ? word.danish : (testedMode === "recognition" ? entered : "—");
+    danish.lang = "da";
+    row.append(target, danish);
+    body.append(row);
+  }
+
+  addRow(correctWord, "is-correct");
+  if (selectedWord && selectedWord.word_id !== correctWord.word_id) {
+    addRow(selectedWord, "is-selected");
+  } else if (submitted) {
+    addRow(null, "is-selected", submitted);
+  }
+  matrix.append(caption, head, body);
+
+  const note = document.createElement("p");
+  note.className = "feedback-note";
+  note.textContent = "Ordet kommer snart igen.";
+  feedback.append(title, matrix, note);
 }
 
-function setFeedback(text, kind) {
-  feedbackState = { text, kind };
+function setFeedback(text, kind, correction = null) {
+  feedbackState = { text, kind, correction };
   renderFeedback();
 }
 
@@ -745,15 +799,12 @@ function submitAnswer(answer, isTyped = false) {
       ? normalizeAnswer(answer, "da") === normalizeAnswer(word.danish, "da")
       : isAcceptedAnswer(word, answer)
     : word.word_id === answer);
-  const selectedReading = selectedWord
-    ? capitalize(visibleReading(selectedWord) || selectedWord.target)
-    : "";
-  const selectedExplanation = selectedWord && selectedReading
-    ? ' "' + selectedWord.danish + '" hedder "' + selectedReading + '".'
-    : "";
-  const incorrectFeedback = 'FORKERT! ' + displayReading + ' betyder "' +
-    testedWord.danish.toLocaleLowerCase("da-DK") + '".' + selectedExplanation +
-    " " + displayReading + " kommer snart igen.";
+  const correction = correct ? null : {
+    correctWord: testedWord,
+    selectedWord,
+    submitted: isTyped ? String(answer).trim() : "",
+    testedMode
+  };
   progress.answered += 1;
   answerLocked = true;
 
@@ -772,7 +823,7 @@ function submitAnswer(answer, isTyped = false) {
       review.weakness[testedMode] = Math.min(5, review.weakness[testedMode] + 1);
       review.dueQuestion = progress.answered + Math.max(2, 6 - 2 * review.failures);
       review.dueAt = Date.now() + DAY_MS;
-      setFeedback(correct ? shownCorrectFeedback : incorrectFeedback, correct ? "success" : "error");
+      setFeedback(correct ? shownCorrectFeedback : "FORKERT", correct ? "success" : "error", correction);
     }
   } else {
     const streak = getStreak(testedWord.word_id);
@@ -794,7 +845,7 @@ function submitAnswer(answer, isTyped = false) {
       }
     } else {
       streak[testedMode] = 0;
-      setFeedback(correct ? shownCorrectFeedback : incorrectFeedback, correct ? "success" : "error");
+      setFeedback(correct ? shownCorrectFeedback : "FORKERT", correct ? "success" : "error", correction);
     }
   }
 
