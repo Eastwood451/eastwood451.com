@@ -246,7 +246,7 @@ async function changeLanguages(codes) {
   feedback.replaceChildren();
   feedback.dataset.kind = "";
   wordListItems.replaceChildren();
-  resetButton.disabled = !selectedLanguageCodes.length;
+  resetButton.disabled = true;
 
   if (!selectedLanguageCodes.length) {
     learnedCount.innerHTML = '0 <span>/ 0</span>';
@@ -297,6 +297,7 @@ function activateLanguage(code) {
   dataSource.dataset.source = session.source;
   dataSource.textContent = currentLanguage().label + " · " +
     (session.source === "supabase" ? "Ord fra Supabase" : "Lokal ordliste");
+  resetButton.disabled = false;
   resetButton.textContent = "Nulstil " + currentLanguage().label.toLowerCase();
 }
 
@@ -969,6 +970,7 @@ function normalizeAnswer(value, code) {
 }
 
 function resetLanguage() {
+  if (!selectedLanguageCodes.includes(languageCode) || !languageSessions.has(languageCode)) return;
   const language = currentLanguage();
   const confirmed = window.confirm("Nulstille alle kort og streaks for " + language.label + "?");
   if (!confirmed) return;
