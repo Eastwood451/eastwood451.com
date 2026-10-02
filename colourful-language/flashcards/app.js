@@ -781,7 +781,7 @@ function renderQuiz() {
 
   const questionLabel = (reviewing ? "Repetition · " : "") + MODE_NAMES[mode];
   const translationCue = "På " + language.label.toLowerCase() +
-    (mode === "recognition" ? " betyder:" : " hedder:");
+    (mode === "recognition" ? " betyder" : " hedder");
   const reading = visibleReading(question);
   const promptWord = mode === "recognition"
     ? (reading ? '<span class="question-roman" lang="und-Latn" dir="ltr">' + escapeHtml(reading) + "</span>" : "") +
@@ -790,7 +790,8 @@ function renderQuiz() {
     : '<span class="question-danish" lang="da" dir="ltr">' + escapeHtml(question.danish) + "</span>";
 
   const promptLanguage = mode === "recognition" ? language.label : "Dansk";
-  quiz.innerHTML = '<div class="question-card">' +
+  quiz.innerHTML = '<p class="translation-cue">' + escapeHtml(translationCue) + "</p>" +
+    '<div class="question-card">' +
     '<p class="question-label">' + escapeHtml(questionLabel) + "</p>" +
     '<div class="word-pair question-pair">' +
       '<span class="word-language">' + escapeHtml(promptLanguage) + "</span>" +
@@ -803,8 +804,7 @@ function renderQuiz() {
         "</span>" +
       "</div>" +
     "</div>" +
-  "</div>" +
-    '<p class="translation-cue">' + escapeHtml(translationCue) + "</p>";
+  "</div>";
 
   if (answerMethod === "multiple-choice") {
     const otherWords = shuffle(vocabulary.slice(0, progress.introduced)
