@@ -1237,3 +1237,227 @@ h1 span {
 .word-list-target.is-primary:is([lang="ja"], [lang="el"], [lang="ar"], [lang="sr"], [lang="ru"]) { font-size: 1.575rem; }
 .correction-matrix .japanese-scripts { font-size: 1.5em; }
 .japanese-scripts .script-label { font-size: 0.4em; }
+
+.word-tools {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.question-tools {
+  flex: 0 0 auto;
+  flex-direction: column;
+}
+
+.nsm-button {
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 140, 26, 0.5);
+  border-radius: 6px;
+  background: #2a2118;
+  color: var(--orange);
+  font-size: 0.65rem;
+  font-weight: 800;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.nsm-button:hover {
+  background: #3a2c1b;
+  border-color: var(--orange);
+  color: var(--text);
+}
+
+.answer-option > .word-tools {
+  position: absolute;
+  right: 8px;
+  left: 8px;
+  bottom: 7px;
+  justify-content: space-between;
+}
+
+.correction-matrix td .word-tools {
+  display: flex;
+  margin-top: 7px;
+}
+
+.correction-matrix td .word-tools .miraris-link {
+  display: inline-flex;
+  margin-top: 0;
+}
+
+body:has(.nsm-dialog[open]) {
+  overflow: hidden;
+}
+
+.nsm-dialog {
+  width: min(760px, calc(100% - 24px));
+  max-height: calc(100dvh - 32px);
+  padding: 26px;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 140, 26, 0.4);
+  border-radius: 16px;
+  background: #111721;
+  color: var(--text);
+  box-shadow: 0 24px 100px rgba(0, 0, 0, 0.6);
+}
+
+.nsm-dialog::backdrop {
+  background: rgba(4, 7, 12, 0.82);
+  backdrop-filter: blur(5px);
+}
+
+.nsm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.nsm-header h2 {
+  margin-bottom: 8px;
+  font-size: 1.8rem;
+  overflow-wrap: anywhere;
+}
+
+#nsm-subtitle {
+  margin: 0;
+  color: var(--orange);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.nsm-close {
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #203044;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.nsm-scope {
+  margin: 20px 0;
+  font-weight: 750;
+}
+
+.nsm-hint-note {
+  margin: 16px 0 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(255, 140, 26, 0.1);
+  color: var(--orange);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+#nsm-content section {
+  margin: 24px 0;
+}
+
+#nsm-content h3 {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+}
+
+#nsm-content section > p,
+.nsm-draft {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.nsm-explication {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding-left: 23px;
+  line-height: 1.65;
+}
+
+.nsm-molecule {
+  color: var(--orange);
+  font-weight: 700;
+}
+
+.nsm-primes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.nsm-primes li {
+  padding: 10px;
+  border: 1px solid rgba(30, 183, 255, 0.2);
+  border-radius: 8px;
+  background: #0c1823;
+}
+
+.nsm-primes strong {
+  display: block;
+  color: var(--blue);
+  font-size: 0.9rem;
+}
+
+.nsm-primes span {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 0.6rem;
+}
+
+.nsm-molecules {
+  display: grid;
+  gap: 8px;
+}
+
+.nsm-molecules details {
+  padding: 11px 13px;
+  border: 1px solid rgba(255, 140, 26, 0.2);
+  border-radius: 8px;
+  background: #191a1e;
+}
+
+.nsm-molecules summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.nsm-molecules summary span {
+  color: var(--orange);
+}
+
+.nsm-molecules p {
+  margin: 10px 0 0;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.nsm-draft {
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.nsm-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+}
+
+.nsm-sources a {
+  color: var(--blue);
+  font-size: 0.76rem;
+}
+
+@media (max-width: 560px) {
+  .nsm-dialog { padding: 18px; }
+  .nsm-header h2 { font-size: 1.4rem; }
+}

@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#080b12">
     <meta name="description" content="Lær 14 danske ord på græsk, latin, arabisk, japansk, serbisk eller russisk. Tre ord ad gangen.">
     <title>Sprogkort · Eastwood451</title>
-    <link rel="stylesheet" href="./style.css?v=20261002-script-size-2">
+    <link rel="stylesheet" href="./style.css?v=20261002-nsm-1">
   </head>
   <body>
     <main class="shell">
@@ -99,7 +99,19 @@
         </div>
       </footer>
     </main>
-    <script type="module" src="./app.js?v=20261002-japanese-1"></script>
+    <dialog id="nsm-dialog" class="nsm-dialog" aria-labelledby="nsm-title" aria-describedby="nsm-subtitle">
+      <header class="nsm-header">
+        <div>
+          <p class="eyebrow">NATURAL SEMANTIC METALANGUAGE</p>
+          <h2 id="nsm-title">Ordets betydning</h2>
+          <p id="nsm-subtitle"></p>
+        </div>
+        <button id="nsm-close" class="nsm-close" type="button" autofocus>Luk ✕</button>
+      </header>
+      <p id="nsm-hint-note" class="nsm-hint-note" hidden>NSM-hjælpen tæller som et hint i denne øvelse. Et rigtigt svar vises stadig som korrekt, men tæller som en fejl i fremskridtet.</p>
+      <div id="nsm-content"></div>
+    </dialog>
+    <script type="module" src="./app.js?v=20261002-nsm-1"></script>
   </body>
 </html>
 
