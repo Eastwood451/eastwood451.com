@@ -538,7 +538,7 @@ function renderActiveWords() {
     const streak = getStreak(word.word_id);
     return '<li class="word-row">' +
       '<div class="word-row-heading">' +
-        '<span class="word-row-name">' + wordImageMarkup(word, "is-tiny") + flagMarkup("da") + escapeHtml(word.danish) + "</span>" +
+        '<span class="word-row-name">' + flagMarkup("da") + escapeHtml(word.danish) + "</span>" +
         '<span class="word-tools">' + nsmButtonMarkup(word, "da") +
           mirarisLinkMarkup(word.danish, "da") + "</span>" +
       "</div>" +
@@ -569,7 +569,7 @@ function renderWordList() {
         ? '<span class="word-list-reading" lang="und-Latn" dir="ltr">' + flagMarkup(language.code) + escapeHtml(reading) + "</span>"
         : "";
       return '<li class="word-list-item' + (isLearned ? " is-learned" : "") + '">' +
-        wordImageMarkup(word, "is-small") + '<div class="word-list-terms">' +
+        '<div class="word-list-terms">' +
           '<span class="word-list-language">' + escapeHtml(language.label) + "</span>" +
           '<div class="word-list-danish-line">' +
             '<span class="word-list-danish" lang="da">' + flagMarkup("da") + escapeHtml(word.danish) + "</span>" +
@@ -665,7 +665,7 @@ function openNsm(wordId, code, asHint = false) {
     '<a href="' + escapeHtml(source.url) + '" target="_blank" rel="noopener noreferrer">' +
     escapeHtml(source.label) + " ↗</a>").join("");
   nsmContent.innerHTML =
-    wordImageMarkup(word, "is-small") + '<p class="nsm-scope">' + escapeHtml(analysis.summary) + "</p>" +
+    '<p class="nsm-scope">' + escapeHtml(analysis.summary) + "</p>" +
     '<section><h3>Betydning i enkle led</h3><ol class="nsm-explication">' +
       analysis.lines.map((line) => "<li>" + nsmLineMarkup(line) + "</li>").join("") +
     "</ol></section>" +
@@ -824,7 +824,7 @@ function renderQuiz() {
     '<div class="word-pair question-pair">' +
       '<span class="word-language">' + escapeHtml(promptLanguage) + "</span>" +
       '<div class="question-content">' +
-        '<p class="question-word">' + promptWord + "</p>" + wordImageMarkup(question, "is-prompt") +
+        '<p class="question-word">' + promptWord + "</p>" +
         '<span class="word-tools question-tools">' +
           mirarisLinkMarkup(mode === "recognition" ? question.target : question.danish,
             mode === "recognition" ? language.code : "da") +
@@ -1064,7 +1064,7 @@ function renderFeedback() {
         .replace(escapeHtml('"' + word.danish + '"'), flagMarkup("da") + escapeHtml('"' + word.danish + '"'));
       const links = document.createElement("span");
       links.className = "feedback-word-links";
-      links.append(createWordImage(word, "is-small"), createNsmButton(word, language.code),
+      links.append(createNsmButton(word, language.code),
         createMirarisLink(word.target, language.code, "Miraris · " + language.label + " ↗"),
         createMirarisLink(word.danish, "da", "Miraris · Dansk ↗"));
       feedback.append(links);
@@ -1110,7 +1110,6 @@ function renderFeedback() {
     danish.lang = "da";
     target.prepend(createFlag(language.code));
     danish.prepend(createFlag("da"));
-    if (word) danish.append(createWordImage(word, "is-small"));
     if (word) {
       const targetTools = document.createElement("span");
       targetTools.className = "word-tools";
