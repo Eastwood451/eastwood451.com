@@ -1220,3 +1220,12 @@ h1 span {
     gap: 8px;
   }
 }
+
+/* Increase every rem-based font by 50% without changing browser zoom. */
+html { font-size: 150%; }
+.japanese-scripts { display: grid; gap: 0.3em; width: 100%; }
+.japanese-script { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3em 0.65em; }
+.script-label { color: var(--muted); font-size: 0.6em; font-weight: 500; min-width: 5.6em; }
+.question-target .japanese-scripts, .answer-target .japanese-scripts,
+.word-list-target .japanese-scripts { font-size: inherit; }
+.matrix-reading { display: block; margin-bottom: 0.3em; }

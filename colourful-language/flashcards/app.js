@@ -520,7 +520,7 @@ function renderWordList() {
           readingMarkup +
           '<span class="word-list-target' + (reading ? "" : " is-primary") +
             '" lang="' + escapeHtml(language.code) + '" dir="' + escapeHtml(direction) + '">' +
-            escapeHtml(word.target) + "</span>" +
+            (language.code === "ja" ? japaneseMarkup(word) : escapeHtml(word.target)) + "</span>" +
         "</div>" +
         '<div class="word-list-actions">' +
           '<span class="word-list-status">' + (isLearned ? "Lært" : "Ikke lært") + "</span>" +
@@ -571,6 +571,31 @@ function createMirarisLink(term, code, label = "Miraris ↗") {
   return link;
 }
 
+
+const JAPANESE_HIRAGANA = {
+  sword: "けん", knife: "ないふ", fork: "ふぉーく", plate: "さら",
+  paper: "かみ", metal: "きんぞく", salt: "しお", water: "みず",
+  food: "たべもの", bear: "くま", wolf: "おおかみ", dog: "いぬ",
+  horse: "うま", elephant: "ぞう"
+};
+
+function japaneseForms(word) {
+  const hiragana = JAPANESE_HIRAGANA[word.word_id] || "";
+  const katakana = hiragana.replace(/[ぁ-ゖ]/g, (character) =>
+    String.fromCharCode(character.charCodeAt(0) + 0x60));
+  const kanji = /[一-龯]/u.test(word.target) ? word.target : "";
+  return { hiragana, katakana, kanji };
+}
+
+function japaneseMarkup(word) {
+  const forms = japaneseForms(word);
+  return '<span class="japanese-scripts" lang="ja" dir="ltr">' +
+    [["Hiragana", forms.hiragana], ["Katakana", forms.katakana], ["Kanji", forms.kanji || "—"]]
+      .map(([label, value]) => '<span class="japanese-script"><span class="script-label">' +
+        label + '</span><span>' + escapeHtml(value) + '</span></span>').join("") +
+    '</span>';
+}
+
 function visibleReading(word, code = languageCode) {
   // Latin already uses the Roman alphabet; its reading field contains syllable breaks.
   return code === "la" ? "" : String(word.reading || "").trim();
@@ -605,7 +630,7 @@ function renderQuiz() {
   const promptWord = mode === "recognition"
     ? (reading ? '<span class="question-roman" lang="und-Latn" dir="ltr">' + escapeHtml(reading) + "</span>" : "") +
       '<span class="question-target' + (reading ? "" : " is-primary") + '" lang="' + escapeHtml(language.code) + '" dir="' + escapeHtml(targetDirection) + '">' +
-      escapeHtml(question.target) + "</span>"
+      (language.code === "ja" ? japaneseMarkup(question) : escapeHtml(question.target)) + "</span>"
     : '<span class="question-danish" lang="da" dir="ltr">' + escapeHtml(question.danish) + "</span>";
 
   const promptLanguage = mode === "recognition" ? language.label : "Dansk";
@@ -653,7 +678,8 @@ function renderQuiz() {
         }
         const target = document.createElement("span");
         target.className = "answer-target" + (wordReading ? "" : " is-primary");
-        target.textContent = word.target;
+        if (language.code === "ja") target.innerHTML = japaneseMarkup(word);
+        else target.textContent = word.target;
         target.lang = language.code;
         target.dir = targetDirection;
         button.append(target);
@@ -881,7 +907,10 @@ function renderFeedback() {
     const danish = document.createElement("td");
     const reading = word ? visibleReading(word, language.code) : "";
     target.textContent = word ? capitalize(reading || word.target) : (testedMode === "recall" ? entered : "—");
-    target.lang = word && reading ? "und-Latn" : language.code;
+    if (word && language.code === "ja") {
+      target.innerHTML = (reading ? '<span class="matrix-reading">' + escapeHtml(reading) + "</span>" : "") + japaneseMarkup(word);
+    }
+    target.lang = word && reading && language.code !== "ja" ? "und-Latn" : language.code;
     target.dir = word && reading ? "ltr" : (language.direction || "ltr");
     danish.textContent = word ? word.danish : (testedMode === "recognition" ? entered : "—");
     danish.lang = "da";
@@ -1011,7 +1040,8 @@ function submitAnswer(answer, isTyped = false) {
 function isAcceptedAnswer(word, answer) {
   const submitted = normalizeAnswer(answer, languageCode);
   if (!submitted) return false;
-  const accepted = [word.target, word.reading, ...(word.accepted_answers || [])]
+  const accepted = [word.target, word.reading, ...(word.accepted_answers || []),
+    ...(languageCode === "ja" ? Object.values(japaneseForms(word)) : [])]
     .filter(Boolean)
     .map((value) => normalizeAnswer(value, languageCode));
   return accepted.includes(submitted);
