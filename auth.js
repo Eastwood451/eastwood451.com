@@ -324,6 +324,7 @@
           link.rel = 'noopener noreferrer';
           const icon = document.createElement('div');
           icon.className = 'auth-link-icon';
+          icon.setAttribute('aria-hidden', 'true');
           icon.style.background = '#23566b';
           icon.textContent = Array.from(item.name)[0]?.toUpperCase() || '↗';
           const label = document.createElement('span');
