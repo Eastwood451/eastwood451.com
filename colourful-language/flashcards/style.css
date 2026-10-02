@@ -1221,11 +1221,19 @@ h1 span {
   }
 }
 
-/* Increase every rem-based font by 50% without changing browser zoom. */
-html { font-size: 150%; }
 .japanese-scripts { display: grid; gap: 0.3em; width: 100%; }
 .japanese-script { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3em 0.65em; }
 .script-label { color: var(--muted); font-size: 0.6em; font-weight: 500; min-width: 5.6em; }
 .question-target .japanese-scripts, .answer-target .japanese-scripts,
 .word-list-target .japanese-scripts { font-size: inherit; }
 .matrix-reading { display: block; margin-bottom: 0.3em; }
+
+/* Enlarge only words in Japanese, Greek, Arabic and Cyrillic scripts. */
+.question-target:is([lang="ja"], [lang="el"], [lang="ar"], [lang="sr"], [lang="ru"]) { font-size: 1.44rem; }
+.question-target.is-primary:is([lang="ja"], [lang="el"], [lang="ar"], [lang="sr"], [lang="ru"]) { font-size: clamp(2.25rem, 8.25vw, 5.7rem); }
+.answer-target:is([lang="ja"], [lang="el"], [lang="ar"], [lang="sr"], [lang="ru"]) { font-size: 1.17rem; }
+.answer-target.is-primary:is([lang="ja"], [lang="el"], [lang="ar"], [lang="sr"], [lang="ru"]) { font-size: 1.68rem; }
+.word-list-target:is([lang="ja"], [lang="el"], [lang="ar"], [lang="sr"], [lang="ru"]) { font-size: 1.275rem; }
+.word-list-target.is-primary:is([lang="ja"], [lang="el"], [lang="ar"], [lang="sr"], [lang="ru"]) { font-size: 1.575rem; }
+.correction-matrix .japanese-scripts { font-size: 1.5em; }
+.japanese-scripts .script-label { font-size: 0.4em; }
