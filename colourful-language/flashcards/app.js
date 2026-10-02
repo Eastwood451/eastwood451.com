@@ -1,4 +1,5 @@
 import { getSupabaseClient } from "/supabase-client.js";
+import { NSM_ENTRIES, NSM_PRIMES, NSM_MOLECULES, NSM_SOURCES } from "./nsm.js?v=20261002-1";
 import { DANISH_WORDS, LANGUAGES, fallbackRows } from "./vocabulary.js?v=20260930-1";
 
 const TOTAL_WORDS = DANISH_WORDS.length;
@@ -32,6 +33,11 @@ const multipleChoiceButton = document.querySelector("#multiple-choice-button");
 const typingButton = document.querySelector("#typing-button");
 const modeStep = document.querySelector("#mode-step");
 const resetButton = document.querySelector("#reset-progress");
+const nsmDialog = document.querySelector("#nsm-dialog");
+const nsmTitle = document.querySelector("#nsm-title");
+const nsmSubtitle = document.querySelector("#nsm-subtitle");
+const nsmContent = document.querySelector("#nsm-content");
+const nsmHintNote = document.querySelector("#nsm-hint-note");
 
 let selectedLanguageCodes = readLanguageSelection();
 let languageCode = selectedLanguageCodes[0] || LANGUAGES[0].code;
@@ -73,6 +79,20 @@ wordListToggle.addEventListener("click", () => {
   wordListToggle.setAttribute("aria-expanded", String(open));
   wordListToggle.textContent = open ? "Skjul ordlisten" : "Vis alle ord";
   if (open) renderWordList();
+});
+
+document.addEventListener("click", (event) => {
+  const button = event.target.closest(".nsm-button");
+  if (!button) return;
+  openNsm(button.dataset.nsmWord, button.dataset.nsmCode, button.dataset.nsmHint === "true");
+});
+document.querySelector("#nsm-close").addEventListener("click", () => nsmDialog.close());
+nsmDialog.addEventListener("click", (event) => {
+  if (event.target === nsmDialog) {
+    const bounds = nsmDialog.getBoundingClientRect();
+    if (event.clientX < bounds.left || event.clientX > bounds.right ||
+        event.clientY < bounds.top || event.clientY > bounds.bottom) nsmDialog.close();
+  }
 });
 
 function freshProgress() {
@@ -482,7 +502,8 @@ function renderActiveWords() {
     return '<li class="word-row">' +
       '<div class="word-row-heading">' +
         '<span class="word-row-name">' + escapeHtml(word.danish) + "</span>" +
-        mirarisLinkMarkup(word.danish, "da") +
+        '<span class="word-tools">' + nsmButtonMarkup(word, "da") +
+          mirarisLinkMarkup(word.danish, "da") + "</span>" +
       "</div>" +
       '<span class="word-metrics">' +
         metric("Genkend", streak.recognition) +
@@ -515,7 +536,8 @@ function renderWordList() {
           '<span class="word-list-language">' + escapeHtml(language.label) + "</span>" +
           '<div class="word-list-danish-line">' +
             '<span class="word-list-danish" lang="da">' + escapeHtml(word.danish) + "</span>" +
-            mirarisLinkMarkup(word.danish, "da") +
+            '<span class="word-tools">' + nsmButtonMarkup(word, "da") +
+              mirarisLinkMarkup(word.danish, "da") + "</span>" +
           "</div>" +
           readingMarkup +
           '<span class="word-list-target' + (reading ? "" : " is-primary") +
@@ -524,7 +546,8 @@ function renderWordList() {
         "</div>" +
         '<div class="word-list-actions">' +
           '<span class="word-list-status">' + (isLearned ? "Lært" : "Ikke lært") + "</span>" +
-          mirarisLinkMarkup(word.target, language.code) +
+          '<span class="word-tools">' + nsmButtonMarkup(word, language.code) +
+            mirarisLinkMarkup(word.target, language.code) + "</span>" +
         "</div>" +
       "</li>";
     }).join("");
@@ -541,6 +564,81 @@ function metric(label, value) {
 function renderAnswerMethodToggle() {
   multipleChoiceButton.setAttribute("aria-pressed", String(answerMethod === "multiple-choice"));
   typingButton.setAttribute("aria-pressed", String(answerMethod === "typing"));
+}
+
+function nsmButtonMarkup(word, code, asHint = false) {
+  return '<button class="nsm-button" type="button" data-nsm-word="' +
+    escapeHtml(word.word_id) + '" data-nsm-code="' + escapeHtml(code) +
+    '" data-nsm-hint="' + asHint + '" aria-haspopup="dialog" aria-controls="nsm-dialog" aria-label="' +
+    escapeHtml("Se semantiske primitiver og molekyler for " + (code === "da" ? word.danish : word.target)) +
+    '">NSM</button>';
+}
+
+function createNsmButton(word, code, asHint = false) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "nsm-button";
+  button.dataset.nsmWord = word.word_id;
+  button.dataset.nsmCode = code;
+  button.dataset.nsmHint = String(asHint);
+  button.setAttribute("aria-haspopup", "dialog");
+  button.setAttribute("aria-controls", "nsm-dialog");
+  button.setAttribute("aria-label", "Se semantiske primitiver og molekyler for " +
+    (code === "da" ? word.danish : word.target));
+  button.textContent = "NSM";
+  return button;
+}
+
+function nsmLineMarkup(line) {
+  return escapeHtml(line).replace(/\{([a-z]+)\}/g, (_, key) => {
+    const molecule = NSM_MOLECULES[key];
+    return molecule ? '<span class="nsm-molecule">' + escapeHtml(molecule[0]) + " [m]</span>" : key;
+  });
+}
+
+function openNsm(wordId, code, asHint = false) {
+  const sourceCode = code === "da" ? languageCode : code;
+  const language = LANGUAGES.find((item) => item.code === sourceCode);
+  if (!language) return;
+  const words = languageSessions.get(sourceCode)?.words || fallbackRows(sourceCode);
+  const word = words.find((item) => item.word_id === wordId);
+  const analysis = NSM_ENTRIES[wordId];
+  if (!word || !analysis) return;
+
+  const givesHint = !answerLocked && question &&
+    (asHint || question.word_id === wordId);
+  if (givesHint) hintUsedForQuestion = true;
+  nsmHintNote.hidden = !givesHint;
+  const displayWord = code === "da" ? word.danish : visibleReading(word, sourceCode) || word.target;
+  nsmTitle.textContent = "NSM · " + displayWord;
+  nsmSubtitle.textContent = code === "da" ? "Dansk · " + word.danish :
+    language.label + " · " + word.target + " · " + word.danish;
+
+  const primes = analysis.primes.map((key) => {
+    const [danish, english] = NSM_PRIMES[key];
+    return '<li><strong>' + escapeHtml(danish) + "</strong><span>" + escapeHtml(english) + "</span></li>";
+  }).join("");
+  const molecules = analysis.molecules.map((key) => {
+    const [label, description] = NSM_MOLECULES[key];
+    return '<details><summary>' + escapeHtml(label) + ' <span>[m]</span></summary><p>' +
+      escapeHtml(description) + "</p></details>";
+  }).join("");
+  const sources = NSM_SOURCES.map((source) =>
+    '<a href="' + escapeHtml(source.url) + '" target="_blank" rel="noopener noreferrer">' +
+    escapeHtml(source.label) + " ↗</a>").join("");
+  nsmContent.innerHTML =
+    '<p class="nsm-scope">' + escapeHtml(analysis.summary) + "</p>" +
+    '<section><h3>Betydning i enkle led</h3><ol class="nsm-explication">' +
+      analysis.lines.map((line) => "<li>" + nsmLineMarkup(line) + "</li>").join("") +
+    "</ol></section>" +
+    '<section><h3>Semantiske primitiver</h3><p>Grundbetydninger fra NSM-inventaret. Her vises danske læsegloser og de engelske betegnelser.</p>' +
+      '<ul class="nsm-primes">' + primes + "</ul></section>" +
+    '<section><h3>Semantiske molekyler [m]</h3><p>Komplekse støttebegreber i forklaringen. Åbn et begreb for en kort dansk læsehjælp.</p>' +
+      '<div class="nsm-molecules">' + molecules + "</div></section>" +
+    '<p class="nsm-draft">NSM-inspireret læringsudkast med almindeligt dansk. Forklaringen og molekylernes læsehjælp er egne formuleringer og er ikke en publiceret eller fagligt valideret NSM-analyse. Udgangspunktet er ordlistens danske betydning; nuancer kan variere mellem sprogene.</p>' +
+    '<nav class="nsm-sources" aria-label="Kilder til NSM-metoden">' + sources + "</nav>";
+  if (!nsmDialog.open) nsmDialog.showModal();
+  nsmDialog.scrollTop = 0;
 }
 
 function mirarisUrl(term, code) {
@@ -641,8 +739,11 @@ function renderQuiz() {
       '<span class="word-language">' + escapeHtml(promptLanguage) + "</span>" +
       '<div class="question-content">' +
         '<p class="question-word">' + promptWord + "</p>" +
-        mirarisLinkMarkup(mode === "recognition" ? question.target : question.danish,
-          mode === "recognition" ? language.code : "da") +
+        '<span class="word-tools question-tools">' +
+          mirarisLinkMarkup(mode === "recognition" ? question.target : question.danish,
+            mode === "recognition" ? language.code : "da") +
+          nsmButtonMarkup(question, mode === "recognition" ? language.code : "da", true) +
+        "</span>" +
       "</div>" +
     "</div>" +
   "</div>";
@@ -686,10 +787,12 @@ function renderQuiz() {
       }
       const option = document.createElement("div");
       option.className = "answer-option";
-      option.append(button, createMirarisLink(
-        mode === "recognition" ? word.danish : word.target,
-        mode === "recognition" ? "da" : language.code
-      ));
+      const tools = document.createElement("span");
+      tools.className = "word-tools";
+      tools.append(createNsmButton(word, mode === "recognition" ? "da" : language.code, true),
+        createMirarisLink(mode === "recognition" ? word.danish : word.target,
+          mode === "recognition" ? "da" : language.code));
+      option.append(button, tools);
       answerGrid.append(option);
     });
     const answerPair = document.createElement("div");
@@ -871,7 +974,8 @@ function renderFeedback() {
       const { word, language } = feedbackState.lookup;
       const links = document.createElement("span");
       links.className = "feedback-word-links";
-      links.append(createMirarisLink(word.target, language.code, "Miraris · " + language.label + " ↗"),
+      links.append(createNsmButton(word, language.code),
+        createMirarisLink(word.target, language.code, "Miraris · " + language.label + " ↗"),
         createMirarisLink(word.danish, "da", "Miraris · Dansk ↗"));
       feedback.append(links);
     }
@@ -915,8 +1019,14 @@ function renderFeedback() {
     danish.textContent = word ? word.danish : (testedMode === "recognition" ? entered : "—");
     danish.lang = "da";
     if (word) {
-      target.append(createMirarisLink(word.target, language.code));
-      danish.append(createMirarisLink(word.danish, "da"));
+      const targetTools = document.createElement("span");
+      targetTools.className = "word-tools";
+      targetTools.append(createNsmButton(word, language.code), createMirarisLink(word.target, language.code));
+      const danishTools = document.createElement("span");
+      danishTools.className = "word-tools";
+      danishTools.append(createNsmButton(word, "da"), createMirarisLink(word.danish, "da"));
+      target.append(targetTools);
+      danish.append(danishTools);
     } else if (entered) {
       (testedMode === "recall" ? target : danish).append(
         createMirarisLink(entered, testedMode === "recall" ? language.code : "da")
