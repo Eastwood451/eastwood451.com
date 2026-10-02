@@ -13,6 +13,8 @@
     <link rel="apple-touch-icon" href="/icons/eastwood451-192.png" />
     <script src="/pwa.js?v=20260928-install" defer></script>
     <script src="/auth.js"></script>
+    <link rel="stylesheet" href="/shortcuts.css" />
+    <script type="module" src="/shortcuts.js"></script>
     <link rel="stylesheet" href="/app-order.css?v=1" />
     <script type="module" src="/app-order.js?v=1"></script>
     <style>
@@ -247,6 +249,7 @@
       <section class="intro" aria-labelledby="page-title">
         <h1 id="page-title">Eastwood451</h1>
         <button id="install-app" type="button" hidden>Installer som app</button>
+        <button id="add-shortcut" type="button">＋ Genvej på forsiden</button>
         <p id="install-status" role="status" aria-live="polite"></p>
       </section>
 
@@ -337,6 +340,19 @@
       <p>Få Eastwood451 som en app på din hjemmeskærm.</p>
       <div id="install-instructions"></div>
       <form method="dialog"><button autofocus>Luk</button></form>
+    </dialog>
+    <dialog id="shortcut-dialog" aria-labelledby="shortcut-title">
+      <form id="shortcut-form">
+        <h2 id="shortcut-title">Genvej på forsiden</h2>
+        <p>Tilføj en genvej under loginfeltet. Genvejene er fælles på alle enheder.</p>
+        <label for="shortcut-name">Navn</label>
+        <input id="shortcut-name" maxlength="60" required autocomplete="off" />
+        <label for="shortcut-url">Webadresse</label>
+        <input id="shortcut-url" type="url" maxlength="2048" placeholder="https://…" required />
+        <p id="shortcut-status" role="status" aria-live="polite"></p>
+        <div class="shortcut-actions"><button type="button" id="shortcut-close">Luk</button><button type="submit">Tilføj genvej</button></div>
+      </form>
+      <ul id="shortcut-list" aria-label="Tilføjede genveje"></ul>
     </dialog>
   </body>
 </html>

@@ -1,0 +1,41 @@
+#add-shortcut {
+  margin: 16px 6px 0;
+  min-height: 44px;
+  padding: 12px 20px;
+  border: 1px solid #1eb7ff;
+  border-radius: 8px;
+  background: #101a25;
+  color: #f5f8fc;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+#shortcut-dialog {
+  width: min(480px, calc(100% - 32px));
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  border: 1px solid #475363;
+  border-radius: 12px;
+  padding: 24px;
+  background: #0b111b;
+  color: #f5f8fc;
+}
+#shortcut-dialog::backdrop { background: rgb(0 0 0 / 70%); }
+#shortcut-dialog h2 { margin-top: 0; }
+#shortcut-dialog label { display: block; margin: 16px 0 8px; font-weight: 700; }
+#shortcut-dialog input {
+  width: 100%; min-height: 44px; padding: 10px;
+  border: 1px solid #637186; border-radius: 6px;
+  background: #18212e; color: #fff; font: inherit;
+}
+#shortcut-dialog button {
+  min-height: 44px; padding: 8px 16px; border: 1px solid #1eb7ff;
+  border-radius: 6px; background: #18212e; color: #fff; font: inherit; cursor: pointer;
+}
+#shortcut-dialog button[type=submit] { background: #1eb7ff; color: #041019; font-weight: 800; }
+#shortcut-dialog button:disabled { opacity: .5; cursor: wait; }
+.shortcut-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; }
+#shortcut-status { margin-top: 14px; min-height: 1.5em; }
+#shortcut-list { padding: 0; list-style: none; }
+#shortcut-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 12px; }
+#shortcut-list span { overflow-wrap: anywhere; }

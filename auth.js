@@ -36,7 +36,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: safe center;
       gap: 28px;
       padding: 24px;
       color: #f5f8fc;
@@ -306,6 +306,28 @@
 
     document.body.appendChild(gate);
     input.focus();
+    fetch('/api/shortcuts', { cache: 'no-store' })
+      .then(response => { if (!response.ok) throw new Error('Genveje'); return response.json(); })
+      .then(data => {
+        for (const item of data.shortcuts || []) {
+          const url = new URL(item.url);
+          if (!['https:', 'http:'].includes(url.protocol)) continue;
+          const link = document.createElement('a');
+          link.className = 'auth-link-item';
+          link.href = url.href;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          const icon = document.createElement('div');
+          icon.className = 'auth-link-icon';
+          icon.style.background = '#23566b';
+          icon.textContent = Array.from(item.name)[0]?.toUpperCase() || '↗';
+          const label = document.createElement('span');
+          label.className = 'auth-link-label';
+          label.textContent = item.name;
+          link.append(icon, label);
+          gate.querySelector('.auth-quicklinks').append(link);
+        }
+      }).catch(() => {});
   }
 
   if (document.body) {
