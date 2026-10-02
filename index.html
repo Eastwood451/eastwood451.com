@@ -247,11 +247,15 @@
   <body>
     <main>
       <section class="intro" aria-labelledby="page-title">
+        <button id="logout" type="button">Log ud</button>
         <h1 id="page-title">Eastwood451</h1>
         <button id="install-app" type="button" hidden>Installer som app</button>
         <button id="add-shortcut" type="button">＋ Genvej på forsiden</button>
         <p id="install-status" role="status" aria-live="polite"></p>
       </section>
+
+      <nav id="homepage-shortcuts" aria-label="Dine genveje" hidden></nav>
+      <p id="homepage-shortcut-status" role="status" aria-live="polite"></p>
 
       <section class="organizer" aria-label="Organisér apps" hidden>
         <div class="organizer-heading"><span>DINE APPS</span><button id="organize-toggle" type="button" aria-pressed="false">Organisér</button></div>
@@ -344,7 +348,7 @@
     <dialog id="shortcut-dialog" aria-labelledby="shortcut-title">
       <form id="shortcut-form">
         <h2 id="shortcut-title">Genvej på forsiden</h2>
-        <p>Tilføj en genvej under loginfeltet. Genvejene er fælles på alle enheder.</p>
+        <p>Tilføj en genvej på forsiden og under loginfeltet. Genvejene er fælles på alle enheder.</p>
         <label for="shortcut-name">Navn</label>
         <input id="shortcut-name" maxlength="60" required autocomplete="off" />
         <label for="shortcut-url">Webadresse</label>

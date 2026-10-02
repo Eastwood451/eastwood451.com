@@ -4,6 +4,8 @@ const status = document.querySelector('#shortcut-status');
 const list = document.querySelector('#shortcut-list');
 const nameInput = document.querySelector('#shortcut-name');
 const urlInput = document.querySelector('#shortcut-url');
+const homepage = document.querySelector('#homepage-shortcuts');
+const homepageStatus = document.querySelector('#homepage-shortcut-status');
 let state;
 let busy = false;
 function controls(disabled) {
@@ -13,7 +15,18 @@ function controls(disabled) {
 }
 function render() {
   list.replaceChildren();
+  homepage.replaceChildren();
+  homepage.hidden = state.shortcuts.length === 0;
+  homepageStatus.textContent = '';
   for (const item of state.shortcuts) {
+    const link = document.createElement('a');
+    const url = new URL(item.url);
+    if (!['https:', 'http:'].includes(url.protocol)) continue;
+    link.href = url.href;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = item.name;
+    homepage.append(link);
     const row = document.createElement('li');
     const label = document.createElement('span');
     label.textContent = item.name;
@@ -37,7 +50,7 @@ async function load() {
     state = await response.json();
     render();
     status.textContent = '';
-  } catch (error) { status.textContent = error.message; }
+  } catch (error) { status.textContent = error.message; homepageStatus.textContent = error.message; }
   finally { controls(false); }
 }
 async function save(shortcuts) {
@@ -54,7 +67,7 @@ async function save(shortcuts) {
     if (!response.ok) throw new Error(data.error || 'Genvejen kunne ikke gemmes.');
     state = data;
     render();
-    status.textContent = 'Gemt. Genvejene vises på login-siden.';
+    status.textContent = 'Gemt. Genvejene vises på forsiden og login-siden.';
     return true;
   } catch (error) { status.textContent = error.message; return false; }
   finally { controls(false); }
@@ -73,3 +86,9 @@ form.addEventListener('submit', async event => {
     nameInput.focus();
   }
 });
+
+document.querySelector('#logout').addEventListener('click', () => {
+  sessionStorage.removeItem('eastwood451-auth');
+  window.location.reload();
+});
+load();

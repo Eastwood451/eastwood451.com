@@ -1,4 +1,4 @@
-#add-shortcut {
+#add-shortcut, #logout {
   margin: 16px 6px 0;
   min-height: 44px;
   padding: 12px 20px;
@@ -39,3 +39,13 @@
 #shortcut-list { padding: 0; list-style: none; }
 #shortcut-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 12px; }
 #shortcut-list span { overflow-wrap: anywhere; }
+
+.intro { position: relative; }
+#logout { position: absolute; left: 0; top: 0; margin: 0; }
+#homepage-shortcuts { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+#homepage-shortcuts[hidden] { display: none; }
+#homepage-shortcuts a { padding: 12px 20px; border: 1px solid #475363; border-radius: 8px; color: #f5f8fc; background: #101a25; text-decoration: none; overflow-wrap: anywhere; }
+#homepage-shortcuts a:hover { border-color: #1eb7ff; }
+#homepage-shortcut-status { margin-bottom: 16px; }
+#homepage-shortcut-status:empty { display: none; }
+@media (max-width: 700px) { #logout { position: static; display: block; margin: 0 0 20px; } }
