@@ -268,11 +268,11 @@ export function fallbackRows(languageCode) {
 export const PRONOUN_IDS = ["i","you","he","she","my","your","his","her","their"];
 export function wordNote(wordId, code) {
   if (!PRONOUN_IDS.includes(wordId)) return "";
-  if (code === "la" && ["his", "her"].includes(wordId)) return "Eius kan betyde både hans og hendes. Begge danske svar godkendes.";
+  if (code === "la" && ["his", "her"].includes(wordId)) return "Samme form bruges for en mandlig og en kvindelig ejer; begge betydninger godkendes.";
   if (code === "ar" && ["my", "your", "his", "her", "their"].includes(wordId)) return "Ejefaldsendelse: sættes direkte efter et navneord.";
-  if (code === "ar" && wordId === "you") return "Anta bruges til en mand, anti til en kvinde.";
+  if (code === "ar" && wordId === "you") return "Formen afhænger af, om du taler til en mand eller en kvinde.";
   if (["la", "sr", "ru"].includes(code) && ["my", "your"].includes(wordId)) return "Her vises hankønsformen. Hunkøns- og intetkønsformer godkendes også.";
-  if (code === "ja" && wordId === "you") return "Anata betyder du; i samtaler bruges ofte personens navn i stedet.";
+  if (code === "ja" && wordId === "you") return "I samtaler bruges ofte personens navn i stedet for dette stedord.";
   if (code === "el" && ["my", "your", "his", "her", "their"].includes(wordId)) return "Kort ejefaldsform: bruges efter det navneord, den hører til.";
   return "";
 }
