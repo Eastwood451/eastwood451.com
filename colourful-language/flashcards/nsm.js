@@ -6,6 +6,8 @@ export const NSM_SOURCES = [
 ];
 
 export const NSM_PRIMES = {
+  i: ["jeg", "I"], you: ["du", "YOU"], say: ["sige", "SAY"],
+  have: ["have", "HAVE"], this: ["denne", "THIS"],
   thing: ["noget / ting", "SOMETHING~THING"], someone: ["nogen", "SOMEONE"],
   people: ["mennesker", "PEOPLE"], body: ["krop", "BODY"], kind: ["slags", "KINDS"],
   part: ["dele", "(HAVE) PARTS"], one: ["én", "ONE"], two: ["to", "TWO"],
@@ -23,6 +25,8 @@ export const NSM_PRIMES = {
 
 // Molecule notes are brief Danish reading aids, not recursive formal analyses.
 export const NSM_MOLECULES = {
+  man: ["mand", "Et voksent menneske af hankøn."],
+  woman: ["kvinde", "Et voksent menneske af hunkøn."],
   make: ["lave", "Nogen gør noget, så en ting kommer til at være der eller får en anden form."],
   hands: ["hænder", "Dele af kroppen, som mennesker kan bevæge og bruge til at røre ved eller holde ting."],
   mouth: ["mund", "En del af kroppen. Noget kan komme ind i kroppen gennem denne del."],
@@ -171,3 +175,15 @@ export const NSM_ENTRIES = {
 };
 
 
+
+Object.assign(NSM_ENTRIES, {
+"i": entry("Jeg: den person, der taler.",["i","someone","say"],[],["Når nogen siger jeg, taler denne person om sig selv."]),
+"you": entry("Du: den person, man taler til.",["you","someone","say"],[],["Når jeg siger du, taler jeg til denne person."]),
+"he": entry("Han: en person omtalt som han.",["someone","say"],["man"],["Jeg taler om en bestemt person; denne person kan være en {man}.","Jeg taler om personen, ikke til personen."]),
+"she": entry("Hun: en person omtalt som hun.",["someone","say"],["woman"],["Jeg taler om en bestemt person; denne person kan være en {woman}.","Jeg taler om personen, ikke til personen."]),
+"my": entry("Min: noget, der hører til mig.",["i","thing","have"],[],["Jeg taler om noget, jeg har.","Det hører til mig; fx min gaffel."]),
+"your": entry("Din: noget, der hører til dig.",["you","thing","have"],[],["Jeg taler om noget, du har.","Det hører til dig; fx din gaffel."]),
+"his": entry("Hans: noget, der hører til en person omtalt som han.",["someone","thing","have"],["man"],["Jeg taler om en bestemt person, fx en {man}.","Denne person har noget; det hører til denne person."]),
+"her": entry("Hendes: noget, der hører til en person omtalt som hun.",["someone","thing","have"],["woman"],["Jeg taler om en bestemt person, fx en {woman}.","Denne person har noget; det hører til denne person."]),
+"their": entry("Deres: noget, der hører til flere personer.",["people","thing","have"],[],["Jeg taler om nogle mennesker.","Disse mennesker har noget; det hører til dem."])
+});
