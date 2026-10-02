@@ -1,7 +1,7 @@
 import { getSupabaseClient } from "/supabase-client.js";
 import { HIRAGANA_MEMOS } from "./hiragana-memos.js?v=20261002-1";
-import { NSM_ENTRIES, NSM_PRIMES, NSM_MOLECULES, NSM_SOURCES } from "./nsm.js?v=20261002-1";
-import { DANISH_WORDS, LANGUAGES, fallbackRows } from "./vocabulary.js?v=20260930-1";
+import { NSM_ENTRIES, NSM_PRIMES, NSM_MOLECULES, NSM_SOURCES } from "./nsm.js?v=20261002-pronouns-1";
+import { DANISH_WORDS, LANGUAGES, fallbackRows, PRONOUN_IDS, wordNote } from "./vocabulary.js?v=20261002-pronouns-1";
 
 const TOTAL_WORDS = DANISH_WORDS.length;
 const VOCABULARY_TIMEOUT_MS = 10000;
@@ -661,7 +661,11 @@ function openNsm(wordId, code, asHint = false) {
 function mirarisUrl(term, code) {
   const query = code === "da" ? term.toLocaleLowerCase("da-DK") : term;
   return "https://miraris.app/search?q=" + encodeURIComponent(query) +
-    "&lang=" + encodeURIComponent(code) + "&pos=noun";
+    "&lang=" + encodeURIComponent(code) + "&pos=" + (
+      (code === "da"
+        ? DANISH_WORDS.some(([id, word]) => PRONOUN_IDS.includes(id) && word.toLocaleLowerCase("da-DK") === query)
+        : fallbackRows(code).some((word) => PRONOUN_IDS.includes(word.word_id) && word.target === term))
+      ? "pronoun" : "noun");
 }
 
 function mirarisDescription(term, code) {
@@ -691,7 +695,9 @@ const JAPANESE_HIRAGANA = {
   sword: "けん", knife: "ないふ", fork: "ふぉーく", plate: "さら",
   paper: "かみ", metal: "きんぞく", salt: "しお", water: "みず",
   food: "たべもの", bear: "くま", wolf: "おおかみ", dog: "いぬ",
-  horse: "うま", elephant: "ぞう"
+  horse: "うま", elephant: "ぞう",
+  i: "わたし", you: "あなた", he: "かれ", she: "かのじょ",
+  my: "わたしの", your: "あなたの", his: "かれの", her: "かのじょの", their: "かれらの"
 };
 
 function japaneseForms(word) {
@@ -790,6 +796,7 @@ function renderQuiz() {
     : '<span class="question-danish" lang="da" dir="ltr">' + escapeHtml(question.danish) + "</span>";
 
   const promptLanguage = mode === "recognition" ? language.label : "Dansk";
+  const note = wordNote(question.word_id, language.code);
   quiz.innerHTML = '<p class="translation-cue">' + escapeHtml(translationCue) + "</p>" +
     '<div class="question-card">' +
     '<p class="question-label">' + escapeHtml(questionLabel) + "</p>" +
@@ -804,11 +811,12 @@ function renderQuiz() {
         "</span>" +
       "</div>" +
     "</div>" +
+    (note ? '<p class="question-label">' + escapeHtml(note) + "</p>" : "") +
   "</div>";
 
   if (answerMethod === "multiple-choice") {
     const otherWords = shuffle(vocabulary.slice(0, progress.introduced)
-      .filter((word) => word.word_id !== question.word_id)).slice(0, 2);
+      .filter((word) => word.word_id !== question.word_id && !sameTranslation(word, question))).slice(0, 2);
     const answers = shuffle([question, ...otherWords]);
     const answerGrid = document.createElement("div");
     answerGrid.className = "answer-grid";
@@ -1117,6 +1125,10 @@ function capitalize(value) {
   return value ? value.charAt(0).toLocaleUpperCase() + value.slice(1) : "";
 }
 
+function sameTranslation(first, second) {
+  return normalizeAnswer(first.target, languageCode) === normalizeAnswer(second.target, languageCode);
+}
+
 function submitAnswer(answer, isTyped = false) {
   if (answerLocked || !question) return;
 
@@ -1124,9 +1136,10 @@ function submitAnswer(answer, isTyped = false) {
   const testedWord = question;
   const correct = isTyped
     ? testedMode === "recognition"
-      ? normalizeAnswer(answer, "da") === normalizeAnswer(testedWord.danish, "da")
+      ? vocabulary.some((word) => sameTranslation(word, testedWord) &&
+          normalizeAnswer(answer, "da") === normalizeAnswer(word.danish, "da"))
       : isAcceptedAnswer(testedWord, answer)
-    : answer === testedWord.word_id;
+    : vocabulary.some((word) => word.word_id === answer && sameTranslation(word, testedWord));
   const reviewing = progress.learned.includes(testedWord.word_id);
   const countsAsCorrect = correct && !hintUsedForQuestion;
   const displayReading = capitalize(visibleReading(testedWord) || testedWord.target);
