@@ -1495,3 +1495,12 @@ body:has(.nsm-dialog[open]) {
 .kana-note { color: var(--muted); font-size: 0.85rem; line-height: 1.6; }
 .kana-images { display: grid; gap: 16px; }
 .kana-images img { display: block; width: 100%; height: auto; border-radius: 8px; background: white; }
+
+/* Translation prompt between the displayed word and its answers. */
+.translation-cue {
+  margin: 18px 0 12px;
+  color: var(--blue);
+  font-size: 1.05rem;
+  font-weight: 750;
+  line-height: 1.4;
+}

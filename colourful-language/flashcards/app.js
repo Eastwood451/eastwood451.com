@@ -779,9 +779,9 @@ function renderQuiz() {
   const streak = getStreak(question.word_id)[mode];
   modeStep.textContent = reviewing ? "REPETITION" : "0" + (streak + 1) + " / 03";
 
-  const questionLabel = (reviewing ? "Repetition · " : "") + (mode === "recognition"
-    ? "Genkendelse · find det danske svar, der passer til " + language.label.toLowerCase() + "."
-    : "Genkaldelse · find ordet på " + language.label.toLowerCase() + ", der svarer til det danske ord.");
+  const questionLabel = (reviewing ? "Repetition · " : "") + MODE_NAMES[mode];
+  const translationCue = "På " + language.label.toLowerCase() +
+    (mode === "recognition" ? " betyder:" : " hedder:");
   const reading = visibleReading(question);
   const promptWord = mode === "recognition"
     ? (reading ? '<span class="question-roman" lang="und-Latn" dir="ltr">' + escapeHtml(reading) + "</span>" : "") +
@@ -790,7 +790,6 @@ function renderQuiz() {
     : '<span class="question-danish" lang="da" dir="ltr">' + escapeHtml(question.danish) + "</span>";
 
   const promptLanguage = mode === "recognition" ? language.label : "Dansk";
-  const answerLanguage = mode === "recognition" ? "Dansk" : language.label;
   quiz.innerHTML = '<div class="question-card">' +
     '<p class="question-label">' + escapeHtml(questionLabel) + "</p>" +
     '<div class="word-pair question-pair">' +
@@ -804,7 +803,8 @@ function renderQuiz() {
         "</span>" +
       "</div>" +
     "</div>" +
-  "</div>";
+  "</div>" +
+    '<p class="translation-cue">' + escapeHtml(translationCue) + "</p>";
 
   if (answerMethod === "multiple-choice") {
     const otherWords = shuffle(vocabulary.slice(0, progress.introduced)
@@ -862,13 +862,7 @@ function renderQuiz() {
       }
       answerGrid.append(option);
     });
-    const answerPair = document.createElement("div");
-    answerPair.className = "word-pair answer-pair";
-    const answerLanguageLabel = document.createElement("span");
-    answerLanguageLabel.className = "word-language";
-    answerLanguageLabel.textContent = answerLanguage;
-    answerPair.append(answerLanguageLabel, answerGrid);
-    quiz.append(answerPair);
+    quiz.append(answerGrid);
     return;
   }
 
@@ -908,13 +902,7 @@ function renderQuiz() {
     event.preventDefault();
     submitAnswer(input.value, true);
   });
-  const answerPair = document.createElement("div");
-  answerPair.className = "word-pair answer-pair";
-  const answerLanguageLabel = document.createElement("span");
-  answerLanguageLabel.className = "word-language";
-  answerLanguageLabel.textContent = answerLanguage;
-  answerPair.append(answerLanguageLabel, form);
-  quiz.append(createHintPanel(), answerPair);
+  quiz.append(createHintPanel(), form);
   if (!answerLocked) input.focus({ preventScroll: true });
 }
 
