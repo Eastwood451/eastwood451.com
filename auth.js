@@ -306,6 +306,11 @@
 
     document.body.appendChild(gate);
     input.focus();
+    const shortcutStatus = document.createElement('div');
+    shortcutStatus.setAttribute('role', 'status');
+    gate.append(shortcutStatus);
+    function loadShortcuts() {
+    shortcutStatus.textContent = '';
     fetch('/api/shortcuts', { cache: 'no-store' })
       .then(response => { if (!response.ok) throw new Error('Genveje'); return response.json(); })
       .then(data => {
@@ -327,7 +332,16 @@
           link.append(icon, label);
           gate.querySelector('.auth-quicklinks').append(link);
         }
-      }).catch(() => {});
+      }).catch(() => {
+        shortcutStatus.textContent = 'Dine gemte genveje kunne ikke hentes. ';
+        const retry = document.createElement('button');
+        retry.type = 'button';
+        retry.textContent = 'Prøv igen';
+        retry.addEventListener('click', loadShortcuts);
+        shortcutStatus.append(retry);
+      });
+    }
+    loadShortcuts();
   }
 
   if (document.body) {

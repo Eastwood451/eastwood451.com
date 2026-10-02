@@ -20,7 +20,7 @@ test('manifest has a stable identity, root scope and standalone launch', () => {
   assert.match(page, /rel="manifest" href="\/manifest\.webmanifest"/);
   assert.match(page, /src="\/pwa\.js\?[^\"]+" defer/);
   assert.match(page, /id="install-app"[^>]*hidden/);
-  assert.match(page, /src="\/auth\.js"/);
+  assert.match(page, /src="\/auth\.js(?:\?[^"\s]+)?"/);
 });
 
 test('install icons are real PNGs with correct dimensions', async () => {
