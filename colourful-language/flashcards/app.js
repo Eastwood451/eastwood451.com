@@ -1,6 +1,6 @@
 import { getSupabaseClient } from "/supabase-client.js";
 import { HIRAGANA_MEMOS } from "./hiragana-memos.js?v=20261002-1";
-import { NSM_ENTRIES, NSM_PRIMES, NSM_MOLECULES, NSM_SOURCES } from "./nsm.js?v=20261002-pronouns-1";
+import { WORD_HISTORIES, HISTORY_STAGES } from "./etymology.js?v=20261002-history-1";
 import { DANISH_WORDS, LANGUAGES, fallbackRows, PRONOUN_IDS, wordNote } from "./vocabulary.js?v=20261002-pronouns-1";
 
 const TOTAL_WORDS = DANISH_WORDS.length;
@@ -34,11 +34,11 @@ const multipleChoiceButton = document.querySelector("#multiple-choice-button");
 const typingButton = document.querySelector("#typing-button");
 const modeStep = document.querySelector("#mode-step");
 const resetButton = document.querySelector("#reset-progress");
-const nsmDialog = document.querySelector("#nsm-dialog");
-const nsmTitle = document.querySelector("#nsm-title");
-const nsmSubtitle = document.querySelector("#nsm-subtitle");
-const nsmContent = document.querySelector("#nsm-content");
-const nsmHintNote = document.querySelector("#nsm-hint-note");
+const historyDialog = document.querySelector("#history-dialog");
+const historyTitle = document.querySelector("#history-title");
+const historySubtitle = document.querySelector("#history-subtitle");
+const historyContent = document.querySelector("#history-content");
+const historyHintNote = document.querySelector("#history-hint-note");
 const kanaDialog = document.querySelector("#kana-dialog");
 const kanaTitle = document.querySelector("#kana-title");
 const kanaNote = document.querySelector("#kana-note");
@@ -95,9 +95,9 @@ document.addEventListener("click", (event) => {
     openKanaMemo(kana.dataset.kana);
     return;
   }
-  const button = event.target.closest(".nsm-button");
+  const button = event.target.closest(".history-button");
   if (!button) return;
-  openNsm(button.dataset.nsmWord, button.dataset.nsmCode, button.dataset.nsmHint === "true");
+  openHistory(button.dataset.historyWord, button.dataset.historyCode, button.dataset.historyHint === "true");
 });
 document.querySelector("#kana-close").addEventListener("click", () => kanaDialog.close());
 kanaDialog.addEventListener("click", (event) => {
@@ -106,12 +106,12 @@ kanaDialog.addEventListener("click", (event) => {
   if (event.clientX < bounds.left || event.clientX > bounds.right ||
       event.clientY < bounds.top || event.clientY > bounds.bottom) kanaDialog.close();
 });
-document.querySelector("#nsm-close").addEventListener("click", () => nsmDialog.close());
-nsmDialog.addEventListener("click", (event) => {
-  if (event.target === nsmDialog) {
-    const bounds = nsmDialog.getBoundingClientRect();
+document.querySelector("#history-close").addEventListener("click", () => historyDialog.close());
+historyDialog.addEventListener("click", (event) => {
+  if (event.target === historyDialog) {
+    const bounds = historyDialog.getBoundingClientRect();
     if (event.clientX < bounds.left || event.clientX > bounds.right ||
-        event.clientY < bounds.top || event.clientY > bounds.bottom) nsmDialog.close();
+        event.clientY < bounds.top || event.clientY > bounds.bottom) historyDialog.close();
   }
 });
 
@@ -542,7 +542,7 @@ function renderActiveWords() {
     return '<li class="word-row">' +
       '<div class="word-row-heading">' +
         '<span class="word-row-name">' + flagMarkup("da") + escapeHtml(word.danish) + "</span>" +
-        '<span class="word-tools">' + nsmButtonMarkup(word, "da") +
+        '<span class="word-tools">' + historyButtonMarkup(word, "da") +
           mirarisLinkMarkup(word.danish, "da") + "</span>" +
       "</div>" +
       '<span class="word-metrics">' +
@@ -576,7 +576,7 @@ function renderWordList() {
           '<span class="word-list-language">' + escapeHtml(language.label) + "</span>" +
           '<div class="word-list-danish-line">' +
             '<span class="word-list-danish" lang="da">' + flagMarkup("da") + escapeHtml(word.danish) + "</span>" +
-            '<span class="word-tools">' + nsmButtonMarkup(word, "da") +
+            '<span class="word-tools">' + historyButtonMarkup(word, "da") +
               mirarisLinkMarkup(word.danish, "da") + "</span>" +
           "</div>" +
           readingMarkup +
@@ -586,7 +586,7 @@ function renderWordList() {
         "</div>" +
         '<div class="word-list-actions">' +
           '<span class="word-list-status">' + (isLearned ? "Lært" : "Ikke lært") + "</span>" +
-          '<span class="word-tools">' + nsmButtonMarkup(word, language.code) +
+          '<span class="word-tools">' + historyButtonMarkup(word, language.code) +
             mirarisLinkMarkup(word.target, language.code) + "</span>" +
         "</div>" +
       "</li>";
@@ -606,80 +606,91 @@ function renderAnswerMethodToggle() {
   typingButton.setAttribute("aria-pressed", String(answerMethod === "typing"));
 }
 
-function nsmButtonMarkup(word, code, asHint = false) {
-  return '<button class="nsm-button" type="button" data-nsm-word="' +
-    escapeHtml(word.word_id) + '" data-nsm-code="' + escapeHtml(code) +
-    '" data-nsm-hint="' + asHint + '" aria-haspopup="dialog" aria-controls="nsm-dialog" aria-label="' +
-    escapeHtml("Se semantiske primitiver og molekyler for " + (code === "da" ? word.danish : word.target)) +
-    '">NSM</button>';
+function historyButtonMarkup(word, code, asHint = false) {
+  return '<button class="history-button" type="button" data-history-word="' +
+    escapeHtml(word.word_id) + '" data-history-code="' + escapeHtml(code) +
+    '" data-history-hint="' + asHint + '" aria-haspopup="dialog" aria-controls="history-dialog" aria-label="' +
+    escapeHtml("Se ordets lyd- og sproghistorie for " + (code === "da" ? word.danish : word.target)) +
+    '">Ordhistorie</button>';
 }
 
-function createNsmButton(word, code, asHint = false) {
+function createHistoryButton(word, code, asHint = false) {
   const button = document.createElement("button");
   button.type = "button";
-  button.className = "nsm-button";
-  button.dataset.nsmWord = word.word_id;
-  button.dataset.nsmCode = code;
-  button.dataset.nsmHint = String(asHint);
+  button.className = "history-button";
+  button.dataset.historyWord = word.word_id;
+  button.dataset.historyCode = code;
+  button.dataset.historyHint = String(asHint);
   button.setAttribute("aria-haspopup", "dialog");
-  button.setAttribute("aria-controls", "nsm-dialog");
-  button.setAttribute("aria-label", "Se semantiske primitiver og molekyler for " +
+  button.setAttribute("aria-controls", "history-dialog");
+  button.setAttribute("aria-label", "Se ordets lyd- og sproghistorie for " +
     (code === "da" ? word.danish : word.target));
-  button.textContent = "NSM";
+  button.textContent = "Ordhistorie";
   return button;
 }
 
-function nsmLineMarkup(line) {
-  return escapeHtml(line).replace(/\{([a-z]+)\}/g, (_, key) => {
-    const molecule = NSM_MOLECULES[key];
-    return molecule ? '<span class="nsm-molecule">' + escapeHtml(molecule[0]) + " [m]</span>" : key;
-  });
+function historyStepMarkup(step, index, steps) {
+  const [label, period] = HISTORY_STAGES[step.stage];
+  const states = { attested: "Belagt form", reconstructed: "Rekonstrueret form / lyd", hypothesis: "Hypotese" };
+  const uncertain = step.status === "hypothesis" || steps[index - 1]?.status === "hypothesis";
+  const kinds = { arv: "Lydudvikling / arv", lån: "Lån mellem sprog", orddannelse: "Orddannelse", overblik: "Mellemled ikke fastlagt" };
+  const transition = index ? '<div class="history-transition' + (uncertain ? ' uncertain' : '') + '"><span aria-hidden="true">↓</span> ' +
+    escapeHtml(uncertain ? "Mulig forbindelse" : kinds[step.kind]) + '</div>' : '';
+  return '<li class="history-step ' + step.status + '">' + transition +
+    '<div class="history-stage"><span>' + escapeHtml(label) + '</span><span class="history-status">' + states[step.status] + '</span></div>' +
+    '<p class="history-period">' + escapeHtml(period) + '</p>' +
+    '<h4><bdi>' + escapeHtml(step.form) + '</bdi></h4>' +
+    (step.reading ? '<p class="history-reading"><bdi>' + escapeHtml(step.reading) + '</bdi></p>' : '') +
+    '<p class="history-change">' + escapeHtml(step.change) + '</p></li>';
 }
 
-function openNsm(wordId, code, asHint = false) {
+function openHistory(wordId, code, asHint = false) {
   const sourceCode = code === "da" ? languageCode : code;
   const language = LANGUAGES.find((item) => item.code === sourceCode);
   if (!language) return;
   const words = languageSessions.get(sourceCode)?.words || fallbackRows(sourceCode);
   const word = words.find((item) => item.word_id === wordId);
-  const analysis = NSM_ENTRIES[wordId];
-  if (!word || !analysis) return;
-
-  const givesHint = !answerLocked && question &&
-    (asHint || question.word_id === wordId);
+  if (!word) return;
+  const canonical = fallbackRows(sourceCode).find((item) => item.word_id === wordId);
+  const history = WORD_HISTORIES[code + ":" + wordId];
+  const matchesWord = code === "da" || canonical?.target.normalize("NFC").trim().toLowerCase() === word.target.normalize("NFC").trim().toLowerCase();
+  const givesHint = !answerLocked && question && (asHint || question.word_id === wordId);
   if (givesHint) hintUsedForQuestion = true;
-  nsmHintNote.hidden = !givesHint;
-  const displayWord = code === "da" ? word.danish : visibleReading(word, sourceCode) || word.target;
-  nsmTitle.textContent = "NSM · " + displayWord;
-  nsmTitle.prepend(createFlag(code));
-  nsmSubtitle.textContent = code === "da" ? "Dansk · " + word.danish :
-    language.label + " · " + word.target + " · " + word.danish;
+  historyHintNote.hidden = !givesHint;
+  const displayWord = code === "da" ? word.danish : word.target;
+  historyTitle.textContent = "Ordhistorie · " + displayWord;
+  historyTitle.prepend(createFlag(code));
+  historySubtitle.textContent = code === "da" ? "Dansk · " + word.danish :
+    language.label + " · " + word.danish;
 
-  const primes = analysis.primes.map((key) => {
-    const [danish, english] = NSM_PRIMES[key];
-    return '<li><strong>' + escapeHtml(danish) + "</strong><span>" + escapeHtml(english) + "</span></li>";
-  }).join("");
-  const molecules = analysis.molecules.map((key) => {
-    const [label, description] = NSM_MOLECULES[key];
-    return '<details><summary>' + escapeHtml(label) + ' <span>[m]</span></summary><p>' +
-      escapeHtml(description) + "</p></details>";
-  }).join("");
-  const sources = NSM_SOURCES.map((source) =>
-    '<a href="' + escapeHtml(source.url) + '" target="_blank" rel="noopener noreferrer">' +
-    escapeHtml(source.label) + " ↗</a>").join("");
-  nsmContent.innerHTML =
-    '<p class="nsm-scope">' + escapeHtml(analysis.summary) + "</p>" +
-    '<section><h3>Betydning i enkle led</h3><ol class="nsm-explication">' +
-      analysis.lines.map((line) => "<li>" + nsmLineMarkup(line) + "</li>").join("") +
-    "</ol></section>" +
-    '<section><h3>Semantiske primitiver</h3><p>Grundbetydninger fra NSM-inventaret. Her vises danske læsegloser og de engelske betegnelser.</p>' +
-      '<ul class="nsm-primes">' + primes + "</ul></section>" +
-    '<section><h3>Semantiske molekyler [m]</h3><p>Komplekse støttebegreber i forklaringen. Åbn et begreb for en kort dansk læsehjælp.</p>' +
-      '<div class="nsm-molecules">' + molecules + "</div></section>" +
-    '<p class="nsm-draft">NSM-inspireret læringsudkast med almindeligt dansk. Forklaringen og molekylernes læsehjælp er egne formuleringer og er ikke en publiceret eller fagligt valideret NSM-analyse. Udgangspunktet er ordlistens danske betydning; nuancer kan variere mellem sprogene.</p>' +
-    '<nav class="nsm-sources" aria-label="Kilder til NSM-metoden">' + sources + "</nav>";
-  if (!nsmDialog.open) nsmDialog.showModal();
-  nsmDialog.scrollTop = 0;
+  if (!history || !matchesWord) {
+    historyContent.innerHTML = '<section class="history-boundary"><h3>Historien mangler for denne ordform</h3><p>Ordlisten viser en anden form end den, der er undersøgt. En oversættelses ordhistorie kan ikke bruges som denne forms historie.</p></section>';
+  } else {
+    const sources = history.sources.map((source) => '<a href="' + escapeHtml(source.url) + '" target="_blank" rel="noopener noreferrer">' +
+      escapeHtml(source.label) + ' ↗</a>').join('');
+    const pathMarkup = history.steps.map((step, index) =>
+      (index ? '<span class="history-path-arrow" aria-hidden="true">' +
+        (step.status === "hypothesis" || history.steps[index - 1].status === "hypothesis" ? ' ⇢ ' : step.kind === "overblik" ? ' … ' : ' → ') + '</span>' : '') +
+      '<bdi class="' + step.status + '">' + escapeHtml(step.form) + '</bdi>').join('');
+    historyContent.innerHTML =
+      '<p class="history-scope">' + escapeHtml(history.summary) + '</p>' +
+      '<div class="history-path" aria-label="Ordets historiske former">' + pathMarkup + '</div>' +
+      '<section class="history-boundary"><p class="eyebrow">FØR DET ÆLDSTE SPOR</p><h3>Den første lyd: ukendt</h3><p>' +
+        escapeHtml(history.boundary) + '</p></section>' +
+      '<section><h3>Fra det ældste spor til ordlistens form</h3><p class="history-date-note">Perioderne er omtrentlige sprogperioder, ikke datoer for ordets opfindelse. Latin vises som ordlistens historiske sprog.</p>' +
+        '<ol class="history-timeline">' + history.steps.map(historyStepMarkup).join('') + '</ol></section>' +
+      (history.relatives ? '<section class="history-relatives"><h3>Beslægtede ord og andre grene</h3><p>' + escapeHtml(history.relatives) + '</p></section>' : '') +
+      '<details class="history-notation"><summary>Sådan læser du lydene og beviserne</summary>' +
+        '<p><strong>*</strong> markerer en rekonstrueret form: udledt ved sammenligning, ikke en bevaret lydoptagelse. Belagt form betyder, at ordformen findes i kilder; en historisk udtale kan stadig være rekonstrueret.</p>' +
+        '<p><strong>Hypotese / ⇢</strong> betyder, at forbindelsen er omstridt. En almindelig pil opsummerer de beskrevne ændringer; den er ikke en påstand om, at alle mellemformer er kendt.</p>' +
+        '<p><strong>/…/ og […]</strong> er lydskrift. Andre latinske læsninger er translitterationer. En streg over en vokal, som ā eller ō, viser længde. ʔ er en glottal lukning; ð er en stemt th-lyd; ɸ er en friktionslyd mellem læberne; ɲ er nj.</p>' +
+        '<p><strong>ḱ, kʷ, r̥, h₁ og h₂</strong> er rekonstruktionsnotation: palatal k, læberundet k, stavelsesbærende r og hypotetiske laryngaler. De sidste har ikke en sikkert kendt præcis udtale. Ingen af tegnene er dokumentation for stenaldergrynt.</p>' +
+        '<p>Arv, lån og orddannelse er forskellige processer. Søsterord er parallelle grene; de er ikke automatisk mellemled. Kilderne nedenfor gælder den viste ordform.</p></details>' +
+      '<section><h3>Kilder til denne ordhistorie</h3><nav class="history-sources" aria-label="Ordspecifikke kilder">' + sources + '</nav>' +
+        '<p class="history-date-note">Danske forklaringer sammenfatter ordbogsopslagene. Kilder gennemgået 2. oktober 2026; uafklarede led er angivet i historien.</p></section>';
+  }
+  if (!historyDialog.open) historyDialog.showModal();
+  historyDialog.scrollTop = 0;
 }
 
 function mirarisUrl(term, code) {
@@ -832,7 +843,7 @@ function renderQuiz() {
         '<span class="word-tools question-tools">' +
           mirarisLinkMarkup(mode === "recognition" ? question.target : question.danish,
             mode === "recognition" ? language.code : "da") +
-          nsmButtonMarkup(question, mode === "recognition" ? language.code : "da", true) +
+          historyButtonMarkup(question, mode === "recognition" ? language.code : "da", true) +
         "</span>" +
       "</div>" +
     "</div>" +
@@ -891,7 +902,7 @@ function renderQuiz() {
       option.className = "answer-option";
       const tools = document.createElement("span");
       tools.className = "word-tools";
-      tools.append(createNsmButton(word, mode === "recognition" ? "da" : language.code, true),
+      tools.append(createHistoryButton(word, mode === "recognition" ? "da" : language.code, true),
         createMirarisLink(mode === "recognition" ? word.danish : word.target,
           mode === "recognition" ? "da" : language.code));
       option.append(button, tools);
@@ -1075,7 +1086,7 @@ function renderFeedback() {
         .replace(escapeHtml('"' + word.danish + '"'), flagMarkup("da") + escapeHtml('"' + word.danish + '"'));
       const links = document.createElement("span");
       links.className = "feedback-word-links";
-      links.append(createNsmButton(word, language.code),
+      links.append(createHistoryButton(word, language.code),
         createMirarisLink(word.target, language.code, "Miraris · " + language.label + " ↗"),
         createMirarisLink(word.danish, "da", "Miraris · Dansk ↗"));
       feedback.append(links);
@@ -1124,10 +1135,10 @@ function renderFeedback() {
     if (word) {
       const targetTools = document.createElement("span");
       targetTools.className = "word-tools";
-      targetTools.append(createNsmButton(word, language.code), createMirarisLink(word.target, language.code));
+      targetTools.append(createHistoryButton(word, language.code), createMirarisLink(word.target, language.code));
       const danishTools = document.createElement("span");
       danishTools.className = "word-tools";
-      danishTools.append(createNsmButton(word, "da"), createMirarisLink(word.danish, "da"));
+      danishTools.append(createHistoryButton(word, "da"), createMirarisLink(word.danish, "da"));
       target.append(targetTools);
       danish.append(danishTools);
     } else if (entered) {
