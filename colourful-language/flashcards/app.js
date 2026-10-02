@@ -56,6 +56,9 @@ let revealedHintIndices = new Set();
 let hintUsedForQuestion = false;
 let hintMode = "first";
 let answerLocked = false;
+let revealedAnswerId = null;
+let displayedAnswers = [];
+let displayedAnswerQuestion = null;
 let answerTimer = null;
 let loadSequence = 0;
 let feedbackState = { text: "", kind: "" };
@@ -823,8 +826,9 @@ function renderQuiz() {
     '<p class="question-label">' + escapeHtml(questionLabel) + "</p>" +
     '<div class="word-pair question-pair">' +
       '<span class="word-language">' + escapeHtml(promptLanguage) + "</span>" +
-      '<div class="question-content">' +
+      '<div class="question-content' + (mode === "recall" ? " has-illustration" : "") + '">' +
         '<p class="question-word">' + promptWord + "</p>" +
+        (mode === "recall" ? wordImageMarkup(question, "is-prompt") : "") +
         '<span class="word-tools question-tools">' +
           mirarisLinkMarkup(mode === "recognition" ? question.target : question.danish,
             mode === "recognition" ? language.code : "da") +
@@ -836,9 +840,13 @@ function renderQuiz() {
   "</div>";
 
   if (answerMethod === "multiple-choice") {
-    const otherWords = shuffle(vocabulary.slice(0, progress.introduced)
-      .filter((word) => word.word_id !== question.word_id && !sameTranslation(word, question))).slice(0, 2);
-    const answers = shuffle([question, ...otherWords]);
+    if (!answerLocked || displayedAnswerQuestion !== question) {
+      const otherWords = shuffle(vocabulary.slice(0, progress.introduced)
+        .filter((word) => word.word_id !== question.word_id && !sameTranslation(word, question))).slice(0, 2);
+      displayedAnswers = shuffle([question, ...otherWords]);
+      displayedAnswerQuestion = question;
+    }
+    const answers = displayedAnswers;
     const answerGrid = document.createElement("div");
     answerGrid.className = "answer-grid";
     answerGrid.setAttribute("role", "group");
@@ -875,7 +883,10 @@ function renderQuiz() {
         if (language.code === "ja") japaneseTarget = target;
         else button.append(target);
       }
-      button.append(createWordImage(word, "is-choice"));
+      const illustration = createWordImage(word, "is-choice");
+      illustration.loading = "eager";
+      illustration.hidden = mode === "recall" && !(answerLocked && revealedAnswerId === word.word_id);
+      button.append(illustration);
       const option = document.createElement("div");
       option.className = "answer-option";
       const tools = document.createElement("span");
@@ -1190,6 +1201,7 @@ function submitAnswer(answer, isTyped = false) {
   };
   progress.answered += 1;
   answerLocked = true;
+  revealedAnswerId = !isTyped && testedMode === "recall" ? answer : null;
 
   if (reviewing) {
     const review = getReview(testedWord.word_id);
@@ -1241,7 +1253,7 @@ function submitAnswer(answer, isTyped = false) {
     question = null;
     revealedHintIndices = new Set();
     render();
-  }, 850);
+  }, !isTyped && testedMode === "recall" ? 1000 : 850);
 }
 
 function isAcceptedAnswer(word, answer) {
