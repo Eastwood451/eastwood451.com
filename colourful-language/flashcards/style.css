@@ -1461,3 +1461,37 @@ body:has(.nsm-dialog[open]) {
   .nsm-dialog { padding: 18px; }
   .nsm-header h2 { font-size: 1.4rem; }
 }
+
+.kana-memo-button {
+  display: inline;
+  margin: 0;
+  padding: 0 0.04em;
+  border: 0;
+  border-bottom: 1px dotted currentColor;
+  border-radius: 3px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  cursor: pointer;
+}
+.kana-memo-button:hover { background: rgba(255, 140, 26, 0.18); }
+.kana-memo-button:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+.answer-option.has-kana {
+  align-content: start;
+  padding-bottom: 44px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #161e29;
+}
+.answer-option.has-kana .answer-choice {
+  min-height: 44px;
+  padding-bottom: 8px;
+  border: 0;
+  background: transparent;
+}
+.answer-option.has-kana > .answer-target { padding: 0 13px 10px; cursor: pointer; }
+.kana-dialog { width: min(1000px, calc(100% - 24px)); }
+.kana-note { color: var(--muted); font-size: 0.85rem; line-height: 1.6; }
+.kana-images { display: grid; gap: 16px; }
+.kana-images img { display: block; width: 100%; height: auto; border-radius: 8px; background: white; }

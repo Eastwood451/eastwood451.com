@@ -1,4 +1,5 @@
 import { getSupabaseClient } from "/supabase-client.js";
+import { HIRAGANA_MEMOS } from "./hiragana-memos.js?v=20261002-1";
 import { NSM_ENTRIES, NSM_PRIMES, NSM_MOLECULES, NSM_SOURCES } from "./nsm.js?v=20261002-1";
 import { DANISH_WORDS, LANGUAGES, fallbackRows } from "./vocabulary.js?v=20260930-1";
 
@@ -38,6 +39,10 @@ const nsmTitle = document.querySelector("#nsm-title");
 const nsmSubtitle = document.querySelector("#nsm-subtitle");
 const nsmContent = document.querySelector("#nsm-content");
 const nsmHintNote = document.querySelector("#nsm-hint-note");
+const kanaDialog = document.querySelector("#kana-dialog");
+const kanaTitle = document.querySelector("#kana-title");
+const kanaNote = document.querySelector("#kana-note");
+const kanaImages = document.querySelector("#kana-images");
 
 let selectedLanguageCodes = readLanguageSelection();
 let languageCode = selectedLanguageCodes[0] || LANGUAGES[0].code;
@@ -82,9 +87,21 @@ wordListToggle.addEventListener("click", () => {
 });
 
 document.addEventListener("click", (event) => {
+  const kana = event.target.closest(".kana-memo-button");
+  if (kana) {
+    openKanaMemo(kana.dataset.kana);
+    return;
+  }
   const button = event.target.closest(".nsm-button");
   if (!button) return;
   openNsm(button.dataset.nsmWord, button.dataset.nsmCode, button.dataset.nsmHint === "true");
+});
+document.querySelector("#kana-close").addEventListener("click", () => kanaDialog.close());
+kanaDialog.addEventListener("click", (event) => {
+  if (event.target !== kanaDialog) return;
+  const bounds = kanaDialog.getBoundingClientRect();
+  if (event.clientX < bounds.left || event.clientX > bounds.right ||
+      event.clientY < bounds.top || event.clientY > bounds.bottom) kanaDialog.close();
 });
 document.querySelector("#nsm-close").addEventListener("click", () => nsmDialog.close());
 nsmDialog.addEventListener("click", (event) => {
@@ -685,12 +702,53 @@ function japaneseForms(word) {
   return { hiragana, katakana, kanji };
 }
 
-function japaneseMarkup(word) {
+function memoForKana(character) {
+  const small = { "ぁ": "あ", "ぃ": "い", "ぅ": "う", "ぇ": "え", "ぉ": "お", "っ": "つ", "ゃ": "や", "ゅ": "ゆ", "ょ": "よ", "ゎ": "わ" };
+  const base = small[character] || character.normalize("NFD")[0];
+  const memo = HIRAGANA_MEMOS[base];
+  return memo ? { ...memo, base } : null;
+}
+
+function hiraganaMarkup(value) {
+  return [...value].map((character) => {
+    if (!memoForKana(character)) return escapeHtml(character);
+    return '<button class="kana-memo-button" type="button" data-kana="' +
+      escapeHtml(character) + '" aria-haspopup="dialog" aria-controls="kana-dialog" aria-label="' +
+      escapeHtml("Se memo-billede for " + character) + '">' + escapeHtml(character) + '</button>';
+  }).join("");
+}
+
+function openKanaMemo(character) {
+  const memo = memoForKana(character);
+  if (!memo) return;
+  const givesHint = !answerLocked && question && languageCode === "ja";
+  if (givesHint) hintUsedForQuestion = true;
+  kanaTitle.textContent = character + " · " + memo.reading;
+  const variant = character !== memo.base
+    ? "Anki-filen har et billede for grundtegnet " + memo.base + ". Her vises det som memo til " + character + ". "
+    : "";
+  kanaNote.textContent = variant + (givesHint
+    ? "Memo-hjælpen tæller som et hint. Et rigtigt svar vises stadig som korrekt, men ordet kommer igen."
+    : "Memo-billeder fra Japanese - Hiragana memo.");
+  kanaImages.replaceChildren();
+  for (const [index, filename] of memo.images.entries()) {
+    const image = document.createElement("img");
+    image.src = "./hiragana-memos/" + encodeURIComponent(filename);
+    image.alt = "Anki-memo for " + memo.base + " (" + memo.reading + "), billede " + (index + 1);
+    image.decoding = "async";
+    kanaImages.append(image);
+  }
+  kanaDialog.showModal();
+  kanaDialog.scrollTop = 0;
+}
+
+function japaneseMarkup(word, interactive = true) {
   const forms = japaneseForms(word);
   return '<span class="japanese-scripts" lang="ja" dir="ltr">' +
     [["Hiragana", forms.hiragana], ["Katakana", forms.katakana], ["Kanji", forms.kanji || "—"]]
       .map(([label, value]) => '<span class="japanese-script"><span class="script-label">' +
-        label + '</span><span>' + escapeHtml(value) + '</span></span>').join("") +
+        label + '</span><span class="script-value">' +
+        (label === "Hiragana" && interactive ? hiraganaMarkup(value) : escapeHtml(value)) + '</span></span>').join("") +
     '</span>';
 }
 
@@ -760,6 +818,7 @@ function renderQuiz() {
       : "Vælg ordet på " + language.label.toLowerCase());
 
     answers.forEach((word) => {
+      let japaneseTarget = null;
       const button = document.createElement("button");
       button.className = "answer-choice";
       button.type = "button";
@@ -783,7 +842,8 @@ function renderQuiz() {
         else target.textContent = word.target;
         target.lang = language.code;
         target.dir = targetDirection;
-        button.append(target);
+        if (language.code === "ja") japaneseTarget = target;
+        else button.append(target);
       }
       const option = document.createElement("div");
       option.className = "answer-option";
@@ -793,6 +853,13 @@ function renderQuiz() {
         createMirarisLink(mode === "recognition" ? word.danish : word.target,
           mode === "recognition" ? "da" : language.code));
       option.append(button, tools);
+      if (japaneseTarget) {
+        option.classList.add("has-kana");
+        option.append(japaneseTarget);
+        japaneseTarget.addEventListener("click", (event) => {
+          if (!event.target.closest(".kana-memo-button")) submitAnswer(word.word_id);
+        });
+      }
       answerGrid.append(option);
     });
     const answerPair = document.createElement("div");
@@ -1206,4 +1273,3 @@ function escapeHtml(value) {
 }
 
 changeLanguages(selectedLanguageCodes);
-
