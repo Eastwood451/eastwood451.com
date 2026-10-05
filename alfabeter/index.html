@@ -7,24 +7,27 @@
 <style>
 :root{--bg:#0b0d12;--card:#151923;--text:#f5f7fb;--muted:#9ca9ba;--line:#303746;--accent:#8c6cff}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% 10%,#2c1740 0,transparent 30%),var(--bg);color:var(--text);font:16px/1.5 system-ui,sans-serif}
-main{width:min(1000px,calc(100% - 28px));margin:auto;padding:24px 0 60px}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}.back{color:#b9c8dc;text-decoration:none}
+main{width:min(1000px,calc(100% - 28px));margin:auto;padding:24px 0 80px}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}.back{color:#b9c8dc;text-decoration:none}
 h1{font-size:clamp(2rem,7vw,4rem);margin:22px 0 4px}.sub{color:var(--muted);margin:0 0 24px}
 .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:14px 0 22px;border-bottom:1px solid var(--line)}
 button{min-height:46px;padding:0 16px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);font:inherit;font-weight:750;cursor:pointer}
-button.active{background:var(--accent);border-color:var(--accent)}label{display:flex;align-items:center;gap:9px;font-weight:650}input{width:21px;height:21px}
-.story{padding:28px 0}.p{margin:0 0 26px;line-height:2.05}.word{display:inline-flex;flex-direction:column;align-items:center;vertical-align:top;margin:0 .38em .6em 0}.script{font-size:clamp(1.25rem,3vw,1.65rem);font-weight:650;line-height:1.25}.dk{font-size:.72rem;color:var(--muted);line-height:1.1;margin-top:3px}.hide-dk .dk{display:none}.hide-dk .word{margin-bottom:.15em}
-@media(max-width:560px){.controls button{flex:1 1 100%}.story{padding-top:22px}}
+button.active{background:var(--accent);border-color:var(--accent)}
+.danish-toggle{position:fixed;left:18px;bottom:18px;z-index:100;display:flex;align-items:center;gap:9px;min-height:46px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:rgba(21,25,35,.94);box-shadow:0 8px 28px #0008;font-weight:650;backdrop-filter:blur(10px)}
+.danish-toggle input{width:21px;height:21px}
+.story{padding:28px 0}.p{margin:0 0 26px;line-height:2.05}.word{display:inline-flex;flex-direction:column;align-items:center;vertical-align:top;margin:0 .38em .6em 0}.script{font-size:clamp(1.25rem,3vw,1.65rem);font-weight:650;line-height:1.25}.dk{font-size:.72rem;color:var(--muted);line-height:1.1;margin-top:3px;visibility:visible}.hide-dk .dk{visibility:hidden}
+@media(max-width:560px){.controls button{flex:1 1 100%}.story{padding-top:22px}.danish-toggle{left:12px;bottom:12px}}
 </style>
 </head><body><main>
 <div class="top"><a class="back" href="/">← Eastwood451</a><strong id="modeLabel">Hiragana + danske tegn</strong></div>
-<h1>Alfabeter</h1><p class="sub">Den grimme ælling gennem tre skriftsystemer.</p>
+<h1>Alfabeter</h1><p class="sub">Den grimme ælling gennem fire skriftsystemer.</p>
 <section class="controls" aria-label="Skriftvalg">
 <button class="mode active" data-mode="hiragana">あ Hiragana</button>
 <button class="mode" data-mode="futhark">ᚠ Futhark</button>
 <button class="mode" data-mode="greek">α Græsk</button>
-<label><input id="showDk" type="checkbox" checked> Vis dansk nedenunder</label>
+<button class="mode" data-mode="arabic">ا Arabisk</button>
 </section><article id="story" class="story"></article>
 </main>
+<label class="danish-toggle"><input id="showDk" type="checkbox" checked> Vis dansk</label>
 <script>
 const paragraphs=[
 "Der var en gang en lille ælling, som blev født på en gård. Han så anderledes ud end de andre ællinger. Han var større, klodset og grå, og de andre dyr syntes, at han var grim.",
@@ -36,12 +39,13 @@ const paragraphs=[
 const special=new Set(["æ","ø","å"]);
 const greek={a:"α",b:"β",c:"κ",d:"δ",e:"ε",f:"φ",g:"γ",h:"η",i:"ι",j:"j",k:"κ",l:"λ",m:"μ",n:"ν",o:"ο",p:"π",q:"q",r:"ρ",s:"σ",t:"τ",u:"υ",v:"v",w:"w",x:"ξ",y:"y",z:"ζ"};
 const futhark={a:"ᛅ",b:"ᛒ",c:"ᚴ",d:"ᛏ",e:"ᛁ",f:"ᚠ",g:"ᚴ",h:"ᚼ",i:"ᛁ",j:"ᛁ",k:"ᚴ",l:"ᛚ",m:"ᛘ",n:"ᚾ",o:"ᚢ",p:"ᛒ",q:"ᚴ",r:"ᚱ",s:"ᛋ",t:"ᛏ",u:"ᚢ",v:"ᚢ",w:"w",x:"x",y:"y",z:"z"};
+const arabic={a:"ا",b:"ب",c:"ك",d:"د",e:"e",f:"ف",g:"غ",h:"ه",i:"ي",j:"ي",k:"ك",l:"ل",m:"م",n:"ن",o:"o",p:"پ",q:"ق",r:"ر",s:"س",t:"ت",u:"و",v:"ڤ",w:"و",x:"كس",y:"ي",z:"ز"};
 const hp=[["sk","すく"],["st","すと"],["sv","すう"],["bl","ぶる"],["br","ぶる"],["dr","どる"],["gr","ぐる"],["kr","くる"],["kl","くる"],["fr","ふる"],["fl","ふる"],["tr","とる"],["pr","ぷる"],["ja","や"],["ju","ゆ"],["jo","よ"],["sh","し"],["ch","ち"]];
 const hira={a:"あ",b:"ぶ",c:"く",d:"ど",e:"え",f:"ふ",g:"ぐ",h:"は",i:"い",j:"や",k:"く",l:"る",m:"む",n:"ん",o:"お",p:"ぷ",q:"く",r:"る",s:"す",t:"と",u:"う",v:"う",w:"w",x:"x",y:"ゆ",z:"ず"};
 const charMap=(w,map)=>[...w.toLowerCase()].map(c=>special.has(c)?c:(map[c]??c)).join("");
 function hiraWord(w){let s=w.toLowerCase(),o="";for(let i=0;i<s.length;){if(special.has(s[i])){o+=s[i++];continue}let hit=false;for(const [p,k] of hp)if(s.startsWith(p,i)){o+=k;i+=p.length;hit=true;break}if(!hit)o+=hira[s[i]]??s[i++];else continue;if(!hit)i++}return o}
-const conv={hiragana:hiraWord,futhark:w=>charMap(w,futhark),greek:w=>charMap(w,greek)};
-const labels={hiragana:"Hiragana + danske tegn",futhark:"Yngre futhark + danske tegn",greek:"Græske bogstaver + danske tegn"};
+const conv={hiragana:hiraWord,futhark:w=>charMap(w,futhark),greek:w=>charMap(w,greek),arabic:w=>charMap(w,arabic)};
+const labels={hiragana:"Hiragana + danske tegn",futhark:"Yngre futhark + danske tegn",greek:"Græske bogstaver + danske tegn",arabic:"Arabisk + danske tegn"};
 let mode="hiragana";
 function render(){const box=document.querySelector("#story");box.innerHTML="";for(const text of paragraphs){const p=document.createElement("p");p.className="p";for(const token of text.split(/\s+/)){const m=token.match(/^([^A-Za-zÆØÅæøå]*)([A-Za-zÆØÅæøå]+)([^A-Za-zÆØÅæøå]*)$/);const pre=m?.[1]??"",word=m?.[2]??token,post=m?.[3]??"";const span=document.createElement("span");span.className="word";const a=document.createElement("span");a.className="script";a.textContent=pre+conv[mode](word)+post;const b=document.createElement("span");b.className="dk";b.textContent=token;span.append(a,b);p.append(span)}box.append(p)}document.querySelector("#modeLabel").textContent=labels[mode];document.querySelectorAll(".mode").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode))}
 document.querySelectorAll(".mode").forEach(b=>b.addEventListener("click",()=>{mode=b.dataset.mode;render()}));
