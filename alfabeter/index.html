@@ -40,10 +40,10 @@ const special=new Set(["æ","ø","å"]);
 const greek={a:"α",b:"β",c:"κ",d:"δ",e:"ε",f:"φ",g:"γ",h:"η",i:"ι",j:"j",k:"κ",l:"λ",m:"μ",n:"ν",o:"ο",p:"π",q:"q",r:"ρ",s:"σ",t:"τ",u:"υ",v:"v",w:"w",x:"ξ",y:"y",z:"ζ"};
 const futhark={a:"ᛅ",b:"ᛒ",c:"ᚴ",d:"ᛏ",e:"ᛁ",f:"ᚠ",g:"ᚴ",h:"ᚼ",i:"ᛁ",j:"ᛁ",k:"ᚴ",l:"ᛚ",m:"ᛘ",n:"ᚾ",o:"ᚢ",p:"ᛒ",q:"ᚴ",r:"ᚱ",s:"ᛋ",t:"ᛏ",u:"ᚢ",v:"ᚢ",w:"w",x:"x",y:"y",z:"z"};
 const arabic={a:"ا",b:"ب",c:"ك",d:"د",e:"e",f:"ف",g:"غ",h:"ه",i:"ي",j:"ي",k:"ك",l:"ل",m:"م",n:"ن",o:"o",p:"پ",q:"ق",r:"ر",s:"س",t:"ت",u:"و",v:"ڤ",w:"و",x:"كس",y:"ي",z:"ز"};
-const hp=[["sk","すく"],["st","すと"],["sv","すう"],["bl","ぶる"],["br","ぶる"],["dr","どる"],["gr","ぐる"],["kr","くる"],["kl","くる"],["fr","ふる"],["fl","ふる"],["tr","とる"],["pr","ぷる"],["ja","や"],["ju","ゆ"],["jo","よ"],["sh","し"],["ch","ち"]];
-const hira={a:"あ",b:"ぶ",c:"く",d:"ど",e:"え",f:"ふ",g:"ぐ",h:"は",i:"い",j:"や",k:"く",l:"る",m:"む",n:"ん",o:"お",p:"ぷ",q:"く",r:"る",s:"す",t:"と",u:"う",v:"う",w:"w",x:"x",y:"ゆ",z:"ず"};
+const hp=[["sk","すく"],["st","すと"],["sv","すう"],["br","ぶる"],["dr","どる"],["gr","ぐる"],["kr","くる"],["fr","ふる"],["tr","とる"],["pr","ぷる"],["ja","や"],["ju","ゆ"],["jo","よ"],["sh","し"],["ch","ち"]];
+const hira={a:"あ",b:"ぶ",c:"く",d:"ど",e:"え",f:"ふ",g:"ぐ",h:"は",i:"い",j:"や",k:"く",l:"l",m:"む",n:"ん",o:"お",p:"ぷ",q:"く",r:"る",s:"す",t:"と",u:"う",v:"う",w:"w",x:"x",y:"ゆ",z:"ず"};
 const charMap=(w,map)=>[...w.toLowerCase()].map(c=>special.has(c)?c:(map[c]??c)).join("");
-function hiraWord(w){let s=w.toLowerCase(),o="";for(let i=0;i<s.length;){if(special.has(s[i])){o+=s[i++];continue}let hit=false;for(const [p,k] of hp)if(s.startsWith(p,i)){o+=k;i+=p.length;hit=true;break}if(!hit)o+=hira[s[i]]??s[i++];else continue;if(!hit)i++}return o}
+function hiraWord(w){let s=w.toLowerCase(),o="";for(let i=0;i<s.length;){if(special.has(s[i])){o+=s[i++];continue}let hit=false;for(const [p,k] of hp)if(s.startsWith(p,i)){o+=k;i+=p.length;hit=true;break}if(!hit){o+=hira[s[i]]??s[i];i++}}return o}
 const conv={hiragana:hiraWord,futhark:w=>charMap(w,futhark),greek:w=>charMap(w,greek),arabic:w=>charMap(w,arabic)};
 const labels={hiragana:"Hiragana + danske tegn",futhark:"Yngre futhark + danske tegn",greek:"Græske bogstaver + danske tegn",arabic:"Arabisk + danske tegn"};
 let mode="hiragana";
