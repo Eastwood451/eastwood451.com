@@ -4,7 +4,7 @@ import urllib.request,urllib.error,urllib.parse
 base=sys.argv[1] if len(sys.argv)>1 else 'https://wpriingzftsboauvkmsj.supabase.co/functions/v1/smfi-mcp'
 site='https://eastwood451.com';resource=site+'/api/smfi/mcp'
 def call(path,method='GET',data=None,token=None):
-    headers={'Content-Type':'application/json','Origin':site}
+    headers={'Content-Type':'application/json','Origin':site,'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36'}
     if token:headers['Authorization']='Bearer '+token
     req=urllib.request.Request(base+path,data=None if data is None else json.dumps(data).encode(),headers=headers,method=method)
     try:
@@ -24,7 +24,7 @@ try:
     verifier=secrets.token_urlsafe(48);challenge=base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).decode().rstrip('=')
     query=urllib.parse.urlencode({'client_id':client['client_id'],'redirect_uri':redirect,'response_type':'code','code_challenge':challenge,'code_challenge_method':'S256','resource':resource,'scope':'smfi:read smfi:write offline_access','state':'test-state'})
     opener=urllib.request.build_opener(NoRedirect())
-    try:opener.open(base+'/authorize?'+query,timeout=25);raise AssertionError('Expected redirect')
+    try:opener.open(urllib.request.Request(base+'/authorize?'+query,headers={'User-Agent':'Mozilla/5.0'}),timeout=25);raise AssertionError('Expected redirect')
     except urllib.error.HTTPError as e:
         assert e.code==302,e.code
         request=urllib.parse.parse_qs(urllib.parse.urlparse(e.headers['Location']).query)['request'][0]
