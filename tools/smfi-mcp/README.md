@@ -1,73 +1,99 @@
-# SMFI ↔ ChatGPT
+# SMFI ↔ ChatGPT / Grok
 
-The Nested Actor Mapper exposes its existing diagram through an OAuth-protected
-MCP endpoint at `https://eastwood451.com/api/smfi/mcp`. This bridge makes no model
-API calls. Inference stays in the user's ChatGPT conversation.
+Two OAuth-protected Streamable HTTP MCP servers connect the existing editors to
+an assistant's own conversation, with no model API calls:
 
-## Connect
+| Editor | MCP URL | Scopes |
+| --- | --- | --- |
+| Nested Actor Mapper | `https://eastwood451.com/api/smfi/mcp` | `smfi:read smfi:write offline_access` |
+| Belief Map | `https://eastwood451.com/api/smfi/belief/mcp` | `belief:read belief:write offline_access` |
 
-Open an existing diagram in the Nested Actor Mapper and click **Forbind ChatGPT**.
-This creates a private cloud copy and stores its randomly generated owner
-capability in that browser. Open the setup page, add the MCP URL to ChatGPT with
-OAuth authentication, and explicitly approve access to that diagram. Both pages
-must use the same browser and the `eastwood451.com` origin.
+Open the editor in the browser holding the existing diagram and click **Forbind AI**.
+This creates a private cloud copy. The setup page explains ChatGPT and Grok OAuth
+configuration. Consent must happen in the same browser and on `eastwood451.com`.
+For Grok, use Connectors → New Connector → Custom. If a Client ID is required,
+the setup page registers a public client restricted to Grok's web callback. Leave
+the secret empty and choose `none (PKCE only)`. The public ID confers no access
+without owner consent. ChatGPT's existing dynamic registration remains supported.
 
-Once installed, invoke the plugin and ask it to read the model. Supported tools
-read the diagram, update notes and K1–K7 tags, create or move custom holons, and
-add nested actors. Standard holons retain their structural meaning and cannot
-be moved with the custom-holon tool.
+Both assistants can connect to the same workspace and see each other's changes.
+Inference uses each service's normal subscription and usage limits. No model API
+key is required by these bridges. Infrastructure uses the existing hosting/database.
 
-## Data and authentication
+Nested Actor tools read the diagram, update notes/tags, create/move custom holons,
+and add actors. Standard holons keep their structural meaning.
 
-Cloudflare Pages Functions proxy `/api/smfi/*` to the `smfi-mcp` Supabase Edge
-Function. The `.well-known` function publishes the OAuth issuer's discovery
-metadata. The Edge Function authenticates its own diagram capabilities and
-OAuth tokens, so Supabase gateway JWT verification is disabled for this function.
-The built-in `SUPABASE_SERVICE_ROLE_KEY` stays inside the Edge runtime.
+Belief Map tools list/read/select/create saved maps, edit titles/notes, and apply
+atomic batches of node/edge/timeline actions. The active map is displayed by the
+browser. IDs, flat nesting, clusters, node fields and timeline steps are preserved.
+Derived `subNodes` copies are rebuilt locally; viewport, legacy chat and proposition
+tester state stay local. Confidence and weights are model values, not independently
+verified probabilities. New AI-created nodes default to hypothesis / 0.5 confidence.
+The connected library has limits of 50 maps, 1 MB total, 1,000 nodes and 2,000 edges
+per map. Oversized libraries report an error without discarding local data.
 
-The three `smfi_mcp_*` tables have RLS enabled and all browser-role grants
-revoked. No anonymous or ordinary authenticated client can read them. A random
-256-bit capability identifies a browser-owned diagram; only its SHA-256 hash is
-stored. OAuth clients receive separate access and rotating refresh tokens scoped
-to the approved diagram. PKCE is mandatory. Codes and refresh tokens are
-atomically consumed. Redirect URIs are restricted to official ChatGPT callbacks.
-Tokens and raw owner capabilities must never be logged or committed.
+## Authentication and storage
 
-The bridge intentionally does not treat the site's frontend password gate as an
-account identity. Possession of the browser's private diagram capability is the
-owner credential. Clearing this browser's storage removes its owner access.
-Export diagrams before changing browsers; importing a file and clicking
-**Forbind ChatGPT** creates a separate private workspace. Existing cloud diagrams
-can still be accessed by their already-authorized plugin until disconnected or
-the tokens expire. The setup page can revoke all plugin tokens for its workspace.
+Cloudflare Pages proxies `/api/smfi/*` to `smfi-mcp` and `/api/smfi/belief/*` to
+`belief-mcp` Supabase Edge Functions. Path-specific `.well-known` routes publish
+each issuer's OAuth discovery. Both authenticate every data operation themselves,
+so Supabase gateway JWT verification is disabled. Service role credentials stay
+inside the Edge runtime. Both use the existing RLS-protected `smfi_mcp_*` tables;
+browser-role grants are revoked. No new schema is required for Belief Map.
+
+A random 256-bit browser owner capability is stored locally, with only its SHA-256
+hash in the database. This is independent of the site's frontend password gate.
+OAuth access and rotating refresh tokens are bound to the approved workspace AND
+MCP resource; owner credentials, clients, codes and tokens cannot cross editors.
+S256 PKCE is mandatory. Codes/refresh tokens are atomically consumed. Redirects
+accept only exact official ChatGPT callbacks and Grok's HTTPS web callback:
+`https://grok.com/connectors-oauth-exchange-code/`.
+Raw capabilities, tokens and client secrets must never be logged or committed.
+
+Clearing browser storage removes owner access. Export diagrams before changing
+browsers; importing and connecting creates another private workspace. Existing
+OAuth connections remain authorized until disconnected or expired. The setup
+page explicitly revokes **all** AI connections to its workspace.
 
 ## Sync and history
 
-The browser polls every two seconds. Writes require the current revision, checked
-again by an atomic database update. A three-way merge combines independent local
-and remote edits. Overlapping edits pause sync and preserve the local copy for
-review. Arrays, including actor trees, are treated as a unit during conflict
-resolution. Diagram content is rendered as text rather than HTML.
+Polling every two seconds uses atomic compare-and-swap revisions. Three-way merge
+combines independent edits. Belief maps/nodes/edges merge by stable ID; actor trees
+and index-addressed timeline steps merge atomically. Overlapping changes or jointly
+invalid graph references pause sync, preserving the local copy for review/export.
+Text is rendered as text, including names/notes supplied by assistants.
 
-A database trigger retains the previous 30 revisions. The setup page can restore
-a revision. Close the mapper tab before restoring and reopen it afterward.
-Snapshots exclude the legacy provider's chat history and credentials.
+A trigger retains the previous 30 revisions. Restore through setup after closing
+the editor, then reopen. Separate local connection/cache keys keep both editors
+independent. Revision history records browser, ChatGPT or Grok as the source.
 
-## Verification and deployment
+## Verification
 
-- `node --test tests/smfi-mcp.test.mjs`
-- `node tools/smfi-mcp/browser-test.cjs` (set `SMFI_TEST_CHROMIUM` to an installed Chromium executable)
-- `python tools/smfi-mcp/live-test.py https://eastwood451.com/api/smfi`
+- `node --test tests/smfi-mcp.test.mjs tests/belief-mcp.test.mjs`
+- `node tools/smfi-mcp/browser-test.cjs`
+- `node tools/smfi-mcp/belief-browser-test.cjs`
+- `python tools/smfi-mcp/live-test.py https://eastwood451.com/api/smfi grok`
+- `python tools/smfi-mcp/live-test.py https://eastwood451.com/api/smfi/belief grok belief`
 - `npm run build:library`
-- `npx wrangler pages functions build --outdir /tmp/smfi-functions-build`
+- `npm exec --package=wrangler -- wrangler pages functions build --outdir /tmp/smfi-functions-build`
 
-The browser test uses an isolated mocked origin. The live test creates and deletes
-its own test workspace and exercises OAuth, read/create/move, conflict rejection,
-history, refresh and revocation. It never prints credentials. Its browser user agent
-avoids Cloudflare's automated-client integrity rejection.
+Browser tests use an isolated mocked origin and an installed Chromium executable
+(`SMFI_TEST_CHROMIUM`). The Belief test needs downloaded React 18.3.1, ReactDOM
+18.3.1 and Babel standalone UMD files named react.js, react-dom.js and babel.js in
+`SMFI_BELIEF_VENDOR` (default `/tmp/smfi-belief-vendor`). The live tests create and
+delete their own test workspace, never touching user diagrams or printing tokens.
+They test Grok-compatible OAuth at protocol level; user-account installation in
+Grok must still be completed by the user.
 
-Apply the tracked SQL migration once to Supabase. Deploy `index.ts`, `server.js`
-and `model.js` together as the `smfi-mcp` Edge Function. Push source changes to
-GitHub `main`; Cloudflare Pages deploys the frontend and proxy functions. Keep
-`.well-known/oauth-*` in the generated routes, and check the Cloudflare deployment
-check plus the production health and metadata URLs after deployment.
+## Deployment
+
+Apply the original SQL migration once. `smfi-mcp` deploys index.ts, server.js and
+model.js. `belief-mcp` deploys index.ts plus the same server/model and belief-model.js.
+The three shared source files in its folder are deployment bundle copies; synchronize
+from `smfi-mcp` before deploying. Both entrypoints implement their own authentication.
+Publish GitHub main and check Cloudflare's deployment check, production health,
+issuer/resource metadata and live OAuth tests.
+
+Native Grok setup and callback references:
+- https://docs.x.ai/grok/connectors
+- https://docs.x.com/x-ads-api/mcp (Grok web OAuth recipe)

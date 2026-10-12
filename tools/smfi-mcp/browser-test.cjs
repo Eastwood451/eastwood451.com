@@ -28,7 +28,7 @@ const fs=require('node:fs/promises');const path=require('node:path');const asser
  assert.deepEqual(Object.keys(serverView.holons).sort(),Object.keys(browserView.holons).sort());
  for(const [key,h] of Object.entries(serverView.holons))assert.equal(h.notation,browserView.holons[key].notation);
  await page.locator('#smfiChatGPT').click();
- await page.waitForFunction(()=>document.getElementById('smfiChatGPT').textContent==='ChatGPT ✓');
+ await page.waitForFunction(()=>document.getElementById('smfiChatGPT').textContent==='AI ✓');
  // AI change arrives through the same synced state the live endpoint will return.
  remote.state.holonNotes['person_line/operator/main']='AI note: <img src=x onerror="window.INJECTED=true">';remote.revision++;remote.connected=true;
  await page.waitForFunction(()=>window.smfiDiagram.exportState().holonNotes['person_line/operator/main']?.startsWith('AI note:'));
@@ -36,7 +36,7 @@ const fs=require('node:fs/promises');const path=require('node:path');const asser
  assert.ok(await page.locator('[data-hkey="person_line/operator/main"]').textContent().then(t=>t.includes('<img')));
  await page.locator('[data-hkey="person_line/operator/main"]').click();
  await page.locator('#detailTextarea').fill('Browser note');
- await page.waitForFunction(()=>document.getElementById('smfiSyncStatus').textContent==='Synkroniseret med ChatGPT');
+ await page.waitForFunction(()=>document.getElementById('smfiSyncStatus').textContent==='Synkroniseret med AI');
  await new Promise(resolve=>setTimeout(resolve,2300));
  assert.equal(remote.state.holonNotes['person_line/operator/main'],'Browser note');
  const putCount=puts;await new Promise(resolve=>setTimeout(resolve,2400));assert.equal(puts,putCount,'no endless saves due to key order');

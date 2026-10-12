@@ -818,6 +818,55 @@ function App(){
     resetViewportState();
   }, [resetViewportState]);
 
+  // The bridge shares saved maps and graph data, while viewport and chat stay local.
+  const canonicalBridgeMap = state => {
+    const next = normalizeMapState(state);
+    return {id:next.id,mapTitle:next.mapTitle,mapNotes:next.mapNotes,showTimeline:next.showTimeline,
+      slots:next.slots,nodes:next.nodes.map(({subNodes,...node})=>node),edges:next.edges};
+  };
+  const bridgeMaps = new Map(savedCanvases.map(item=>[item.id,canonicalBridgeMap(item)]));
+  bridgeMaps.set(currentCanvasId,canonicalBridgeMap(buildSuiteState()));
+  const bridgeSnapshotRef = useRef(null);
+  bridgeSnapshotRef.current = {kind:'belief-map',activeMapId:currentCanvasId,maps:[...bridgeMaps.values()].sort((a,b)=>a.id.localeCompare(b.id))};
+  const bridgeImportRef = useRef(null);
+  bridgeImportRef.current = state => {
+    const selected = state.maps.find(item=>item.id===state.activeMapId);
+    if(!selected)throw new Error('Det aktive argumentkort mangler.');
+    const hydrate = map => {
+      const next = normalizeMapState(map);
+      const childTree = (node,seen=new Set()) => {
+        if(seen.has(node.id)||seen.size>20)throw new Error('Ugyldig nesting.');
+        const path = new Set([...seen,node.id]);
+        return {...node,subNodes:next.nodes.filter(child=>child.parentId===node.id).map(child=>childTree(child,path))};
+      };
+      return {...next,nodes:next.nodes.map(node=>childTree(node))};
+    };
+    const maps = state.maps.map(hydrate),next = maps.find(item=>item.id===state.activeMapId);
+    bridgeSnapshotRef.current = JSON.parse(JSON.stringify(state));
+    setSavedCanvases(maps);
+    localStorage.setItem(STORAGE_KEY_BELIEF_MAP_LIBRARY,JSON.stringify(maps));
+    setCurrentCanvasId(next.id);setMapTitle(next.mapTitle);setMapNotes(next.mapNotes);
+    setSlots(next.slots);setNodes(next.nodes);setEdges(next.edges);setShowTimeline(next.showTimeline);
+    if(currentCanvasId!==next.id)resetViewportState();
+    else {
+      if(focusId&&!next.nodes.some(n=>n.id===focusId))setFocusId(null);
+      if(selNodeId&&!next.nodes.some(n=>n.id===selNodeId))setSelNodeId(null);
+      if(selEdgeId&&!next.edges.some(e=>e.id===selEdgeId))setSelEdgeId(null);
+      setActiveSlot(index=>Math.min(index,next.slots.length-1));
+    }
+  };
+  useEffect(()=>{
+    // Mount after React has restored the local map library.
+    const timer=setTimeout(()=>{
+      window.smfiBeliefDiagram={
+        exportState:()=>JSON.parse(JSON.stringify(bridgeSnapshotRef.current)),
+        importState:state=>bridgeImportRef.current(state)
+      };
+      window.dispatchEvent(new Event('smfi-belief-ready'));
+    },0);
+    return ()=>{clearTimeout(timer);delete window.smfiBeliefDiagram;};
+  },[]);
+
   const visNodes = useMemo(()=>nodes.filter(n=>n.parentId===focusId),[nodes,focusId]);
   const visEdges = useMemo(()=>edges.filter(e=>e.parentId===focusId),[edges,focusId]);
   const selNode  = useMemo(()=>nodes.find(n=>n.id===selNodeId)??null,[nodes,selNodeId]);
@@ -1341,6 +1390,8 @@ function App(){
 
   useEffect(() => {
     try {
+      const current = JSON.parse(localStorage.getItem(STORAGE_KEY_BELIEF_MAP)||'null');
+      if(current)applySuiteState(current);
       const raw = localStorage.getItem(STORAGE_KEY_BELIEF_MAP_LIBRARY);
       const parsed = raw ? JSON.parse(raw) : [];
       if (Array.isArray(parsed)) {
@@ -1449,6 +1500,7 @@ function App(){
       )}
 
       <div style={{display:"flex",flexDirection:"column",gap:5,minHeight:0}}>
+        <div id="beliefChatGPTMount" style={{display:'flex',alignItems:'center',gap:9,flexWrap:'wrap',padding:'5px 8px',background:'var(--panel-bg)',borderRadius:7}}/>
         {/* Timeline slot tabs */}
         {showTimeline&&<SlotBar slots={slots} activeSlot={activeSlot} setActiveSlot={setActiveSlot}
           editSlotId={editSlotId} setEditSlotId={setEditSlotId}
@@ -4041,6 +4093,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
     document.body.appendChild(script);
   })();
 </script>
+<script type="module" src="../../SMFI_Suite/belief-sync.js?v=1"></script>
 <script src="../../eastwood-home-link.js"></script>
 </body>
 </html>

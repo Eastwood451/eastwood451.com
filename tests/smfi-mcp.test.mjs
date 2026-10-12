@@ -4,18 +4,7 @@ import {validateState,describe,mutate} from '../supabase/functions/smfi-mcp/mode
 import {createHandler,challenge,validRedirect,BASE,RESOURCE,SITE} from '../supabase/functions/smfi-mcp/server.js';
 import {same,mergeStates} from '../SMFI_Suite/sync-merge.js';
 const initial=()=>validateState({version:'4.0',operatorName:'Jacob',actors:[{id:'a1',personId:'person_line',name:'Line',children:[]}],holonNotes:{'person_line/operator/main':'Original note'}});
-function memoryDB(){
- const tables={smfi_mcp_workspaces:[],smfi_mcp_oauth:[],smfi_mcp_history:[]};
- const db=async(table,method='GET',query='',value)=>{
-  const p=new URLSearchParams(query),rows=tables[table];
-  const match=r=>[...p].every(([k,v])=>['select','order','limit'].includes(k)||v.startsWith('eq.')&&String(r[k])===v.slice(3)||v.startsWith('gt.')&&r[k]>v.slice(3));
-  if(method==='POST'){if(rows.some(r=>r.id===value.id&&r.id!==undefined||value.owner_hash&&r.owner_hash===value.owner_hash))throw Object.assign(new Error('duplicate'),{status:409});const row={id:crypto.randomUUID(),revision:1,source:'browser',updated_at:new Date().toISOString(),...structuredClone(value)};rows.push(row);return [structuredClone(row)];}
-  const found=rows.filter(match);
-  if(method==='PATCH')for(const row of found)Object.assign(row,structuredClone(value));
-  if(method==='DELETE')tables[table]=rows.filter(r=>!match(r));
-  return structuredClone(found);
- };return {db,tables};
-}
+import {memoryDB} from './helpers/smfi-db.mjs';
 function harness(){const {db,tables}=memoryDB(),handle=createHandler(db);return {tables,call:async(path,method='GET',data,token,extra={})=>{
  const response=await handle(new Request(BASE+path,{method,headers:{Origin:SITE,'Content-Type':'application/json',...token?{Authorization:'Bearer '+token}:{},...extra},body:data===undefined?undefined:JSON.stringify(data)}));
  return {status:response.status,headers:response.headers,data:await response.json().catch(()=>null)};
