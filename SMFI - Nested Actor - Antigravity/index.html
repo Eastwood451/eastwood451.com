@@ -4279,17 +4279,16 @@
             (customHolons[zone + '/mof'] || []).forEach(ch => { mofH += renderCH(ch, zone + '/mof'); });
 
             // Actor containers
-            const nestJson = JSON.stringify(nesting).replace(/"/g, '&quot;');
+            const nestJson = esc(JSON.stringify(nesting));
             let actorsH = fieldActors.map(a => {
                 const cn = N(nesting, a.name, '_bevidst');
                 const bevidstKey = K(nestingIds, a.personId, '_bevidst');
                 return '<div class="actor-container" data-depth="' + depth + '" data-bevidst-key="' + bevidstKey + '">' +
                     '<div class="actor-container-header">' +
-                    '<button class="actor-profile-btn" onclick="event.stopPropagation();openPersonality(\'' + a.personId.replace(/'/g, "\\'") + '\',\'' + a.name.replace(/'/g, "\\'") + '\')" title="Profil: ' + a.name + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button>' +
-                    '<input type="text" class="actor-name-input" value="' + a.name + '" ' +
-                    'onchange="renameActor(\'' + a.id + '\',this.value)" onclick="event.stopPropagation()" placeholder="Navn">' +
-                    '<span class="actor-notation-badge">' + cn + '</span>' +
-                    '<button class="actor-delete-btn" onclick="event.stopPropagation();deleteActor(\'' + a.id + '\')" title="Slet via personbiblioteket">Slet</button>' +
+                    '<button class="actor-profile-btn" onclick="event.stopPropagation();' + htmlCall('openPersonality', a.personId, a.name) + '" title="Profil: ' + esc(a.name) + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button>' +
+                    '<input type="text" class="actor-name-input" value="' + esc(a.name) + '" onchange="' + esc('renameActor(' + JSON.stringify(a.id) + ',this.value)') + '" onclick="event.stopPropagation()" placeholder="Navn">' +
+                    '<span class="actor-notation-badge">' + esc(cn) + '</span>' +
+                    '<button class="actor-delete-btn" onclick="event.stopPropagation();' + htmlCall('deleteActor', a.id) + '" title="Slet via personbiblioteket">Slet</button>' +
                     '</div>' +
                     '<div class="holon-row" style="margin-bottom:0.5rem;">' + renderH(nesting, nestingIds, a.name, a.personId, '_bevidst') + '</div>' +
                     renderField([...nesting, a.name], a.children, depth + 1, [...nestingIds, a.personId]) +
@@ -4314,7 +4313,7 @@
                 '<div class="mof-section">' +
                 '<div class="section-label' + lbl + '">' +
                 '<svg class="icon-xs" style="color:#f59e0b;fill:#f59e0b;" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>' +
-                ' MOF ' + (isTop ? '(Mentalt Operativt Felt)' : '(' + owner + ')') +
+                ' MOF ' + (isTop ? '(Mentalt Operativt Felt)' : '(' + esc(owner) + ')') +
                 '</div>' +
                 '<div class="holon-row drop-zone" data-zone="' + zone + '/mof">' + mofH + '</div>' +
                 '<div class="actor-list">' + actorsH + '</div>' +
@@ -4323,7 +4322,7 @@
                 '<div class="lof-section">' +
                 '<div class="section-label' + lbl + '">' +
                 '<svg class="icon-xs" style="color:#6366f1;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>' +
-                ' LOF ' + (isTop ? '(Latent Operativt Felt)' : '(' + owner + ')') +
+                ' LOF ' + (isTop ? '(Latent Operativt Felt)' : '(' + esc(owner) + ')') +
                 '</div>' +
                 '<div class="holon-row drop-zone" data-zone="' + zone + '/lof">' + lofH + '</div>' +
                 '</div>' +
@@ -4331,47 +4330,30 @@
         }
 
         function renderH(nesting, nestingIds, target, targetId, suffix) {
-            const key = K(nestingIds, targetId, suffix);
-            const not = N(nesting, target, suffix);
-            const dsc = D(nesting, target, suffix);
-            const notes = holonNotes[key] || '';
-            const lines = notes.split('\n').filter(l => l.trim());
-            const act = activeKey === key;
-            const sz = holonSizes[key] ? 'width:' + holonSizes[key].w + 'px;height:' + holonSizes[key].h + 'px;flex:0 1 auto;max-width:100%;' : '';
-            const safeKey = key.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-            const safeNot = not.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-            const safeDsc = dsc.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            const key = K(nestingIds, targetId, suffix), notation = N(nesting, target, suffix);
+            const description = D(nesting, target, suffix), size = holonSizes[key];
+            const style = size ? 'width:' + Number(size.w) + 'px;height:' + Number(size.h) + 'px;flex:0 1 auto;max-width:100%;' : '';
+            return '<div class="holon-box' + (activeKey === key ? ' active' : '') + '" data-hkey="' + esc(key) + '" style="' + style + '" onclick="' + htmlCall('openH', key, notation, description) + '">' +
+                '<div class="h-not">' + esc(notation) + '</div><div class="h-desc">' + esc(description) + '</div>' + renderTagBadges(key) + renderNotePreview(key) + '</div>';
+        }
 
-            return '<div class="holon-box' + (act ? ' active' : '') + '" data-hkey="' + key + '" style="' + sz + '" ' +
-                'onclick="openH(\'' + safeKey + '\',\'' + safeNot + '\',\'' + safeDsc + '\')">' +
-                '<div class="h-not">' + not + '</div>' +
-                '<div class="h-desc">' + dsc + '</div>' +
-                renderTagBadges(key) +
-                (lines.length > 0 ? '<div class="h-preview"><ul>' + lines.map(l => '<li>' + l.replace(/^[-\u2022]\s*/, '') + '</li>').join('') + '</ul></div>' : '') +
-                '</div>';
+        function renderNotePreview(key) {
+            const lines = (holonNotes[key] || '').split('\n').filter(line => line.trim());
+            return lines.length ? '<div class="h-preview"><ul>' + lines.map(line => '<li>' + esc(line.replace(/^[-•]\s*/, '')) + '</li>').join('') + '</ul></div>' : '';
         }
 
         function renderTagBadges(key) {
-            const tags = holonTags[key];
-            if (!tags || tags.length === 0) return '';
-            return '<div class="holon-tags">' + tags.map(t => '<span class="holon-tag holon-tag-' + t + '">' + t + '</span>').join('') + '</div>';
+            const tags = (holonTags[key] || []).filter(tag => /^K[1-7]$/.test(tag));
+            return tags.length ? '<div class="holon-tags">' + tags.map(tag => '<span class="holon-tag holon-tag-' + tag + '">' + tag + '</span>').join('') + '</div>' : '';
         }
 
         function renderCH(ch, zone) {
-            const act = activeKey === ch.id;
-            const notes = holonNotes[ch.id] || '';
-            const lines = notes.split('\n').filter(l => l.trim());
-            const sz = holonSizes[ch.id] ? 'width:' + holonSizes[ch.id].w + 'px;height:' + holonSizes[ch.id].h + 'px;flex:0 1 auto;max-width:100%;' : '';
-            const sz2 = zone.replace(/'/g, "\\'");
-            return '<div class="holon-box custom-type' + (act ? ' active' : '') + '" data-hkey="' + ch.id + '" style="' + sz + '" ' +
-                'onclick="openH(\'' + ch.id + '\',\'' + ch.title.replace(/'/g, "\\'") + '\',\'Brugerdefineret holon\')">' +
-                '<button class="holon-delete" onclick="event.stopPropagation();delCH(\'' + sz2 + '\',\'' + ch.id + '\')">&times;</button>' +
-                '<input class="actor-name-input" value="' + ch.title + '" style="font-size:10px;width:80px;margin-bottom:2px;border-color:#a5b4fc;" ' +
-                'onchange="renameCH(\'' + sz2 + '\',\'' + ch.id + '\',this.value)" onclick="event.stopPropagation()">' +
-                renderTagBadges(ch.id) +
-                (lines.length > 0 ? '<div class="h-preview"><ul>' + lines.map(l => '<li>' + l.replace(/^[-\u2022]\s*/, '') + '</li>').join('') + '</ul></div>'
-                    : '<div class="h-desc">Klik for noter</div>') +
-                '</div>';
+            const size = holonSizes[ch.id];
+            const style = size ? 'width:' + Number(size.w) + 'px;height:' + Number(size.h) + 'px;flex:0 1 auto;max-width:100%;' : '';
+            return '<div class="holon-box custom-type' + (activeKey === ch.id ? ' active' : '') + '" data-hkey="' + esc(ch.id) + '" style="' + style + '" onclick="' + htmlCall('openH', ch.id, ch.title, 'Brugerdefineret holon') + '">' +
+                '<button class="holon-delete" onclick="event.stopPropagation();' + htmlCall('delCH', zone, ch.id) + '">&times;</button>' +
+                '<input class="actor-name-input" value="' + esc(ch.title) + '" style="font-size:10px;width:80px;margin-bottom:2px;border-color:#a5b4fc;" onchange="' + esc('renameCH(' + JSON.stringify(zone) + ',' + JSON.stringify(ch.id) + ',this.value)') + '" onclick="event.stopPropagation()">' +
+                renderTagBadges(ch.id) + (renderNotePreview(ch.id) || '<div class="h-desc">Klik for noter</div>') + '</div>';
         }
 
         // ═══════════════════════════════════════
@@ -4797,7 +4779,8 @@
                 el.innerHTML = '<span style="color:#dc2626;">Fejl: ' + esc(e.message) + '</span>';
             }
         }
-        function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+        function esc(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+        function htmlCall(name, ...args) { return esc(name + '(' + args.map(a => JSON.stringify(a)).join(',') + ')'); }
 
         // ═══════════════════════════════════════
         // CONFLICT LIST & RANKING
@@ -6364,6 +6347,33 @@ Naar brugeren har koert "Analyser konflikter", indeholder get_full_state() et fe
 
         updateT();
     </script>
+    <script>
+        window.smfiDiagram = {
+            exportState() {
+                return JSON.parse(JSON.stringify({version:'4.0',operatorName,actors,holonNotes,holonSizes,customHolons,holonTags,personalityData,savedPeopleLibrary,savedPeopleVisibility}));
+            },
+            importState(s) {
+                const previousKey = activeKey;
+                operatorName = s.operatorName;
+                document.getElementById('operatorNameInput').value = operatorName;
+                actors = normalizeActorsTree(s.actors);
+                holonNotes = s.holonNotes || {};
+                holonSizes = s.holonSizes || {};
+                customHolons = s.customHolons || {};
+                holonTags = s.holonTags || {};
+                personalityData = s.personalityData || {};
+                savedPeopleLibrary = s.savedPeopleLibrary || [];
+                savedPeopleVisibility = s.savedPeopleVisibility || {};
+                persistSavedPeopleLibrary(); persistSavedPeopleVisibility();
+                migrateLegacyHolonState(); render();
+                if (previousKey) {
+                    DA.value = holonNotes[previousKey] || '';
+                    renderTagPicker(previousKey);
+                }
+            }
+        };
+    </script>
+    <script type="module" src="../SMFI_Suite/chatgpt-sync.js?v=1"></script>
     <!-- AI Suite Assistant -->
     <script src="../SMFI_Suite/bus.js?v=3"></script>
     <script src="../SMFI_Suite/google-api.js?v=3"></script>

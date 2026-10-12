@@ -13,5 +13,5 @@ for(const file of new Set([...files,...extra])){
  if((denied.test(file)&&!legacyPublicAssets.has(file))||['package.json','package-lock.json','wrangler.jsonc'].includes(file))continue;
  const dest=path.join('dist',file);await mkdir(path.dirname(dest),{recursive:true});await copyFile(file,dest);
 }
-await writeFile('dist/_routes.json',JSON.stringify({version:1,include:['/api/*'],exclude:[]}));
+await writeFile('dist/_routes.json',JSON.stringify({version:1,include:['/api/*','/.well-known/oauth-*'],exclude:[]}));
 console.log('Public assets built; private imports and original PDFs are outside this repository.');

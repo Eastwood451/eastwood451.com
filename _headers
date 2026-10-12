@@ -55,3 +55,10 @@
 
 /shortcuts.css
   Cache-Control: no-cache
+
+/SMFI_Suite/chatgpt*
+  Cache-Control: no-store
+  Referrer-Policy: no-referrer
+
+/SMFI_Suite/chatgpt.html
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'
