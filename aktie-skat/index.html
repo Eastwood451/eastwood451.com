@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b0d12"><title>Depot vs. aktiesparekonto · Eastwood451</title><script src="/auth.js?v=20261002-shortcuts"></script><script src="chart.umd.min.js?v=4.4.1"></script><style>
+:root{--bg:#0b0d12;--card:#151923;--text:#f5f7fb;--muted:#9ca9ba;--line:#303746;--accent:#b48cff}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% 10%,#123345 0,transparent 32%),var(--bg);color:var(--text);font:16px/1.5 system-ui,sans-serif}main{width:min(1100px,calc(100% - 28px));margin:auto;padding:24px 0 60px}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}.back{color:#b9c8dc;text-decoration:none}h1{font-size:clamp(1.8rem,5vw,3rem);margin:20px 0 4px;line-height:1.1}.sub{color:var(--muted);margin:0 0 18px}.controls{display:flex;gap:10px 24px;flex-wrap:wrap;align-items:center;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--card)}.controls label{display:flex;align-items:center;gap:8px;flex-wrap:wrap}input[type=range]{accent-color:#38bdf8;width:180px}input[type=number]{width:100px;min-height:38px;padding:0 8px;border:1px solid var(--line);border-radius:8px;background:#0f131b;color:var(--text);font:inherit}input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}button{min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:#1c2230;color:var(--text);font:inherit;font-weight:700;cursor:pointer}button:hover{border-color:#4a5568}#view{color:var(--muted);font-size:.9rem}#info{margin:16px 0 10px;font-weight:700}#ro{padding:10px 14px;border:2px solid var(--accent);border-radius:10px;margin-bottom:10px;font-size:15px;background:rgba(180,140,255,.07)}.chart{padding:12px;border:1px solid var(--line);border-radius:12px;background:#10141c}canvas{touch-action:none;cursor:grab}.note{font-size:13px;color:var(--muted);margin:10px 0 0}@media(max-width:560px){input[type=range]{width:140px}}</style></head><body><main>
+<div class="top"><a class="back" href="/">← Eastwood451</a><strong>Aktieskat</strong></div>
+<h1>Depot vs. aktiesparekonto</h1>
+<p class="sub">Depot med realisationsbeskatning sammenlignet med aktiesparekonto med lagerbeskatning.</p>
+<section class="controls" aria-label="Indstillinger">
+<label>Startværdi (kr) <input id="s" type="range" min="1000" max="200000" step="1000" value="10000"> <input id="sn" type="number" value="10000" aria-label="Startværdi i kroner"></label>
+<label>Vækst p.a. (%) <input id="r" type="range" min="0" max="25" step="0.5" value="10"> <input id="rn" type="number" step="0.5" value="10" aria-label="Vækst pr. år i procent"></label>
+<button id="reset" type="button">Nulstil zoom</button><label><input id="logy" type="checkbox"> Logaritmisk y-akse</label><span id="view"></span>
+</section>
+<div id="info"></div><div id="ro"></div>
+<div class="chart"><canvas id="c"></canvas></div>
+<p class="note">Musehjul: zoom ud/ind (flere/færre år) omkring musen. Træk den lilla linje for at aflæse forskellen; klik i grafen for at flytte den dertil. Træk andre steder i grafen for at panorere.</p>
+<p class="note">A: skat ved salg = 27 % af gevinst op til 79.400 kr + 42 % af gevinst derover. B: hvert nytår trækkes 17 % af årets gevinst (hakkene). Beregnet månedligt, år 0–200.</p>
+</main>
+<script>
+Chart.defaults.color='#c7d2e0';Chart.defaults.borderColor='#303746';Chart.defaults.font.family='system-ui,sans-serif';
+const NMAX=200,M=12,DEF=[0,40];let ch,cross=null,scrub=20,view=[...DEF],P={S:10000,r:.1,vs:[10000]},series=[];
+const tax=x=>{x=Math.max(x,0);return .27*Math.min(x,79400)+.42*Math.max(x-79400,0)};
+const fmt=v=>Math.round(v).toLocaleString('da-DK');
+const At=t=>{const G=P.S*Math.pow(1+P.r,t);return G-tax(G-P.S)};const Bt=t=>{const y=Math.min(Math.floor(t),NMAX-1);return P.vs[y]*Math.pow(1+P.r,t-y)};
+function readout(){const t=scrub,a=At(t),b=Bt(t),d=a-b;ro.innerHTML=`<b>År ${t.toFixed(1).replace('.',',')}</b> &nbsp; A efter salg: <b>${fmt(a)} kr</b> &nbsp; B (ASK): <b>${fmt(b)} kr</b> &nbsp; Forskel (A−B): <b style="color:${d>=0?'#4ade80':'#ff6b6b'}">${d>=0?'+':'−'}${fmt(Math.abs(d))} kr</b> ${d>=0?'(depot bedst)':'(ASK bedst)'}`}
+const inView=(c,px)=>px>=c.chartArea.left-1&&px<=c.chartArea.right+1;
+const scrubPlug={id:'scrub',afterDraw(c){const{ctx,chartArea:ar,scales:{x,y}}=c;const px=x.getPixelForValue(scrub);if(!inView(c,px))return;ctx.save();ctx.strokeStyle='#b48cff';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(px,ar.top);ctx.lineTo(px,ar.bottom);ctx.stroke();ctx.fillStyle='#b48cff';ctx.fillRect(px-7,ar.top-2,14,14);const ya=y.getPixelForValue(At(scrub)),yb=y.getPixelForValue(Bt(scrub));ctx.lineWidth=4;ctx.globalAlpha=.5;ctx.beginPath();ctx.moveTo(px,ya);ctx.lineTo(px,yb);ctx.stroke();ctx.globalAlpha=1;[[ya,'#ff9f43'],[yb,'#4ade80']].forEach(([yy,col])=>{ctx.fillStyle=col;ctx.beginPath();ctx.arc(px,yy,5,0,7);ctx.fill()});ctx.restore()}};
+const crossPlug={id:'cross',afterDatasetsDraw(c){if(!cross)return;const{ctx,chartArea:ar,scales:{x,y}}=c;const px=x.getPixelForValue(cross.x),py=y.getPixelForValue(cross.a);if(!inView(c,px))return;ctx.save();ctx.setLineDash([6,4]);ctx.strokeStyle='#d62728';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(px,ar.top);ctx.lineTo(px,ar.bottom);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#d62728';ctx.beginPath();ctx.arc(px,py,6,0,7);ctx.fill();ctx.font='bold 13px sans-serif';const l1=`Skæring år ${cross.x}`,l2=`A efter salg: ${fmt(cross.a)} kr`,l3=`B (ASK): ${fmt(cross.b)} kr`;const w=Math.max(...[l1,l2,l3].map(s=>ctx.measureText(s).width))+12;let bx=px+10;if(bx+w>ar.right)bx=px-10-w;const by=Math.min(Math.max(ar.top+5,py-75),ar.bottom-60);ctx.fillStyle='rgba(16,20,28,.94)';ctx.fillRect(bx,by,w,56);ctx.strokeStyle='#d62728';ctx.strokeRect(bx,by,w,56);ctx.fillStyle='#ff6b6b';[l1,l2,l3].forEach((s,i)=>ctx.fillText(s,bx+6,by+16+i*17));ctx.restore();}};
+function applyView(){const[x0,x1]=view;let lo=Infinity,hi=-Infinity;for(const d of series)for(const p of d)if(p.x>=x0&&p.x<=x1){if(p.y<lo)lo=p.y;if(p.y>hi)hi=p.y}
+const lg=logy.checked;const xs=ch.options.scales.x,ys=ch.options.scales.y;xs.min=x0;xs.max=x1;ys.type=lg?'logarithmic':'linear';
+if(lg){ys.min=Math.max(lo/1.15,1);ys.max=hi*1.15}else{const pad=(hi-lo)*.05||1;ys.min=Math.max(0,lo-pad);ys.max=hi+pad}
+const e=Math.min(NMAX,Math.round(x1));info.textContent=(cross?`A (depot efter salg) overhaler B fra år ${cross.x}. `:`A overhaler ikke B inden for ${NMAX} år. `)+`Efter ${e} år: A brutto ${fmt(P.S*Math.pow(1+P.r,e))} kr, A efter salg ${fmt(At(e))} kr, B ${fmt(P.vs[e])} kr.`;
+document.getElementById('view').textContent=`Viser år ${x0.toFixed(1).replace('.',',')}–${x1.toFixed(1).replace('.',',')}`;ch.update('none')}
+function calc(){const S=+sn.value,r=+rn.value/100;const g=[],a=[],b=[];let v=S;cross=null;const vs=[S];
+for(let y=0;y<NMAX;y++){for(let m=0;m<=M;m++){const t=y+m/M,G=S*Math.pow(1+r,t);if(m<M||y==NMAX-1){g.push({x:t,y:G});a.push({x:t,y:G-tax(G-S)});}b.push({x:t,y:v*Math.pow(1+r,m/M)});}
+const gain=v*r;v=v+gain-.17*Math.max(gain,0);b.push({x:y+1,y:v});vs.push(v);
+const An=S*Math.pow(1+r,y+1);if(!cross&&An-tax(An-S)>v)cross={x:y+1,a:An-tax(An-S),b:v};}
+P={S,r,vs};series=[g,a,b];readout();
+const ds=[{label:'A: depotværdi (før skat)',data:g,borderColor:'#38bdf8'},{label:'A: værdi efter likvidation og skat',data:a,borderColor:'#ff9f43'},{label:'B: aktiesparekonto (17 % hvert nytår)',data:b,borderColor:'#4ade80'}];
+ds.forEach(d=>{d.pointRadius=0;d.borderWidth=2;d.fill=false});
+if(!ch)ch=new Chart(c,{type:'line',plugins:[crossPlug,scrubPlug],data:{datasets:ds},options:{animation:false,parsing:false,normalized:true,events:[],
+scales:{x:{type:'linear',min:0,max:40,title:{display:true,text:'År'},grid:{color:'#252c39'}},y:{type:'linear',title:{display:true,text:'Kr.'},grid:{color:'#252c39'},ticks:{callback:v=>fmt(v)}}},plugins:{tooltip:{enabled:false}}}});
+else ch.data.datasets=ds;applyView()}
+const link=(a,b)=>{a.oninput=()=>{b.value=a.value;calc()};b.oninput=()=>{a.value=b.value;calc()}};
+link(s,sn);link(r,rn);calc();
+logy.onchange=applyView;reset.onclick=()=>{view=[...DEF];applyView()};
+const clampView=(x0,x1)=>{let w=Math.min(Math.max(x1-x0,1),NMAX);if(x0<0)x0=0;if(x0+w>NMAX)x0=NMAX-w;return[x0,x0+w]};
+c.addEventListener('wheel',e=>{e.preventDefault();const rect=c.getBoundingClientRect();const xc=ch.scales.x.getValueForPixel(e.clientX-rect.left);const f=e.deltaY>0?1.2:1/1.2;const[x0,x1]=view;view=clampView(xc-(xc-x0)*f,xc+(x1-xc)*f);applyView()},{passive:false});
+let mode=null,start=null;const xOf=e=>ch.scales.x.getValueForPixel(e.clientX-c.getBoundingClientRect().left);
+const setScrub=e=>{scrub=Math.max(0,Math.min(NMAX,Math.round(xOf(e)*10)/10));readout();ch.draw()};
+c.addEventListener('pointerdown',e=>{c.setPointerCapture(e.pointerId);const px=e.clientX-c.getBoundingClientRect().left;const sp=ch.scales.x.getPixelForValue(scrub);if(Math.abs(px-sp)<12){mode='scrub';setScrub(e)}else{mode='maybe';start={cx:e.clientX,view:[...view],w:ch.chartArea.width}}});
+c.addEventListener('pointermove',e=>{if(mode==='scrub')setScrub(e);else if(mode==='maybe'||mode==='pan'){const dx=e.clientX-start.cx;if(mode==='maybe'&&Math.abs(dx)>4){mode='pan';c.style.cursor='grabbing'}if(mode==='pan'){const span=start.view[1]-start.view[0];const d=-dx/start.w*span;view=clampView(start.view[0]+d,start.view[1]+d);applyView()}}});
+['pointerup','pointercancel'].forEach(k=>c.addEventListener(k,e=>{if(mode==='scrub'||mode==='maybe')setScrub(e);mode=null;c.style.cursor='grab'}));
+</script></body></html>
