@@ -4,11 +4,14 @@
 // renders. It never reads or writes input values, option values, attributes,
 // or request bodies.
 
-const DISPLAY = {
+export const DISPLAY = {
   Klassen: 'Hovedspor',
   Nicki: 'Støttespor',
   'Malthe D': 'Ekstra',
 };
+
+// Track choices in the order shown to the user: [stored row key, display name].
+export const TRACKS = Object.entries(DISPLAY);
 
 const EXACT = /^(\s*)(Klassen|Nicki|Malthe D)(\s*)$/;
 // These strings are built as one text node in the private UI. They are labels,
