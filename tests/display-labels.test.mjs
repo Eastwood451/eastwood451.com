@@ -178,5 +178,6 @@ test('the display mapper does not touch fetch, attributes or stored text', async
   assert.doesNotMatch(source, /setAttribute|innerHTML|textContent\s*=|supabase/i);
   assert.match(source, /nodeValue/);
   assert.match(login, /watchDisplayLabels\(document\.body\)/);
-  assert.match(login, /\/api\/agent-skolelaerer\/assets\/app\.js/);
+  assert.match(login, /\/agent-skolelaerer\/app\/app\.js/);
+  assert.doesNotMatch(login, /chatgpt\.site|\/api\/agent-skolelaerer\/assets/);
 });

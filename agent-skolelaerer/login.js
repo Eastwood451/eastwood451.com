@@ -1,4 +1,7 @@
 import {applyDisplayLabels, watchDisplayLabels} from './display-labels.js';
+import {materialFromQuery, openMaterialDialog} from './material.js';
+
+const APP_VERSION = '20261104';
 
 const panel = document.querySelector('#loading-panel');
 const status = document.querySelector('#status');
@@ -20,10 +23,10 @@ async function open() {
       const link = document.createElement('link');
       link.id = 'app-styles';
       link.rel = 'stylesheet';
-      link.href = '/api/agent-skolelaerer/assets/app.css';
+      link.href = '/agent-skolelaerer/app/app.css?v=' + APP_VERSION;
       document.head.append(link);
     }
-    const module = await import('/api/agent-skolelaerer/assets/app.js');
+    const module = await import('/agent-skolelaerer/app/app.js?v=' + APP_VERSION);
     await module.mount(document.querySelector('#app'));
     try { applyDisplayLabels(document.body); } catch { /* the observer still covers later renders */ }
     panel.hidden = true;
@@ -35,4 +38,15 @@ async function open() {
 }
 
 retry.addEventListener('click', () => window.location.reload());
+
+// "Tilføj materiale": from the nav button, or opened from the material library
+// (?materiale=1&title=…&drive=…&page=…). The query is removed so a reload does
+// not reopen it.
+document.querySelector('#add-material')?.addEventListener('click', () => openMaterialDialog(document));
+const fromLibrary = materialFromQuery(window.location.search);
+if (fromLibrary) {
+  window.history.replaceState(null, '', window.location.pathname);
+  openMaterialDialog(document, fromLibrary);
+}
+
 void open();
