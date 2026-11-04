@@ -8,7 +8,8 @@
     "build:library": "npm run test:pwa && node tools/matematikbibliotek/build.mjs"
   },
   "devDependencies": {
-    "wrangler": "4.135.0",
-    "supabase": "2.117.0"
+    "linkedom": "0.18.15",
+    "supabase": "2.117.0",
+    "wrangler": "4.135.0"
   }
 }
