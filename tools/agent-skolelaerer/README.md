@@ -16,7 +16,14 @@ five-minute material-register sync remain in place. Google reconnection continue
 through the existing private Sites settings page.
 
 The app's React source and generated JS/CSS remain in its **private** source
-repository. Do not copy them into this repository. The public `/assets/app.js`
+repository. Do not copy them into this repository. Visible track labels on this
+page are renamed in the browser only, by `agent-skolelaerer/display-labels.js`
+(started from `login.js`): Klassen is shown as Hovedspor, Nicki as Støttespor,
+and Malthe D as Ekstra. Stored row names, `name` on `POST /lesson`, recipient
+keys, and homework keys stay the original names. The mapper rewrites label text
+nodes (column headers, section summaries, dialog titles, and the visible text of
+the material recipient control) and leaves input values, option values, links,
+and lesson text alone. The public `/assets/app.js`
 and `/assets/app.css` routes now deliver the UI without requiring login, with
 `Cache-Control: no-store`. The original private Sites build now
 runs `eastwood/build.mjs` before its normal build, so later app updates also refresh
@@ -26,7 +33,7 @@ This is a new Eastwood entry point with shared backend services, not an independ
 replacement of the Sites backend. Do not delete the original Site or its private
 Google connection while this integration is in use.
 
-Validation: `node --test tests/agent-skolelaerer.test.mjs` and
+Validation: `node --test tests/agent-skolelaerer.test.mjs tests/display-labels.test.mjs` and
 `node tools/matematikbibliotek/build.mjs`. Deploy by updating main; the existing
 Cloudflare Pages Git integration publishes the site and its Functions.
 Deploy `supabase/functions/agent-skolelaerer/index.ts` separately to the preparation
