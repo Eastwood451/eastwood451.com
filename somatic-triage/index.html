@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="da">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#12181c" />
+    <meta name="color-scheme" content="dark" />
+    <title>Somatisk triagepanel · Eastwood451</title>
+    <meta
+      name="description"
+      content="Fem manuelle visere til selvrapporterede kropslige signaler. Personlige bånd, ikke en medicinsk måling."
+    />
+    <script src="/auth.js?v=20261002-shortcuts"></script>
+    <link rel="stylesheet" href="app.css?v=1" />
+  </head>
+  <body>
+    <a class="skip" href="#instruments">Spring til viserne</a>
+    <div class="wrap">
+      <header class="mast">
+        <p class="eyebrow">Eastwood451 · personligt instrument</p>
+        <h1>Somatisk triagepanel</h1>
+        <p class="lede">
+          Fem visere til signaler, du selv lægger mærke til og ellers let skubber til side. Du sætter hvert tal selv.
+          Panelet mærker ikke din krop.
+        </p>
+      </header>
+
+      <section class="notice" aria-label="Sådan læses panelet">
+        <p>
+          Viserne viser dine indtastninger. Båndene viser dine tærskler. Et rødt bånd betyder
+          <strong>Stop og korrigér</strong>: hold pause, juster og vurder igen. Det er ikke et nødkald.
+          Panelet regner ikke et gennemsnit, så grønne visere vejer ikke et rødt op. Argumenter ikke en viser væk.
+          Den beviser heller ikke noget uden for det, du selv har sat.
+        </p>
+        <p id="scale-legend">
+          Alle skalaer peger samme vej. <b>0 til venstre</b> er grønt: ro, tilnærmelse eller autonomi.
+          <b>100 til højre</b> er rødt: tilbagetrækning, belastning eller pres.
+        </p>
+        <p id="disclaimer">
+          Tallene er selvrapporterede. Tærsklerne er personlige udgangsværdier, ikke medicinske målinger og ikke en
+          videnskabelig skala. Panelet stiller ikke diagnoser og afgør ikke en anden persons hensigt. Det, du skriver,
+          kan gemmes i denne browser. Det sendes ikke videre.
+        </p>
+      </section>
+
+      <section class="annunciator" id="annunciator" data-state="open" aria-labelledby="master-title">
+        <p class="annunciator-kicker">Samlet aflæsning</p>
+        <h2 id="master-title">Ikke afklaret</h2>
+        <p id="master-text">
+          Tomme visere er ikke grønne. Panelet viser ikke fri bane, før alle fem er sat, og ingen står i rødt.
+        </p>
+        <ul class="lamps" id="lamps"></ul>
+        <div id="master-reflections"></div>
+      </section>
+
+      <div class="instruments" id="instruments">
+        <article class="instrument" id="instrument-approach" data-gauge="approach" data-state="unset">
+          <p class="roman" aria-hidden="true">I</p>
+          <h2 id="q-approach">Vil din krop hen imod situationen, eller væk fra den?</h2>
+          <p class="direction" id="dir-approach">Lavt tal er hen imod og ro. Højt tal er væk fra og tilbagetrækning.</p>
+          <div class="dial" id="dial-approach" aria-hidden="true"></div>
+          <p class="nameplate">Retning</p>
+          <p class="reading" id="status-approach">Ikke vurderet. En tom viser er ikke et grønt nul.</p>
+          <div class="ends">
+            <p id="lo-approach">
+              <span class="swatch swatch-low" aria-hidden="true"></span>
+              <span><b>0 · venstre</b> Hen imod, ro</span>
+            </p>
+            <p class="end-high" id="hi-approach">
+              <span class="swatch swatch-high" aria-hidden="true"></span>
+              <span><b>100 · højre</b> Væk fra, tilbagetrækning</span>
+            </p>
+          </div>
+          <div class="controls">
+            <div class="slider-block">
+              <label class="visually-hidden" id="slabel-approach" for="range-approach">Skydereglen</label>
+              <div class="slider-wrap" id="wrap-approach">
+                <input
+                  id="range-approach"
+                  class="scale is-unset"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value="50"
+                  aria-labelledby="slabel-approach q-approach"
+                  aria-describedby="dir-approach lo-approach hi-approach status-approach scale-legend"
+                  aria-valuetext="Ikke vurderet. 0 til venstre er hen imod og ro. 100 til højre er væk fra og tilbagetrækning."
+                  autocomplete="off"
+                />
+                <span class="unset-flag" id="flag-approach">Ikke vurderet</span>
+              </div>
+            </div>
+            <div class="number-block">
+              <label for="num-approach">Tal 0–100</label>
+              <input
+                id="num-approach"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                max="100"
+                step="1"
+                placeholder="—"
+                aria-describedby="q-approach dir-approach lo-approach hi-approach"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+          <p class="field-msg" id="msg-approach" role="status"></p>
+          <p class="prompt" id="prompt-approach" hidden></p>
+          <button type="button" id="clear-approach" aria-label="Tøm viseren Retning">Tøm viser</button>
+        </article>
+
+        <article class="instrument" id="instrument-yes" data-gauge="yes" data-state="unset">
+          <p class="roman" aria-hidden="true">II</p>
+          <h2 id="q-yes">Hvad sker der i din krop, når du forestiller dig at sige ja?</h2>
+          <p class="direction" id="dir-yes">
+            Lavt tal er ro, åbning og lethed. Højt tal er anspændthed, sammentrækning og uro.
+          </p>
+          <div class="dial" id="dial-yes" aria-hidden="true"></div>
+          <p class="nameplate">Ja-billedet</p>
+          <p class="reading" id="status-yes">Ikke vurderet. En tom viser er ikke et grønt nul.</p>
+          <div class="ends">
+            <p id="lo-yes">
+              <span class="swatch swatch-low" aria-hidden="true"></span>
+              <span><b>0 · venstre</b> Ro ved ja</span>
+            </p>
+            <p class="end-high" id="hi-yes">
+              <span class="swatch swatch-high" aria-hidden="true"></span>
+              <span><b>100 · højre</b> Anspændthed ved ja</span>
+            </p>
+          </div>
+          <div class="controls">
+            <div class="slider-block">
+              <label class="visually-hidden" id="slabel-yes" for="range-yes">Skydereglen</label>
+              <div class="slider-wrap" id="wrap-yes">
+                <input
+                  id="range-yes"
+                  class="scale is-unset"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value="50"
+                  aria-labelledby="slabel-yes q-yes"
+                  aria-describedby="dir-yes lo-yes hi-yes status-yes scale-legend"
+                  aria-valuetext="Ikke vurderet. 0 til venstre er ro ved ja. 100 til højre er anspændthed ved ja."
+                  autocomplete="off"
+                />
+                <span class="unset-flag" id="flag-yes">Ikke vurderet</span>
+              </div>
+            </div>
+            <div class="number-block">
+              <label for="num-yes">Tal 0–100</label>
+              <input
+                id="num-yes"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                max="100"
+                step="1"
+                placeholder="—"
+                aria-describedby="q-yes dir-yes lo-yes hi-yes"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+          <p class="field-msg" id="msg-yes" role="status"></p>
+          <p class="prompt" id="prompt-yes" hidden></p>
+          <button type="button" id="clear-yes" aria-label="Tøm viseren Ja-billedet">Tøm viser</button>
+        </article>
+
+        <article class="instrument" id="instrument-last" data-gauge="last" data-state="unset">
+          <p class="roman" aria-hidden="true">III</p>
+          <h2 id="q-last">Hvad gjorde din krop sidste gang, du tilbragte timer med denne person?</h2>
+          <p class="direction" id="dir-last">
+            Lavt tal er ro og overskud bagefter. Højt tal er udmattelse, vagtsomhed eller tilbagetrækning.
+          </p>
+          <div class="dial" id="dial-last" aria-hidden="true"></div>
+          <p class="nameplate">Sidste gang</p>
+          <p class="reading" id="status-last">Ikke vurderet. En tom viser er ikke et grønt nul.</p>
+          <div class="ends">
+            <p id="lo-last">
+              <span class="swatch swatch-low" aria-hidden="true"></span>
+              <span><b>0 · venstre</b> Ro efter timerne</span>
+            </p>
+            <p class="end-high" id="hi-last">
+              <span class="swatch swatch-high" aria-hidden="true"></span>
+              <span><b>100 · højre</b> Belastning efter timerne</span>
+            </p>
+          </div>
+          <div class="controls">
+            <div class="slider-block">
+              <label class="visually-hidden" id="slabel-last" for="range-last">Skydereglen</label>
+              <div class="slider-wrap" id="wrap-last">
+                <input
+                  id="range-last"
+                  class="scale is-unset"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value="50"
+                  aria-labelledby="slabel-last q-last"
+                  aria-describedby="dir-last lo-last hi-last status-last scale-legend"
+                  aria-valuetext="Ikke vurderet. 0 til venstre er ro efter timerne. 100 til højre er belastning efter timerne."
+                  autocomplete="off"
+                />
+                <span class="unset-flag" id="flag-last">Ikke vurderet</span>
+              </div>
+            </div>
+            <div class="number-block">
+              <label for="num-last">Tal 0–100</label>
+              <input
+                id="num-last"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                max="100"
+                step="1"
+                placeholder="—"
+                aria-describedby="q-last dir-last lo-last hi-last"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+          <p class="field-msg" id="msg-last" role="status"></p>
+          <p class="prompt" id="prompt-last" hidden></p>
+          <button type="button" id="clear-last" aria-label="Tøm viseren Sidste gang">Tøm viser</button>
+        </article>
+
+        <article class="instrument" id="instrument-cost" data-gauge="cost" data-state="unset">
+          <p class="roman" aria-hidden="true">IV</p>
+          <h2 id="q-cost">Hvem får gavn, hvis du siger ja?</h2>
+          <p class="frame" id="frame-cost">
+            Her sætter du kun din oplevede omkostning og ubalance. Viseren er ikke en dom over den anden persons hensigt.
+          </p>
+          <p class="direction" id="dir-cost">
+            Lavt tal er oplevet balance, hvor et ja også gavner dig. Højt tal er oplevet skævhed, hvor omkostningen
+            lander hos dig.
+          </p>
+          <div class="dial" id="dial-cost" aria-hidden="true"></div>
+          <p class="nameplate">Omkostning</p>
+          <p class="reading" id="status-cost">Ikke vurderet. En tom viser er ikke et grønt nul.</p>
+          <div class="ends">
+            <p id="lo-cost">
+              <span class="swatch swatch-low" aria-hidden="true"></span>
+              <span><b>0 · venstre</b> Oplevet balance</span>
+            </p>
+            <p class="end-high" id="hi-cost">
+              <span class="swatch swatch-high" aria-hidden="true"></span>
+              <span><b>100 · højre</b> Oplevet skæv omkostning</span>
+            </p>
+          </div>
+          <div class="controls">
+            <div class="slider-block">
+              <label class="visually-hidden" id="slabel-cost" for="range-cost">Skydereglen</label>
+              <div class="slider-wrap" id="wrap-cost">
+                <input
+                  id="range-cost"
+                  class="scale is-unset"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value="50"
+                  aria-labelledby="slabel-cost q-cost"
+                  aria-describedby="frame-cost dir-cost lo-cost hi-cost status-cost scale-legend"
+                  aria-valuetext="Ikke vurderet. 0 til venstre er oplevet balance. 100 til højre er oplevet skæv omkostning. Ikke en dom over den anden."
+                  autocomplete="off"
+                />
+                <span class="unset-flag" id="flag-cost">Ikke vurderet</span>
+              </div>
+            </div>
+            <div class="number-block">
+              <label for="num-cost">Tal 0–100</label>
+              <input
+                id="num-cost"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                max="100"
+                step="1"
+                placeholder="—"
+                aria-describedby="q-cost frame-cost dir-cost lo-cost hi-cost"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+          <p class="field-msg" id="msg-cost" role="status"></p>
+          <p class="prompt" id="prompt-cost" hidden></p>
+          <button type="button" id="clear-cost" aria-label="Tøm viseren Omkostning">Tøm viser</button>
+        </article>
+
+        <article class="instrument" id="instrument-refusal" data-gauge="refusal" data-state="unset">
+          <p class="roman" aria-hidden="true">V</p>
+          <h2 id="q-refusal">Kan du sige nej uden at øve en undskyldning?</h2>
+          <p class="direction" id="dir-refusal">
+            Lavt tal betyder ja: nej kan siges uden et undskyldningsmanuskript. Højt tal betyder nej: undskyldningen skal
+            øves først.
+          </p>
+          <div class="dial" id="dial-refusal" aria-hidden="true"></div>
+          <p class="nameplate">Nej'et</p>
+          <p class="reading" id="status-refusal">Ikke vurderet. En tom viser er ikke et grønt nul.</p>
+          <div class="ends">
+            <p id="lo-refusal">
+              <span class="swatch swatch-low" aria-hidden="true"></span>
+              <span><b>0 · venstre</b> Ja, nej uden undskyldning</span>
+            </p>
+            <p class="end-high" id="hi-refusal">
+              <span class="swatch swatch-high" aria-hidden="true"></span>
+              <span><b>100 · højre</b> Nej, undskyldningen skal øves</span>
+            </p>
+          </div>
+          <div class="controls">
+            <div class="slider-block">
+              <label class="visually-hidden" id="slabel-refusal" for="range-refusal">Skydereglen</label>
+              <div class="slider-wrap" id="wrap-refusal">
+                <input
+                  id="range-refusal"
+                  class="scale is-unset"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value="50"
+                  aria-labelledby="slabel-refusal q-refusal"
+                  aria-describedby="dir-refusal lo-refusal hi-refusal status-refusal scale-legend"
+                  aria-valuetext="Ikke vurderet. 0 til venstre betyder ja, nej uden undskyldning. 100 til højre betyder at undskyldningen skal øves."
+                  autocomplete="off"
+                />
+                <span class="unset-flag" id="flag-refusal">Ikke vurderet</span>
+              </div>
+            </div>
+            <div class="number-block">
+              <label for="num-refusal">Tal 0–100</label>
+              <input
+                id="num-refusal"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                max="100"
+                step="1"
+                placeholder="—"
+                aria-describedby="q-refusal dir-refusal lo-refusal hi-refusal"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+          <p class="field-msg" id="msg-refusal" role="status"></p>
+          <p class="prompt" id="prompt-refusal" hidden></p>
+          <button type="button" id="clear-refusal" aria-label="Tøm viseren Nej'et">Tøm viser</button>
+        </article>
+      </div>
+
+      <section class="sheet" aria-labelledby="note-title">
+        <div class="sheet-head">
+          <h2 id="note-title">Situation</h2>
+          <p>Valgfri. Noten ændrer ikke viserne.</p>
+        </div>
+        <label class="field-label" for="situation">Kort note, kun til dig</label>
+        <textarea
+          id="situation"
+          maxlength="400"
+          rows="2"
+          placeholder="Få ord om situationen. Kan stå tom."
+          autocomplete="off"
+        ></textarea>
+        <p id="note-count" class="fine">0 / 400</p>
+      </section>
+
+      <section class="sheet" aria-labelledby="bands-title">
+        <div class="sheet-head">
+          <h2 id="bands-title">Personlige bånd</h2>
+          <p id="bands-help">
+            Foreslåede udgangsværdier, ikke en videnskabelig skala: grønt til og med 34, gult til og med 66, rødt fra 67
+            til 100. De er valgt, så skalaen er let at dele i tre. Skift dem, så de passer til dig. Rødt skal mindst
+            rumme 100.
+          </p>
+        </div>
+        <div class="band-bar" id="band-bar" aria-hidden="true">
+          <span data-part="green">Grønt</span>
+          <span data-part="yellow">Gult</span>
+          <span data-part="red">Rødt</span>
+        </div>
+        <div class="threshold-grid">
+          <div>
+            <label for="green-max">Grønt til og med</label>
+            <input
+              id="green-max"
+              type="number"
+              inputmode="numeric"
+              min="0"
+              max="98"
+              step="1"
+              value="34"
+              aria-describedby="bands-help threshold-error band-summary"
+              autocomplete="off"
+            />
+          </div>
+          <div>
+            <label for="yellow-max">Gult til og med</label>
+            <input
+              id="yellow-max"
+              type="number"
+              inputmode="numeric"
+              min="1"
+              max="99"
+              step="1"
+              value="66"
+              aria-describedby="bands-help threshold-error band-summary"
+              autocomplete="off"
+            />
+          </div>
+        </div>
+        <p id="threshold-error" class="field-msg" role="alert"></p>
+        <p id="band-summary">Bånd i brug: 0–34 grønt, 35–66 gult, 67–100 rødt. Foreslåede udgangsværdier.</p>
+        <button type="button" id="restore-bands">Gendan foreslåede bånd</button>
+      </section>
+
+      <footer class="sheet storage">
+        <h2>Kun i denne browser</h2>
+        <p>
+          Viserne, noten og båndene kan gemmes lokalt i denne browser (localStorage). Intet sendes til en server, og der
+          er ingen analyse. Ryd browserdata for siden, og panelet glemmer det. Automatisk gemning er tilvalgt, så du ikke
+          mister en vurdering ved et uheld. Den kan slås fra her.
+        </p>
+        <label class="check" for="autosave">
+          <input id="autosave" type="checkbox" checked />
+          Gem automatisk i denne browser
+        </label>
+        <p id="save-status">Intet gemt endnu. Når du sætter en viser, kan det ligge kun i denne browser.</p>
+        <p id="reset-status" role="status"></p>
+        <button type="button" id="reset" class="danger">Nulstil panel</button>
+      </footer>
+    </div>
+
+    <dialog id="reset-dialog" aria-labelledby="reset-title">
+      <form method="dialog">
+        <h2 id="reset-title">Nulstil panelet?</h2>
+        <p id="reset-copy">
+          Viserne, situationen og de personlige bånd, som ligger i denne browser, slettes og sættes tilbage til
+          udgangspunktet. Det kan ikke fortrydes her.
+        </p>
+        <div class="dialog-actions">
+          <button type="submit" value="cancel">Annuller</button>
+          <button type="submit" value="confirm" class="danger">Nulstil</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="live" class="visually-hidden" role="status" aria-live="polite"></div>
+    <noscript>
+      <p class="disclaimer">Panelet kræver JavaScript i browseren. Der sendes stadig ingen data.</p>
+    </noscript>
+    <script src="app.js?v=1"></script>
+    <script src="/eastwood-home-link.js"></script>
+  </body>
+</html>
