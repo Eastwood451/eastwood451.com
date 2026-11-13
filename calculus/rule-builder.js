@@ -270,6 +270,35 @@ function selectRuleSkeleton(btn, rule) {
     continueBtn.disabled = false;
 }
 
+
+function renderSkeletonPartsPanel(problem) {
+    const elements = problem && problem.elements;
+    const slots = elements && Array.isArray(elements.slots) ? elements.slots : [];
+    if (!slots.length) return null;
+
+    const parts = document.createElement('aside');
+    parts.className = 'skeleton-parts';
+    parts.setAttribute('aria-label', 'Delene');
+
+    const heading = document.createElement('h3');
+    heading.className = 'skeleton-parts-title';
+    heading.textContent = 'Delene';
+    parts.appendChild(heading);
+
+    const list = document.createElement('div');
+    list.className = 'skeleton-parts-list';
+    slots.forEach(slot => {
+        const row = document.createElement('div');
+        row.className = 'skeleton-parts-row';
+        const label = slot.label || '';
+        const value = slot.correct || '';
+        row.innerHTML = `$${label} = ${value}$`;
+        list.appendChild(row);
+    });
+    parts.appendChild(list);
+    return parts;
+}
+
 function renderSkeletonStep() {
     const problem = getCurrentRuleBuilderProblem();
     const skeleton = problem.skeleton;
@@ -288,10 +317,19 @@ function renderSkeletonStep() {
     const board = document.createElement('div');
     board.className = 'skeleton-board';
 
+    const partsPanel = renderSkeletonPartsPanel(problem);
+    if (partsPanel) {
+        board.classList.add('has-parts');
+        board.appendChild(partsPanel);
+    }
+
+    const main = document.createElement('div');
+    main.className = 'skeleton-main';
+
     const formula = document.createElement('div');
     formula.className = 'skeleton-formula';
     formula.innerHTML = `$${skeleton.formula}$`;
-    board.appendChild(formula);
+    main.appendChild(formula);
 
     const slots = document.createElement('div');
     slots.className = 'skeleton-slots';
@@ -313,7 +351,8 @@ function renderSkeletonStep() {
         drop.addEventListener('drop', (e) => onRuleBuilderDrop(e, slot.id));
         slots.appendChild(drop);
     });
-    board.appendChild(slots);
+    main.appendChild(slots);
+    board.appendChild(main);
     choicesGrid.appendChild(board);
 
     const tileBank = document.createElement('div');

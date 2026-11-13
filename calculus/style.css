@@ -1332,6 +1332,54 @@ input:checked + .slider:before {
     box-shadow: var(--shadow);
 }
 
+.skeleton-board.has-parts {
+    display: grid;
+    grid-template-columns: minmax(148px, 210px) minmax(0, 1fr);
+    gap: 16px 18px;
+    align-items: start;
+}
+
+.skeleton-parts {
+    background: rgba(15, 25, 29, 0.72);
+    border: 1px solid var(--bg-elevated);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px 14px;
+    min-width: 0;
+}
+
+.skeleton-parts-title {
+    margin: 0 0 10px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    text-align: left;
+}
+
+.skeleton-parts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.skeleton-parts-row {
+    color: var(--text);
+    font-weight: 700;
+    font-size: 0.95rem;
+    line-height: 1.45;
+    text-align: left;
+    overflow-x: auto;
+}
+
+.skeleton-parts-row mjx-container {
+    margin: 0 !important;
+}
+
+.skeleton-main {
+    min-width: 0;
+}
+
 .skeleton-formula {
     min-height: 44px;
     display: flex;
@@ -1434,6 +1482,19 @@ input:checked + .slider:before {
     box-shadow: 0 1px 0 rgba(0, 0, 0, 0.28);
 }
 
+@media (max-width: 740px) {
+    .skeleton-board.has-parts {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .skeleton-parts-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px 14px;
+    }
+}
+
 @media (max-width: 480px) {
     .rule-choice-grid,
     .tile-bank {
@@ -1442,6 +1503,15 @@ input:checked + .slider:before {
 
     .skeleton-board {
         padding: 14px;
+    }
+
+    .skeleton-parts-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 4px 10px;
+    }
+
+    .skeleton-parts {
+        padding: 10px 12px 12px;
     }
 
     .skeleton-slots {
@@ -1456,6 +1526,14 @@ input:checked + .slider:before {
     .skeleton-fixed {
         flex: 0 0 auto;
         min-height: 34px;
+    }
+}
+
+
+@media (min-width: 841px) {
+    body:has(.skeleton-board.has-parts) #top-bar,
+    body:has(.skeleton-board.has-parts) #app {
+        max-width: 820px;
     }
 }
 
