@@ -16,7 +16,13 @@ const RULE_BUILDER_PROBLEMS = [
                 { id: "fprime_u", label: "f'(u)", correct: "\\cos(u)" },
                 { id: "gprime_x", label: "g'(x)", correct: "2x" }
             ],
-            tiles: ["\\sin(u)", "x^2", "\\cos(u)", "2x", "\\cos(x^2)", "\\sin(x)"]
+            tiles: ["\\sin(u)", "x^2", "\\cos(u)", "2x", "\\cos(x^2)", "\\sin(x)"],
+            parts: [
+                { display: "u = g(x) = x^2" },
+                { display: "g'(x) = 2x" },
+                { display: "f(u) = \\sin(u)" },
+                { display: "f'(u) = \\cos(u)" }
+            ]
         },
         skeleton: {
             title: "Kædereglen",
@@ -107,7 +113,13 @@ const RULE_BUILDER_PROBLEMS = [
                 { id: "fprime_u", label: "f'(u)", correct: "4u^3" },
                 { id: "gprime_x", label: "g'(x)", correct: "3" }
             ],
-            tiles: ["u^4", "3x+1", "4u^3", "3", "(3x+1)^3", "12(3x+1)^3"]
+            tiles: ["u^4", "3x+1", "4u^3", "3", "(3x+1)^3", "12(3x+1)^3"],
+            parts: [
+                { display: "u = g(x) = 3x+1" },
+                { display: "g'(x) = 3" },
+                { display: "f(u) = u^4" },
+                { display: "f'(u) = 4u^3" }
+            ]
         },
         skeleton: {
             title: "Kædereglen med potens",
@@ -271,10 +283,28 @@ function selectRuleSkeleton(btn, rule) {
 }
 
 
-function renderSkeletonPartsPanel(problem) {
+function getSkeletonPartsEntries(problem) {
     const elements = problem && problem.elements;
-    const slots = elements && Array.isArray(elements.slots) ? elements.slots : [];
-    if (!slots.length) return null;
+    if (!elements) return [];
+    if (Array.isArray(elements.parts) && elements.parts.length) {
+        return elements.parts.map(part => {
+            if (part.display) return part.display;
+            const label = part.label || '';
+            const value = part.correct || '';
+            return label && value ? `${label} = ${value}` : (label || value);
+        }).filter(Boolean);
+    }
+    const slots = Array.isArray(elements.slots) ? elements.slots : [];
+    return slots.map(slot => {
+        const label = slot.label || '';
+        const value = slot.correct || '';
+        return label && value ? `${label} = ${value}` : (label || value);
+    }).filter(Boolean);
+}
+
+function renderSkeletonPartsPanel(problem) {
+    const entries = getSkeletonPartsEntries(problem);
+    if (!entries.length) return null;
 
     const parts = document.createElement('aside');
     parts.className = 'skeleton-parts';
@@ -287,12 +317,10 @@ function renderSkeletonPartsPanel(problem) {
 
     const list = document.createElement('div');
     list.className = 'skeleton-parts-list';
-    slots.forEach(slot => {
+    entries.forEach(tex => {
         const row = document.createElement('div');
         row.className = 'skeleton-parts-row';
-        const label = slot.label || '';
-        const value = slot.correct || '';
-        row.innerHTML = `$${label} = ${value}$`;
+        row.innerHTML = `$${tex}$`;
         list.appendChild(row);
     });
     parts.appendChild(list);
