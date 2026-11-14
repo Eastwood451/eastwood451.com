@@ -177,10 +177,20 @@ const SUPABASE_URL='https://wpriingzftsboauvkmsj.supabase.co';
 const PUBLISHABLE_KEY='sb_publishable_bSvkvx_Lqd5ZEt94oVdMaw_44WV2fYE';
 const SESSION_KEY='smfi-gambits-auth-session-v1';
 let session=null,flushing=false,flushTimer=null,saveQueue=new Map(),flushPromise=null,titleSaveInProgress=false,refreshPromise=null;
-const PENDING_KEY='smfi-gambits-pending-central-v1';
-const TYPING_KEY='smfi-gambits-unsubmitted-text-v1';
+// Each open browser tab owns its own emergency drafts. This avoids one tab clearing another tab's unsent edits.
+const LEGACY_PENDING_KEY='smfi-gambits-pending-central-v1';
+const LEGACY_TYPING_KEY='smfi-gambits-unsubmitted-text-v1';
+const TAB_KEY='smfi-gambits-tab-id-v1';
+let tabId=sessionStorage.getItem(TAB_KEY);
+if(!tabId){
+ tabId=(typeof crypto!=='undefined'&&typeof crypto.randomUUID==='function')
+  ?crypto.randomUUID():(Date.now().toString(36)+'-'+Math.random().toString(36).slice(2));
+ sessionStorage.setItem(TAB_KEY,tabId);
+}
+const PENDING_KEY=LEGACY_PENDING_KEY+':'+tabId;
+const TYPING_KEY=LEGACY_TYPING_KEY+':'+tabId;
 let typingDrafts={};
-try{typingDrafts=JSON.parse(localStorage.getItem(TYPING_KEY)||'{}')||{}}catch{typingDrafts={}}
+try{typingDrafts=JSON.parse(localStorage.getItem(TYPING_KEY)||localStorage.getItem(LEGACY_TYPING_KEY)||'{}')||{}}catch{typingDrafts={}}
 function typingKey(id,field){return id+'::'+field}
 function stagedText(id,field,fallback){const k=typingKey(id,field);return Object.hasOwn(typingDrafts,k)?typingDrafts[k]:fallback}
 function persistTyping(){
@@ -214,7 +224,7 @@ function persistOutbox(){
 }
 function restoreOutbox(){
  try{
-  const obj=JSON.parse(localStorage.getItem(PENDING_KEY)||'null');
+  const obj=JSON.parse(localStorage.getItem(PENDING_KEY)||localStorage.getItem(LEGACY_PENDING_KEY)||'null');
   for(const item of obj?.items||[]){
    if(!/^GAM-[0-9]{4}$/.test(item.id))continue;
    const fields={},base={};
