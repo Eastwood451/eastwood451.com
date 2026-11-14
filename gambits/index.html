@@ -178,6 +178,24 @@ const PUBLISHABLE_KEY='sb_publishable_bSvkvx_Lqd5ZEt94oVdMaw_44WV2fYE';
 const SESSION_KEY='smfi-gambits-auth-session-v1';
 let session=null,flushing=false,flushTimer=null,saveQueue=new Map(),flushPromise=null,titleSaveInProgress=false,refreshPromise=null;
 const PENDING_KEY='smfi-gambits-pending-central-v1';
+const TYPING_KEY='smfi-gambits-unsubmitted-text-v1';
+let typingDrafts={};
+try{typingDrafts=JSON.parse(localStorage.getItem(TYPING_KEY)||'{}')||{}}catch{typingDrafts={}}
+function typingKey(id,field){return id+'::'+field}
+function stagedText(id,field,fallback){const k=typingKey(id,field);return Object.hasOwn(typingDrafts,k)?typingDrafts[k]:fallback}
+function persistTyping(){
+ try{
+  if(Object.keys(typingDrafts).length)localStorage.setItem(TYPING_KEY,JSON.stringify(typingDrafts));
+  else localStorage.removeItem(TYPING_KEY);
+  return true;
+ }catch(err){storageState('Kunne ikke sikre den indtastede tekst · eksportér nu','error');return false}
+}
+function stageText(id,field,value){
+ if(!id)return;
+ typingDrafts[typingKey(id,field)]=value;
+ if(persistTyping())storageState('Redigering sikret lokalt · tryk Gem for at synkronisere','loading');
+}
+function clearStage(id,field){delete typingDrafts[typingKey(id,field)];persistTyping()}
 const DB_EDITABLE_FIELDS=['title','short_description','example','operation','notes','actors','principles','theory','countermove'];
 let serverBase=new Map(),retryDelay=1500,retryTimer=null;
 const sameValue=(a,b)=>JSON.stringify(canonical(a))===JSON.stringify(canonical(b));
@@ -441,6 +459,7 @@ function save(fields){
  const secured=persistOutbox();
  if(secured)pendingLabel();
  clearTimeout(flushTimer);flushTimer=setTimeout(flushDatabase,500);
+ return secured;
 }
 function scheduleRetry(){
  if(retryTimer)clearTimeout(retryTimer);
@@ -554,7 +573,7 @@ window.addEventListener('online',()=>{retryDelay=1500;flushDatabase()});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&saveQueue.size)flushDatabase()});
 window.addEventListener('beforeunload',ev=>{
  // If a write is still pending, strongly warn even though a local emergency copy exists.
- if(saveQueue.size){ev.preventDefault();ev.returnValue='Der er ikke-gemte gambitændringer';}
+ if(saveQueue.size||Object.keys(typingDrafts).length){ev.preventDefault();ev.returnValue='Der er ikke-gemte gambitændringer';}
 });
 setInterval(()=>{if(saveQueue.size&&session&&!flushing)flushDatabase()},30000);
 
@@ -756,11 +775,12 @@ function preserveExampleAnnotations(e,previous,next){
 function bindExampleEditor(e){
  const btn=$('#editExample'),view=$('#exampleView'),editor=$('#exampleEditor'),input=$('#exampleInput');
  const cancel=()=>{editor.hidden=true;view.hidden=false;btn.hidden=false};
- btn.addEventListener('click',()=>{view.hidden=true;editor.hidden=false;btn.hidden=true;input.value=e.examples||'';input.focus();});
- $('#cancelExample').addEventListener('click',cancel);
+ btn.addEventListener('click',()=>{view.hidden=true;editor.hidden=false;btn.hidden=true;input.value=stagedText(e.id,'example',e.examples||'');input.focus();});
+ $('#cancelExample').addEventListener('click',()=>{clearStage(e.id,'example');cancel();pendingLabel()});
+ input.addEventListener('input',ev=>stageText(e.id,'example',ev.target.value));
  $('#saveExample').addEventListener('click',()=>{
   const previous=e.examples||'',next=input.value;
-  if(previous!==next){preserveExampleAnnotations(e,previous,next);e.examples=next;save(['example','actors']);render();}
+  if(previous!==next){preserveExampleAnnotations(e,previous,next);e.examples=next;if(save(['example','actors']))clearStage(e.id,'example');render();}
   view.innerHTML=wordHtml(e,'examples',e.examples);cancel();
   toast(previous!==next?'Ændringen sendes til Supabase…':'Ingen ændringer at gemme');
  });
@@ -787,6 +807,11 @@ function editableSection(e,field){
    '<div class="example-actions"><button class="btn ghost tiny" type="button" data-cancel-field="'+field+'">Annuller</button><button class="btn dark tiny" type="button" data-save-field="'+field+'">Gem i Supabase</button></div>'+
    '<p class="help" role="status" data-field-status="'+field+'"></p></div></section>';
 }
+$('#detailContent').addEventListener('input',ev=>{
+ const input=ev.target.closest('[data-field-text]');
+ const e=current();
+ if(input&&e)stageText(e.id,input.dataset.fieldText,input.value);
+});
 $('#detailContent').addEventListener('click',async ev=>{
  const button=ev.target.closest('[data-open-field],[data-cancel-field],[data-save-field]');
  if(!button)return;
@@ -798,11 +823,11 @@ $('#detailContent').addEventListener('click',async ev=>{
  const edit=section.querySelector('[data-field-editor]'),view=section.querySelector('[data-field-view]'),
   opener=section.querySelector('[data-open-field]'),input=section.querySelector('[data-field-text]'),
   status=section.querySelector('[data-field-status]');
- if(button.dataset.openField){input.value=e[config.prop]||'';edit.hidden=false;view.hidden=true;opener.hidden=true;input.focus();return;}
- if(button.dataset.cancelField){edit.hidden=true;view.hidden=false;opener.hidden=false;status.textContent='';return;}
+ if(button.dataset.openField){input.value=stagedText(e.id,field,e[config.prop]||'');edit.hidden=false;view.hidden=true;opener.hidden=true;input.focus();return;}
+ if(button.dataset.cancelField){clearStage(e.id,field);edit.hidden=true;view.hidden=false;opener.hidden=false;status.textContent='';pendingLabel();return;}
  const value=input.value;button.disabled=true;status.textContent='Sikrer ændringen og gemmer i Supabase…';
  try{
-  e[config.prop]=value;save([field]);render();
+  e[config.prop]=value;if(save([field]))clearStage(e.id,field);render();
   view.innerHTML='<p>'+(value?wordHtml(e,config.prop,value):'<i>Endnu ikke udfyldt</i>')+'</p>';
   await flushDatabase();
   if(saveQueue.get(e.id)?.fields?.[field]!==undefined){
@@ -824,14 +849,15 @@ function cancelTitleEditing(){
 }
 $('#editGambitTitle').addEventListener('click',()=>{
  const e=current();if(!e)return;
- $('#gambitTitleInput').value=e.name;
+ $('#gambitTitleInput').value=stagedText(e.id,'title',e.name);
  $('#gambitTitleStatus').textContent='';
  $('#gambitTitleEditor').hidden=false;
  $('#editGambitTitle').hidden=true;
  $('#gambitTitleInput').focus();
  $('#gambitTitleInput').select();
 });
-$('#cancelGambitTitle').addEventListener('click',cancelTitleEditing);
+$('#cancelGambitTitle').addEventListener('click',()=>{const e=current();if(e)clearStage(e.id,'title');cancelTitleEditing();pendingLabel()});
+$('#gambitTitleInput').addEventListener('input',ev=>{const e=current();if(e)stageText(e.id,'title',ev.target.value)});
 $('#gambitTitleInput').addEventListener('keydown',ev=>{
  if(ev.key==='Escape'){ev.preventDefault();ev.stopPropagation();cancelTitleEditing();}
 });
@@ -844,7 +870,7 @@ $('#gambitTitleEditor').addEventListener('submit',async ev=>{
  if(name===e.name&&!saveQueue.get(e.id)?.fields?.title){cancelTitleEditing();return;}
  submit.disabled=true;status.dataset.state='loading';status.textContent='Sikrer nyt navn og gemmer i Supabase…';
  try{
-  e.name=name;save(['title']);render();
+  e.name=name;const secured=save(['title']);if(secured)clearStage(e.id,'title');render();
   await flushDatabase();
   if(saveQueue.get(e.id)?.fields?.title){
    status.dataset.state='error';
@@ -892,7 +918,7 @@ $('#newForm').addEventListener('submit',async ev=>{
  }catch(err){$('#newError').textContent='IKKE OPRETTET: '+errorText(err);}
  finally{submit.disabled=false;}
 });
-$('#export').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({format:'Gambit-kort',version:6,exported:new Date().toISOString(),entries,rolePrefs,pendingEdits:[...saveQueue].map(([id,record])=>({id,fields:record.fields,base:record.base,blocked:record.blocked||''}))},null,2)],{type:'application/json'});const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download='gambitregister-backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1200)});
+$('#export').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({format:'Gambit-kort',version:6,exported:new Date().toISOString(),entries,rolePrefs,typingDrafts,pendingEdits:[...saveQueue].map(([id,record])=>({id,fields:record.fields,base:record.base,blocked:record.blocked||''}))},null,2)],{type:'application/json'});const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download='gambitregister-backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1200)});
 $('#import').addEventListener('click',()=>toast('Import til central database er endnu ikke aktiveret. Eksportér først en backup.'));
 render();consumeAuthCallback().then(consumed=>{if(!consumed)initAuth()});
 })();
