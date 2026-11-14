@@ -143,11 +143,11 @@ button[disabled]{cursor:not-allowed;opacity:.55}
 <div class="backdrop open" id="authBackdrop" role="dialog" aria-modal="true" aria-labelledby="authTitle">
  <form id="authForm" class="dialog-panel auth-panel">
   <div class="eyebrow">Centralt gambitregister</div><h2 id="authTitle">Log ind til Supabase</h2>
-  <p>Alle kort, eksempler og farvemarkeringer gemmes centralt. Log ind med den bruger, som har adgang til SMFI-projektet.</p>
+  <p>Alle kort, eksempler og farvemarkeringer gemmes centralt. Brug din <strong>appbruger i Supabase Auth</strong>. Adgangskoden til <em>supabase.com-dashboardet</em> er ikke nødvendigvis den samme.</p>
   <label for="authEmail">E-mail</label><input id="authEmail" type="email" autocomplete="username" required>
   <label for="authPassword">Adgangskode</label><input id="authPassword" type="password" autocomplete="current-password">
   <div class="dialog-actions"><button class="btn dark" type="submit" id="authSubmit">Log ind</button><button class="btn" type="button" id="authMagic">Send loginlink</button></div>
-  <p id="authMessage" class="auth-message" role="status" aria-live="polite"></p>
+  <p id="authMessage" class="auth-message" role="status" aria-live="polite"></p><p class="auth-message" id="connectionMessage" role="status" aria-live="polite"></p><div class="dialog-actions"><button class="btn tiny" id="checkConnection" type="button">Test forbindelsen til Supabase</button><a href="https://wpriingzftsboauvkmsj.supabase.co/auth/v1/health" target="_blank" rel="noopener noreferrer">Åbn Supabase-status i ny fane</a></div>
  </form>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -172,7 +172,7 @@ async function api(path,{method='GET',body,auth=true}={}){
  if(method==='PATCH'||method==='POST')headers.Prefer='return=representation';
  let result;
  try{result=await fetch(SUPABASE_URL+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body),cache:'no-store'});}
- catch(e){throw new Error('Ingen forbindelse til Supabase: '+e.message)}
+ catch(e){throw new Error('Ingen forbindelse til Supabase (adgangskoden er endnu ikke blevet kontrolleret): '+e.message)}
  let data=null;try{data=await result.json()}catch{}
  if(!result.ok){
   const explanation=data?.message||data?.msg||data?.error_description||data?.error||`HTTP ${result.status}`;
@@ -206,6 +206,18 @@ async function loadRegistry(){
  entries=rows.map(displayEntry);render();storageState(`${entries.length} gambits · Supabase forbundet`);
 }
 function authStatus(text){$('#authMessage').textContent=text}
+$('#checkConnection').addEventListener('click',async()=>{
+ const button=$('#checkConnection'),target=$('#connectionMessage');
+ button.disabled=true;
+ target.textContent='Tester forbindelsen til Supabase…';
+ try{
+   const response=await api('/auth/v1/health',{auth:false});
+   target.textContent='Forbindelsen virker. Supabase Auth svarer. Prøv derefter login eller »Send loginlink«.';
+ }catch(err){
+   target.textContent='FORBINDELSESFEJL: '+errorText(err)+'. Hvis statuslinket i en ny fane heller ikke åbner, er Supabase-adressen blokeret eller utilgængelig på denne forbindelse. Hvis statuslinket åbner, kan browserens sikkerhedsregler eller en udvidelse blokere API-kald.';
+ }
+ finally{button.disabled=false;}
+});
 function showAuth(){
  $('#authBackdrop').classList.add('open');
  storageState('Log ind for adgang til centrale gambits','error');
