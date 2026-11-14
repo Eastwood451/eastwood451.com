@@ -241,8 +241,9 @@ function applyDraft(e,fields){
  }
 }
 function pendingLabel(){
- const count=saveQueue.size;
+ const count=saveQueue.size,unfinished=Object.keys(typingDrafts).length;
  if(count)storageState(count+' kort med lokale nødudkast · afventer Supabase','loading');
+ else if(unfinished)storageState(unfinished+' ufærdige tekstredigeringer sikret lokalt · tryk Gem','loading');
  else storageState('Alle ændringer bekræftet i Supabase','connected');
 }
 restoreOutbox();
@@ -319,6 +320,7 @@ async function loadRegistry(){
  }
  render();
  if(saveQueue.size){pendingLabel();setTimeout(flushDatabase,120);}
+ else if(Object.keys(typingDrafts).length)pendingLabel();
  else storageState(entries.length+' gambits · Supabase forbundet');
 }
 function authStatus(text){$('#authMessage').textContent=text}
