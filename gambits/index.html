@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Gambitregister · kortoversigt</title>
+<style>
+:root {--bg:#f5f3ef;--paper:#fffefa;--ink:#202930;--muted:#66737b;--line:#dedbd2;--navy:#193d4a;--pale:#e9efec;--warm:#f4eee4;--accent:#be7e47;--shadow:0 14px 42px #152b2d18;}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,textarea,select{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #b57f42;outline-offset:3px}a{color:var(--navy)}
+.page{max-width:1190px;margin:auto;padding:0 32px 90px}.top{padding:44px 0 28px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:20px}.eyebrow{font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#67807d}.top h1{font:500 clamp(40px,5.2vw,69px)/1.05 Georgia,serif;letter-spacing:-.045em;margin:9px 0 0}.top h1 i{font-weight:400;color:#a16e40}.top p{margin:16px 0 0;line-height:1.6;color:var(--muted);max-width:680px;font-size:14px}.top-right{background:#e4e9e3;border:1px solid #d3dad4;border-radius:50%;width:87px;height:87px;flex:0 0 auto;display:grid;place-items:center;font:500 41px Georgia,serif;color:#2b5152}.toolbar{display:flex;align-items:center;gap:10px;padding:23px 0 12px;flex-wrap:wrap}.search-wrap{flex:1;min-width:220px;position:relative}.search-wrap svg{position:absolute;left:14px;top:12px;width:18px;height:18px;opacity:.6}.search-wrap input{background:var(--paper);color:var(--ink);border:1px solid #dcdcd4;border-radius:11px;padding:13px 13px 13px 44px;width:100%;box-shadow:0 1px 2px #3333}.btn,select{border:1px solid #dcdcd4;border-radius:10px;background:#fffefa;padding:12px 16px;color:#30444b;font-size:13px;font-weight:650;min-height:44px}.btn:hover,select:hover{background:#e9efec;border-color:#9db1aa}.btn.dark{background:var(--navy);color:white;border-color:var(--navy)}.btn.dark:hover{background:#315865}.btn.ghost{background:transparent}.filters{display:flex;gap:7px;margin:0 0 20px;align-items:center;flex-wrap:wrap}.filter{border:1px solid transparent;background:transparent;padding:9px 13px;border-radius:40px;color:#647278;font-size:12px;font-weight:650}.filter.selected{background:#dce7e1;border-color:#c8d7ce;color:#24494d}.filter:hover{background:#e7ece7}.spacer{flex:1}.count{font-size:12px;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}.card{position:relative;aspect-ratio:3 / 4;min-width:0;text-align:left;border:1px solid #dddcd3;border-radius:14px;background:var(--paper);padding:24px 23px 23px;color:inherit;display:flex;flex-direction:column;overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s;box-shadow:0 2px 4px #202a2a0a}.card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:#9eaca5}.card:before{content:"";position:absolute;top:0;left:0;width:100%;height:5px;background:#365e61}.card[data-origin="samtalen"]:before{background:#b17d4d}.card-number{font:500 11px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.11em;color:#718381}.card-title{font:500 clamp(23px,2.5vw,34px)/1.12 Georgia,serif;letter-spacing:-.03em;margin:35px 0 14px;overflow-wrap:anywhere}.card-summary{font-size:14px;line-height:1.65;color:#64717a;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}.card-bottom{margin-top:auto;display:flex;gap:8px;align-items:center;justify-content:space-between;border-top:1px solid #ede9e0;padding-top:17px}.card-origin{font-size:10px;font-weight:750;letter-spacing:.08em;text-transform:uppercase;color:#87908b}.card-arrow{font-size:24px;color:#2d5a5d;line-height:1}.empty{grid-column:1/-1;text-align:center;padding:90px 20px;color:#69777d;border:1px dashed #c7c8c0;border-radius:15px;background:#fffdfa}
+.backdrop{position:fixed;inset:0;background:#172b2f94;z-index:10;display:none;justify-content:flex-end}.backdrop.open{display:flex}.drawer{width:min(720px,100%);height:100%;background:var(--paper);overflow:auto;box-shadow:-15px 0 65px #0003;display:flex;flex-direction:column}.drawer-head{position:sticky;top:0;background:var(--paper);z-index:2;border-bottom:1px solid #e4e1d9;padding:24px 32px 18px}.drawer-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.drawer-code{font-size:12px;color:#5c7779;letter-spacing:.1em;font-weight:750}.close{border:1px solid #e0ded7;background:#f9f7f2;border-radius:9px;padding:4px 12px;font-size:26px;line-height:1.2}.drawer h2{font:500 clamp(31px,4vw,49px)/1.1 Georgia,serif;letter-spacing:-.03em;margin:26px 0 11px}.drawer-origin{font-size:12px;color:#75817e}.drawer-content{padding:24px 32px 50px;flex:1}.section{padding:15px 0 23px;border-bottom:1px solid #ebe8df}.section h3{color:#617c7d;letter-spacing:.12em;text-transform:uppercase;font-size:11px;margin:0 0 13px}.section p{font-size:15px;line-height:1.75;color:#37474d;white-space:pre-wrap;margin:0}.quote{background:#f0f3ef;border-left:3px solid #69918a;padding:22px 23px;border-radius:0 11px 11px 0;font:17px/1.7 Georgia,serif;white-space:pre-wrap}.notes{width:100%;border:1px solid #dcdcd4;border-radius:10px;padding:15px;background:#fff;min-height:110px;resize:vertical;line-height:1.5;color:var(--ink)}.drawer-actions{position:sticky;bottom:0;background:#fffef9ef;backdrop-filter:blur(14px);border-top:1px solid #e6e4dd;padding:15px 24px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}.drawer-actions .nav{margin-right:auto;display:flex;gap:6px}.tiny{padding:10px 12px;font-size:12px;min-height:40px}.footer{text-align:center;margin:48px 0 0;color:#86908d;font-size:12px;line-height:1.65}.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:23px;background:#203d42;color:white;padding:13px 20px;border-radius:12px;box-shadow:0 10px 35px #0002;z-index:30;opacity:0;pointer-events:none;transition:opacity .18s}.toast.visible{opacity:1}.dialog-panel{border:1px solid #dddcd3;border-radius:16px;padding:23px;background:#fffefa;max-width:530px;width:calc(100% - 30px);margin:auto;box-shadow:0 25px 70px #0003}.dialog-panel h2{margin:0 0 18px;font:30px Georgia,serif}.dialog-panel label{display:block;font-size:12px;font-weight:750;margin:16px 0 7px}.dialog-panel input,.dialog-panel textarea{width:100%;border:1px solid #dcdcd4;border-radius:9px;padding:12px}.dialog-panel textarea{min-height:110px}.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:1000px){.page{padding:0 23px 75px}.cards{gap:13px}.card{padding:20px}.card-title{margin-top:23px;font-size:clamp(21px,2.4vw,29px)}.card-summary{font-size:12px;-webkit-line-clamp:4}}
+@media(max-width:720px){.page{padding:0 15px 60px}.top{padding:30px 0 22px}.top-right{width:53px;height:53px;font-size:29px}.cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.card{padding:15px;border-radius:11px}.card-title{margin-top:15px;font-size:clamp(18px,4.5vw,26px)}.card-summary{font-size:11px;line-height:1.5;-webkit-line-clamp:3}.card-bottom{padding-top:10px}.card-origin{font-size:9px}.drawer-head,.drawer-content{padding-left:18px;padding-right:18px}.drawer-actions{padding:13px}.toolbar{gap:7px}.btn,select{padding:11px 12px}}
+@media(max-width:430px){.cards{grid-template-columns:1fr}.card{padding:21px 23px}.card-title{font-size:32px;margin-top:28px}.card-summary{font-size:14px;-webkit-line-clamp:5}.card-origin{font-size:10px}.top-right{display:none}.drawer-actions .nav{width:100%}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;scroll-behavior:auto!important}}
+
+/* Individuelle sproglige og pragmatiske vurderinger */
+.role-config{margin:5px 0 17px;border:1px solid #d9ded9;border-radius:13px;background:#eef2ee;padding:0 18px}
+.role-config summary{cursor:pointer;padding:14px 0;color:#28484a;font-size:13px;font-weight:750}
+.role-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding-bottom:12px}
+.role-grid label,.assessment-grid label{display:flex;flex-direction:column;gap:6px;font-size:12px;color:#4a5d5e;font-weight:650}
+.role-grid select,.assessment-grid select{background:white;border:1px solid #d9dcd5;border-radius:8px;padding:10px;min-width:0;width:100%;color:var(--ink)}
+.help{font-size:11px!important;line-height:1.55!important;color:#74827e!important;margin:0 0 14px!important}
+.assessment{background:#f6f7f3;border:1px solid #e1e6df;border-radius:12px;padding:17px;margin:8px 0}
+.assessment h4{margin:0 0 7px;color:#304d4c;font-size:15px}
+.assessment p{margin:4px 0 13px;color:#627372;font-size:12px;line-height:1.55}
+.assessment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.assessment textarea{width:100%;min-height:72px;resize:vertical;border-radius:8px;border:1px solid #d6dcd5;padding:10px;line-height:1.5;background:#fff;margin-top:8px}
+.assessment .detail-label{display:block;margin:12px 0 3px;color:#536c68;font-size:12px;font-weight:700}
+.assess-link{font-size:11px;color:#547477;display:flex;gap:9px;flex-wrap:wrap}
+@media(max-width:740px){.role-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:440px){.assessment-grid{grid-template-columns:1fr}}
+
+/* Aktørannotationer på enkeltord, separat for hver gambit og hver forekomst. */
+.actor-intro{background:#f2f6f2;border:1px solid #d9e2dd;border-radius:12px;padding:13px 16px;margin-bottom:14px}
+.actor-intro strong{font-size:13px;color:#294c50}
+.actor-intro p{font-size:12px;line-height:1.55;color:#566a6b;margin:6px 0 10px}
+.actor-legend{display:flex;flex-wrap:wrap;gap:6px}
+.actor-pill{border:1px solid #cdd7d1;background:white;border-radius:40px;padding:5px 9px;font-size:11px;display:inline-flex;align-items:center;gap:6px;color:#33474a}
+.actor-dot{width:11px;height:11px;display:inline-block;border-radius:50%;border:1px solid #1b2a2d40;flex:none}
+.actor-word{display:inline;padding:0 2px;margin:0 1px;background:transparent;border:0;border-bottom:1px dotted #78928d;border-radius:3px;color:inherit;font:inherit;line-height:inherit;white-space:inherit;text-align:inherit;cursor:pointer;text-decoration:none;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.actor-word:not(.has-actor):hover{background:#dce7df;box-shadow:0 0 0 2px #dce7df}
+.actor-word:focus-visible{outline:2px solid #365e61;outline-offset:1px}
+.actor-word.has-actor{border-bottom:1px solid var(--actor-border,#bbb);background:var(--actor-bg,#eee);color:var(--actor-fg,#111);font-weight:650}
+.actor-word.has-actor:hover{filter:brightness(.94)}
+/* Farver valgt til tydelig kontrast på den lyse læseflade. */
+[data-actor-color="Sort"]{--actor-bg:#29343c;--actor-fg:#fff;--actor-border:#29343c}
+[data-actor-color="Hvid"]{--actor-bg:#fff;--actor-fg:#26363c;--actor-border:#8eaba5}
+[data-actor-color="Grå"]{--actor-bg:#bcc3c8;--actor-fg:#1d292f;--actor-border:#66757b}
+[data-actor-color="Grøn"]{--actor-bg:#ccebd9;--actor-fg:#144d38;--actor-border:#58a57d}
+[data-actor-color="Gul"]{--actor-bg:#fff0a9;--actor-fg:#58450d;--actor-border:#d1b445}
+[data-actor-color="Blå"]{--actor-bg:#cfe2fc;--actor-fg:#173e69;--actor-border:#6b99d4}
+.actor-dot[data-actor-color="Sort"]{background:#29343c}
+.actor-dot[data-actor-color="Hvid"]{background:white}
+.actor-dot[data-actor-color="Grå"]{background:#a1a9af}
+.actor-dot[data-actor-color="Grøn"]{background:#56ba88}
+.actor-dot[data-actor-color="Gul"]{background:#edc84d}
+.actor-dot[data-actor-color="Blå"]{background:#679cdb}
+.actor-picker{position:fixed;z-index:55;width:min(355px,calc(100vw - 24px));padding:14px;background:#fffefa;border:1px solid #cad3cb;border-radius:13px;box-shadow:0 16px 48px #0a232740;display:none;color:#253941}
+.actor-picker.open{display:block}
+.actor-picker-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.actor-picker-head strong{font-size:14px}
+.actor-picker-sub{color:#657376;font-size:12px;line-height:1.5;margin:0 0 11px}
+.actor-picker-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.actor-choice{background:#f7f9f5;border:1px solid #d8dfd8;border-radius:9px;text-align:left;padding:9px;display:flex;gap:8px;align-items:center;color:#29444b;min-height:45px;font-size:12px}
+.actor-choice:hover,.actor-choice:focus-visible{border-color:#78988f;background:#ebf3ee}
+.actor-choice[aria-pressed="true"]{outline:2px solid #396a5f;outline-offset:0}
+.actor-choice-clear{grid-column:1/-1;justify-content:center}
+.actor-picker-close{font-size:17px;border:0;background:transparent;padding:2px 6px;color:#5c7376}
+@media(max-width:530px){.actor-word{padding:1px 3px}.actor-picker-options{gap:5px}.actor-choice{padding:7px}}
+
+/* Eksempler kan redigeres direkte på gambitkortet; aktørfarver bevares når ord flyttes. */
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 13px}
+.section-head h3{margin:0}
+.inline-edit{border:1px solid #b8c9be;background:#f5faf5;border-radius:8px;color:#2b5551;padding:7px 11px;font-size:12px;font-weight:750;white-space:nowrap}
+.inline-edit:hover{background:#e3f2e8}
+.example-editor[hidden],.example-view[hidden]{display:none!important}
+.example-editor textarea{width:100%;min-height:235px;padding:17px 18px;border:1px solid #92a99b;border-radius:9px;background:#fff;font:16px/1.7 Georgia,serif;color:#22313b;resize:vertical;white-space:pre-wrap}
+.example-actions{display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:8px;margin-top:9px}
+.example-editor .help{margin-right:auto!important}
+.example-status{font-size:11px;color:#637b75;margin:10px 0 0}
+.storage-state{font-size:12px;color:#45635c;font-weight:650;white-space:nowrap}
+.storage-state[data-state=error]{color:#a43f35}
+.storage-state[data-state=loading]{color:#68757c}
+@media(max-width:600px){.example-editor textarea{min-height:250px}.section-head{align-items:flex-start}.inline-edit{padding:7px}}
+
+.auth-panel{width:min(520px,calc(100vw - 36px))}.auth-message{color:#a13b30!important;line-height:1.5!important;font-size:13px!important;min-height:24px;margin-top:18px!important}
+#authBackdrop{z-index:65;justify-content:center;align-items:center}
+button[disabled]{cursor:not-allowed;opacity:.55}
+#newError{color:#a13b30!important;margin-top:10px!important}
+</style>
+</head>
+<body>
+<div class="page">
+ <header class="top"><div><div class="eyebrow">Gambitregister · empirisk kortoversigt</div><h1>Gambit<i>kort.</i></h1><p>Ét samtaletræk. Ét permanent ID. Ingen tvungen taksonomi. Åbn et kort for at læse eksempler og beskrivelser, og kopiér indholdet til en samtale.</p></div><div class="top-right" aria-hidden="true">G</div></header>
+ <div class="toolbar">
+  <label class="search-wrap"><span class="sr-only">Søg i gambits</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m16.5 16.5 5 5"></path></svg><input id="search" placeholder="Søg i navn, eksempel eller ID ..." autocomplete="off"></label>
+  <select id="sort" aria-label="Sortér"><option value="id">ID-rækkefølge</option><option value="name">Navn A–Å</option></select>
+  <button class="btn dark" id="add">+ Ny gambit</button>
+  <button class="btn" id="export">Eksportér</button>
+  <button class="btn" id="import">Importér</button><span class="storage-state" id="storageState" data-state="loading" aria-live="polite">Forbinder til Supabase…</span><button class="btn tiny" id="retrySave">Genindlæs / prøv at gemme igen</button><button class="btn tiny" id="logout">Log ud</button>
+  <input id="file" type="file" accept="application/json,.json" hidden>
+ </div>
+ <details class="role-config" id="roleConfig"><summary>Roller, køn og pronomener · indstillinger for visningen</summary>
+  <div class="role-grid">
+    <label>Hvids køn<select id="whiteGender"><option value="unknown">Ikke angivet</option><option value="male">Mand</option><option value="female">Kvinde</option></select></label>
+    <label>Hvid omtales som<select id="whiteTerm"><option value="Hvid">Hvid</option><option value="han">han</option><option value="hun">hun</option></select></label>
+    <label>Sorts køn<select id="blackGender"><option value="unknown">Ikke angivet</option><option value="male">Mand</option><option value="female">Kvinde</option></select></label>
+    <label>Sort omtales som<select id="blackTerm"><option value="Sort">Sort</option><option value="han">han</option><option value="hun">hun</option></select></label>
+  </div>
+  <p class="help">Skifter kun Hvid/Sort-markører i visningen, ikke kildematerialet. Allerede citerede »han« og »hun« ændres ikke, da vi ikke kan vide, hvem de henviser til. To ens pronomener kan gøre samtaleeksempler tvetydige. Dine valg gemmes lokalt.</p>
+ </details>
+ <div class="filters"><button class="filter selected" data-filter="alle">Alle</button><button class="filter" data-filter="manuskript">Fra manuskriptet</button><button class="filter" data-filter="samtalen">Fra samtalen</button><button class="filter" data-filter="egne">Egne nye</button><span class="spacer"></span><span class="count" id="count"></span></div>
+ <main><div class="cards" id="cards" aria-live="polite"></div></main>
+ <div class="footer">Et åbent, uafsluttet empirisk register. Samtaleprincippers overholdelse er en vurdering, ikke en automatisk egenskab. Kilderne er særskilt mærket, og forslag er ikke automatisk dokumenterede mekanismer.<br>Registerets indhold læses fra og gemmes i Supabase. En ændring regnes først for gemt, når serveren har bekræftet den. Eksportér gerne sikkerhedskopier.</div>
+</div>
+<div class="backdrop" id="backdrop" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+ <div class="drawer"><div class="drawer-head"><div class="drawer-top"><span class="drawer-code" id="detailCode"></span><button class="close" id="close" aria-label="Luk detaljer">×</button></div><h2 id="detailTitle"></h2><div class="drawer-origin" id="detailOrigin"></div></div><div class="drawer-content" id="detailContent"></div><div class="drawer-actions"><span class="nav"><button class="btn tiny" id="previous">← Forrige</button><button class="btn tiny" id="next">Næste →</button></span><button class="btn tiny" id="copyId">Kopiér ID</button><button class="btn dark tiny" id="copyChat">Kopiér til chatten</button></div></div>
+</div>
+<div class="backdrop" id="addBackdrop" role="dialog" aria-modal="true" aria-labelledby="addTitle"><form class="dialog-panel" id="newForm"><h2 id="addTitle">Registrér en gambit</h2><p>Kun et navn og en iagttagelse er nødvendig. Resten kan komme senere.</p><label for="newName">Navn</label><input id="newName" required maxlength="160" placeholder="Et navn for trækket"><label for="newExample">Replik / observation</label><textarea id="newExample" placeholder="Hvad blev sagt eller gjort?"></textarea><label for="newPlain">Foreløbig beskrivelse</label><textarea id="newPlain" placeholder="Hvad kendetegner strukturen?"></textarea><p id="newError" class="help" role="status" aria-live="polite"></p><div class="dialog-actions"><button type="button" class="btn" id="cancelAdd">Annuller</button><button type="submit" class="btn dark">Gem med nyt ID</button></div></form></div>
+<div class="actor-picker" id="actorPicker" role="dialog" aria-label="Vælg aktørfarve" aria-hidden="true">
+ <div class="actor-picker-head"><strong id="actorPickedWord">Tildel aktørfarve</strong><button type="button" class="actor-picker-close" id="actorPickerClose" aria-label="Luk aktørvalg">×</button></div>
+ <p class="actor-picker-sub">Farven gælder kun denne forekomst på dette gambitkort.</p>
+ <div class="actor-picker-options" id="actorPickerOptions"></div>
+</div>
+
+<div class="backdrop open" id="authBackdrop" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+ <form id="authForm" class="dialog-panel auth-panel">
+  <div class="eyebrow">Centralt gambitregister</div><h2 id="authTitle">Log ind til Supabase</h2>
+  <p>Alle kort, eksempler og farvemarkeringer gemmes centralt. Log ind med den bruger, som har adgang til SMFI-projektet.</p>
+  <label for="authEmail">E-mail</label><input id="authEmail" type="email" autocomplete="username" required>
+  <label for="authPassword">Adgangskode</label><input id="authPassword" type="password" autocomplete="current-password">
+  <div class="dialog-actions"><button class="btn dark" type="submit" id="authSubmit">Log ind</button><button class="btn" type="button" id="authMagic">Send loginlink</button></div>
+  <p id="authMessage" class="auth-message" role="status" aria-live="polite"></p>
+ </form>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(()=>{'use strict';
+const SEED=[];
+const KEY='gambitregister-kort-v3';let entries,activeId=null,selectedFilter='alle',currentOrder=[],toastTimeout,lastFocus;
+const $=(s)=>document.querySelector(s);const clean=s=>String(s??'');const esc=s=>clean(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const toast=(msg)=>{const el=$('#toast');el.textContent=msg;el.classList.add('visible');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>el.classList.remove('visible'),2600)};
+entries=[];
+// Registry contents are NEVER saved in the browser. Browser storage holds only an auth session and optional display preferences.
+const SUPABASE_URL='https://wpriingzftsboauvkmsj.supabase.co';
+const PUBLISHABLE_KEY='sb_publishable_bSvkvx_Lqd5ZEt94oVdMaw_44WV2fYE';
+const SESSION_KEY='smfi-gambits-auth-session-v1';
+let session=null,flushing=false,flushTimer=null,saveQueue=new Map();
+function storageState(message,kind='connected'){const n=$('#storageState');n.textContent=message;n.dataset.state=kind;}
+function errorText(err){return err?.message||'Ukendt fejl';}
+async function api(path,{method='GET',body,auth=true}={}){
+ const headers={'apikey':PUBLISHABLE_KEY,'Content-Type':'application/json'};
+ if(auth&&session?.access_token)headers.Authorization='Bearer '+session.access_token;
+ if(method==='PATCH'||method==='POST')headers.Prefer='return=representation';
+ let result;
+ try{result=await fetch(SUPABASE_URL+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body),cache:'no-store'});}
+ catch(e){throw new Error('Ingen forbindelse til Supabase: '+e.message)}
+ let data=null;try{data=await result.json()}catch{}
+ if(!result.ok){
+  const explanation=data?.message||data?.msg||data?.error_description||data?.error||`HTTP ${result.status}`;
+  if(result.status===401)storageState('Login udløbet. Log ind igen.','error');
+  throw new Error(explanation);
+ }
+ return data;
+}
+function displayEntry(row){
+ const base=row.source_meta||{};
+ return {
+  ...base,id:row.id,name:row.title,plain:row.short_description||'',examples:row.example||'',
+  mechanism:row.operation||'',notes:row.notes||'',
+  actorAnnotations:row.actors?.annotations||{},assessments:row.principles?.assessments||{},
+  assessmentNotes:row.principles?.assessmentNotes||'',
+  origin:base.origin||'egne',status:base.status||'Ny',dbVersion:row.version,
+  theory:base.theory||'',countermove:base.countermove||'',
+  source_label:base.source_label||'',source_url:base.source_url||''
+ };
+}
+function entryPayload(e){return {
+ title:e.name,short_description:e.plain||'',example:e.examples||'',operation:e.mechanism||'',notes:e.notes||'',
+ actors:{annotations:e.actorAnnotations||{}},
+ principles:{assessments:e.assessments||{},assessmentNotes:e.assessmentNotes||''}
+};}
+async function loadRegistry(){
+ storageState('Henter gambits fra Supabase…','loading');
+ const rows=await api('/rest/v1/smfi_gambits?select=*&order=id.asc&limit=1000');
+ if(!Array.isArray(rows))throw new Error('Supabase returnerede ikke et register.');
+ if(rows.length===0)throw new Error('Ingen adgang til gambits. Kontrollér editorrettigheder i Supabase.');
+ entries=rows.map(displayEntry);render();storageState(`${entries.length} gambits · Supabase forbundet`);
+}
+function authStatus(text){$('#authMessage').textContent=text}
+function showAuth(){
+ $('#authBackdrop').classList.add('open');
+ storageState('Log ind for adgang til centrale gambits','error');
+ $('#add').disabled=true;
+}
+function hideAuth(){
+ $('#authBackdrop').classList.remove('open');$('#add').disabled=false;
+}
+async function enterSession(data){
+ if(!data?.access_token)throw Error('Intet gyldigt login-token fra Supabase');
+ session=data;sessionStorage.setItem(SESSION_KEY,JSON.stringify(data));
+ await loadRegistry();hideAuth();
+}
+async function refreshSession(){
+ if(!session?.refresh_token)throw Error('Ingen session');
+ const data=await api('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:{refresh_token:session.refresh_token},auth:false});
+ session=data;sessionStorage.setItem(SESSION_KEY,JSON.stringify(data));return data;
+}
+async function initAuth(){
+ try{
+  const saved=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');
+  if(!saved)throw Error('Login kræves');
+  session=saved;
+  const exp=saved.expires_at||0;
+  if(exp&&Date.now()/1000>exp-90)await refreshSession();
+  await loadRegistry();hideAuth();
+ }catch(err){session=null;sessionStorage.removeItem(SESSION_KEY);showAuth();authStatus('Log ind med din Supabase-bruger for at redigere det centrale register.');}
+}
+async function loginEmailPassword(email,password){
+ const data=await api('/auth/v1/token?grant_type=password',{method:'POST',body:{email,password},auth:false});
+ if(!data.expires_at&&data.expires_in)data.expires_at=Math.floor(Date.now()/1000)+data.expires_in;
+ await enterSession(data);
+}
+$('#authForm').addEventListener('submit',async ev=>{
+ ev.preventDefault();const button=$('#authSubmit');button.disabled=true;authStatus('Logger ind…');
+ try{await loginEmailPassword($('#authEmail').value.trim(),$('#authPassword').value);$('#authPassword').value='';authStatus('');}
+ catch(err){authStatus('Login mislykkedes: '+errorText(err));showAuth();}
+ finally{button.disabled=false;}
+});
+$('#authMagic').addEventListener('click',async()=>{
+ const email=$('#authEmail').value.trim();if(!email){authStatus('Skriv din Supabase-e-mail først.');return;}
+ try{
+  await api('/auth/v1/otp?redirect_to='+encodeURIComponent(location.origin+location.pathname),{method:'POST',body:{email,create_user:false},auth:false});
+  authStatus('Hvis adressen findes i Supabase Auth, er et loginlink sendt. Åbn det i samme browser.');
+ }catch(err){authStatus('Kunne ikke sende loginlink: '+errorText(err));}
+});
+// Supabase may redirect to this page with an access token in the URL fragment (magic-link login).
+async function consumeAuthCallback(){
+ const fragment=new URLSearchParams(location.hash.replace(/^#/,''));
+ if(fragment.get('access_token')){
+  const d={access_token:fragment.get('access_token'),refresh_token:fragment.get('refresh_token'),
+    expires_in:Number(fragment.get('expires_in')||3600)};
+  d.expires_at=Math.floor(Date.now()/1000)+d.expires_in;
+  history.replaceState(null,'',location.pathname+location.search);
+  try{await enterSession(d)}catch(err){showAuth();authStatus('Loginlink fejlede: '+errorText(err))}
+  return true;
+ }
+ return false;
+}
+$('#logout').addEventListener('click',()=>{session=null;sessionStorage.removeItem(SESSION_KEY);entries=[];render();showAuth()});
+function save(){
+ const e=current();if(!e)return;
+ saveQueue.set(e.id,entryPayload(e));
+ storageState('Ikke gemt endnu · sender til Supabase…','loading');
+ clearTimeout(flushTimer);flushTimer=setTimeout(flushDatabase,450);
+}
+async function flushDatabase(){
+ if(flushing||!session||saveQueue.size===0)return;
+ flushing=true;
+ while(saveQueue.size){
+  const [id,payload]=saveQueue.entries().next().value;
+  saveQueue.delete(id);
+  const e=entries.find(x=>x.id===id);
+  if(!e)continue;
+  try{
+   const q='?id=eq.'+encodeURIComponent(id)+'&version=eq.'+encodeURIComponent(String(e.dbVersion))+'&select=*';
+   const rows=await api('/rest/v1/smfi_gambits'+q,{method:'PATCH',body:payload});
+   if(!rows||rows.length!==1)throw Error('Konflikt: Kortet er ændret i databasen af en anden session. Eksportér ændringerne og genindlæs.');
+   e.dbVersion=rows[0].version;
+   if(saveQueue.size===0)storageState(`Ændringer gemt centralt · ${id}`);
+  }catch(err){
+   saveQueue.set(id,payload);
+   storageState('IKKE GEMT! '+errorText(err),'error');
+   console.error('Supabase-skrivning mislykkedes',err);
+   break;
+  }
+ }
+ flushing=false;
+ if(saveQueue.size&&($('#storageState').dataset.state!=='error')){clearTimeout(flushTimer);flushTimer=setTimeout(flushDatabase,200);}
+}
+$('#retrySave').addEventListener('click',()=>{if(saveQueue.size)flushDatabase();else loadRegistry().catch(err=>storageState('Kunne ikke opdatere: '+errorText(err),'error'))});
+
+function current(){return entries.find(x=>x.id===activeId)}
+function visible(){const q=$('#search').value.toLocaleLowerCase('da').trim();return entries.filter(e=>(selectedFilter==='alle'||e.origin===selectedFilter)&&(!q||[e.id,e.name,e.plain,e.examples,e.mechanism,e.notes].some(v=>clean(v).toLocaleLowerCase('da').includes(q)))).sort((a,b)=>$('#sort').value==='name'?a.name.localeCompare(b.name,'da'):Number(a.id.split('-')[1])-Number(b.id.split('-')[1]));}
+const ROLE_KEY='gambitregister-roller-v3';
+const ROLE_DEFAULT={whiteGender:'unknown',blackGender:'unknown',whiteTerm:'Hvid',blackTerm:'Sort'};
+let rolePrefs={...ROLE_DEFAULT};
+try{const stored=JSON.parse(localStorage.getItem(ROLE_KEY)||localStorage.getItem('jacob-gambit-roles-v1')||'{}');for(const k of Object.keys(ROLE_DEFAULT))if(typeof stored[k]==='string')rolePrefs[k]=stored[k]}catch{}
+for(const k of Object.keys(ROLE_DEFAULT)){$('#'+k).value=rolePrefs[k]}
+function displayRoleText(text){
+  // Kildestrengen bevares intakt. Kun eksplicitte rolleetiketter omskrives i præsentationen.
+  const w=rolePrefs.whiteTerm,b=rolePrefs.blackTerm;
+  const map={Hvid:w,Sort:b,Hvids:w==='Hvid'?'Hvids':w==='han'?'hans':'hendes',Sorts:b==='Sort'?'Sorts':b==='han'?'hans':'hendes'};
+  return clean(text).replace(/\b(Hvids|Sorts|Hvid|Sort)\b/g,(word)=>{
+    const out=map[word];return out==='han'?'han':out==='hun'?'hun':out;
+  });
+}
+function capitalRoleText(text){return displayRoleText(text).replace(/(^|[\n.!?]\s*)(han|hun)(?=\s|:)/g,(whole,prefix,pron)=>prefix+pron[0].toUpperCase()+pron.slice(1))}
+for(const k of Object.keys(ROLE_DEFAULT)){
+  $('#'+k).addEventListener('change',(ev)=>{
+    rolePrefs[k]=ev.target.value;
+    if(k==='whiteGender' || k==='blackGender'){
+      const side=k==='whiteGender'?'white':'black';const term=side+'Term';const gender=rolePrefs[k];
+      rolePrefs[term]=gender==='male'?'han':gender==='female'?'hun':side==='white'?'Hvid':'Sort';
+      $('#'+term).value=rolePrefs[term];
+    }
+    if(k==='whiteTerm' || k==='blackTerm'){
+      const side=k==='whiteTerm'?'white':'black';
+      // Hvis pronomener vælges direkte opdateres kønsindstillingen tilsvarende.
+      rolePrefs[side+'Gender']=ev.target.value==='han'?'male':ev.target.value==='hun'?'female':'unknown';
+      $('#'+side+'Gender').value=rolePrefs[side+'Gender'];
+    }
+    try{localStorage.setItem(ROLE_KEY,JSON.stringify(rolePrefs))}catch{}
+    render();if(activeId)open(activeId);
+  });
+}
+// Nøglerne må tilhøre hvert enkelt gambitkort. Ingen standardklassifikation påføres.
+const PRINCIPLES=[
+  {key:'charity',label:'Principle of Charity',desc:'Er den andens ytring fortolket velvilligt og rationelt? Vurder fortolkningen, ikke blot ordlyden.'},
+  {key:'grice',label:'Samarbejdsprincippet',desc:'Deltager ytringen konstruktivt i samtalens fælles formål?'},
+  {key:'quality',label:'Kvalitet (sandfærdighed)',desc:'Fremsættes påstande, som afsender har grundlag for at anse for sande?'},
+  {key:'quantity',label:'Kvantitet (informationsmængde)',desc:'Gives passende information til det aktuelle spørgsmål?'},
+  {key:'relation',label:'Relevans',desc:'Er bidraget relevant for det aktuelle spørgsmål?'},
+  {key:'manner',label:'Måde (klarhed)',desc:'Er formuleringen tilstrækkeligt klar og ordnet?'},
+  {key:'leech',label:'Høflighedsprincippet',desc:'Er hensynet til den andens ansigt og sociale relation bevaret?'},
+  {key:'tact',label:'Takt og hensyn',desc:'Minimeres unødige omkostninger og maksimeres hensynet til modparten?'},
+  {key:'generosity',label:'Generøsitet',desc:'Undgås urimelig egenfordel på modpartens bekostning?'}
+];
+const ASSESS_VALUES=[['unknown','Ikke vurderet'],['kept','Overholdt'],['broken','Brudt'],['mixed','Blandet / kontekstafhængigt'],['na','Ikke relevant']];
+function assessSection(e){
+ const a=e.assessments||{};
+ const item=(v)=>`<label title="${esc(v.desc)}">${esc(v.label)}<select class="principle-value" data-principle="${esc(v.key)}" aria-label="Vurdering af ${esc(v.label)}">${ASSESS_VALUES.map(([value,label])=>`<option value="${value}" ${a[v.key]===value?'selected':''}>${label}</option>`).join('')}</select></label>`;
+ const group=(title,description,items,links)=>`<div class="assessment"><h4>${title}</h4><p>${description}</p><div class="assessment-grid">${items.map(item).join('')}</div>${links||''}</div>`;
+ return `<section class="section" id="principleAssessments"><h3>Samtaleprincipper · vurdering pr. gambit</h3><p class="help">Muligt brud er ikke automatisk dokumenteret. Vurder hvert princip ud fra ytringens rolle og konkret kontekst. Markér gerne »blandet« ved flertydighed, fx Grices tilsigtede maksimebrud (implicaturer).</p>`+
+ group('1. Fortolkningsvelvilje','Vurder, om et udsagn tolkes rimeligt og sammenhængende uden uberettiget mistænkeliggørelse.',PRINCIPLES.slice(0,1),'<div class="assess-link"><a href="https://en.wikipedia.org/wiki/Principle_of_charity" target="_blank" rel="noopener">Principle of Charity</a></div>')+
+ group('2. Samtalesamarbejde','De fire samtalemaksimer kan vurderes individuelt. Afvigelse er ikke altid manipulation: ironi og implicaturer kan være samarbejdende.',PRINCIPLES.slice(1,6),'<div class="assess-link"><a href="https://en.wikipedia.org/wiki/Cooperative_principle" target="_blank" rel="noopener">Cooperative Principle</a></div>')+
+ group('3. Høflighed og hensyn','Vurder hensyn og unødvendig belastning samt generøsitet i samtalen.',PRINCIPLES.slice(6,9),'<div class="assess-link"><a href="https://www.researchgate.net/publication/353581192_Politeness_Principle" target="_blank" rel="noopener">Politeness Principle</a></div>')+
+ `<label class="detail-label" for="assessmentNotes">Begrundelse / observationer</label><textarea class="notes" id="assessmentNotes" placeholder="Hvilke konkrete ytringer støtter vurderingen? Hvad er den alternative fortolkning?">${esc(e.assessmentNotes||'')}</textarea><p class="help">Vurderingen gemmes sammen med kortet og kommer med ved eksport.</p></section>`;
+}
+function bindAssessments(e){
+  document.querySelectorAll('#principleAssessments select[data-principle]').forEach(s=>s.addEventListener('change',ev=>{
+    e.assessments=e.assessments||{};
+    e.assessments[ev.target.dataset.principle]=ev.target.value;
+    save();
+  }));
+  $('#assessmentNotes').addEventListener('input',ev=>{e.assessmentNotes=ev.target.value;save()});
+}
+const ACTORS=[
+  {id:'Sort',label:'Sort',desc:'Bad-faith-operatør'},
+  {id:'Hvid',label:'Hvid',desc:'Good-faith-operatør'},
+  {id:'Grå',label:'Grå',desc:'Omtalt bad-faith-operatør'},
+  {id:'Grøn',label:'Grøn',desc:'Neutral operatør'},
+  {id:'Gul',label:'Gul',desc:'Neutral operatør'},
+  {id:'Blå',label:'Blå',desc:'Neutral operatør'}
+];
+// Tokenisering uden gæt: hvert forekomst-ID bindes til originalfelt og tegnposition.
+// Ordgrænser er Unicode-aware, så "du" ikke findes inde i andre ord.
+const ACTOR_WORDS=/Hvids|Sorts|Grås|Grøns|Guls|Blås|Hvid|Sort|Grå|Grøn|Gul|Blå|jeg|mig|min|mit|mine|vi|os|vores|du|dig|din|dit|dine|I|jer|jeres|han|ham|hans|hun|hende|hendes|den|det|de|dem|deres|sig|sin|sit|sine/giu;
+const IN_WORD=/[\p{L}\p{N}_]/u;
+const TOKEN_DEFAULTS={hvid:'Hvid',hvids:'Hvid',sort:'Sort',sorts:'Sort',grå:'Grå',grås:'Grå',grøn:'Grøn',grøns:'Grøn',gul:'Gul',guls:'Gul',blå:'Blå',blås:'Blå'};
+let pickedActorToken=null;
+function tokenRole(e,field,pos,token){
+  const key=field+':'+pos;
+  if(e.actorAnnotations && Object.hasOwn(e.actorAnnotations,key))return e.actorAnnotations[key]==='none'?'':e.actorAnnotations[key];
+  // Eksplicitte rolleetiketter er kun standardfarver. Kan overskrives på enhver forekomst.
+  return TOKEN_DEFAULTS[token.toLocaleLowerCase('da')]||'';
+}
+function actorWordTitle(word,role){return 'Klik for aktørfarve: '+word+'. '+(role?'Tildelt '+role:'Endnu ingen farve')}
+function wordHtml(e,field,text){
+  const input=clean(text);
+  const regex=new RegExp(ACTOR_WORDS.source,ACTOR_WORDS.flags);
+  let result='',end=0,m;
+  while((m=regex.exec(input))!==null){
+    const start=m.index,word=m[0];
+    if((start>0&&IN_WORD.test(input[start-1]))||(start+word.length<input.length&&IN_WORD.test(input[start+word.length]))){continue}
+    result+=esc(capitalRoleText(input.slice(end,start)));
+    const role=tokenRole(e,field,start,word),visibleWord=displayRoleText(word);
+    const label=visibleWord==='han'&&word[0]===word[0]?.toUpperCase()&&/(^|[.!?]\s*)$/.test(input.slice(Math.max(0,start-4),start))?'Han':visibleWord;
+    result+=`<button type="button" class="actor-word${role?' has-actor':''}" data-actor-field="${esc(field)}" data-actor-pos="${start}" ${role?`data-actor-color="${esc(role)}"`:''} title="${esc(actorWordTitle(word,role))}" aria-label="${esc(actorWordTitle(word,role))}">${esc(label)}</button>`;
+    end=start+word.length;
+  }
+  result+=esc(capitalRoleText(input.slice(end)));
+  return result;
+}
+function actorIntroduction(e){
+ const annotated=Object.values(e.actorAnnotations||{}).filter(x=>x!=='none').length;
+ return `<div class="actor-intro"><strong>Aktørfarver i dette gambitkort</strong><p>Klik direkte på »jeg«, »du«, »han«, »hun«, »Hvid«, »Sort« osv. i teksten for at tildele farve. Samme ord kan få forskellig farve hver gang det optræder. Det ændrer ikke kildeteksten. ${annotated?annotated+' individuelt tildelte forekomster.':''}</p><div class="actor-legend">${ACTORS.map(a=>`<span class="actor-pill"><span class="actor-dot" data-actor-color="${a.id}"></span><span><strong>${a.label}</strong> · ${a.desc}</span></span>`).join('')}</div></div>`;
+}
+function showActorPicker(button){
+ const e=current();if(!e)return;
+ pickedActorToken=button;
+ const field=button.dataset.actorField,pos=Number(button.dataset.actorPos);
+ const raw=clean(e[field]);const m=raw.slice(pos).match(/^[\p{L}\p{N}_]+/u);
+ const word=m?m[0]:button.textContent;
+ const selected=tokenRole(e,field,pos,word);
+ $('#actorPickedWord').textContent='»'+button.textContent+'« · tildel farve';
+ $('#actorPickerOptions').innerHTML=ACTORS.map(a=>`<button type="button" class="actor-choice" data-pick-color="${a.id}" aria-pressed="${selected===a.id?'true':'false'}"><span class="actor-dot" data-actor-color="${a.id}"></span><span><strong>${a.label}</strong><br>${a.desc}</span></button>`).join('')+`<button type="button" class="actor-choice actor-choice-clear" data-pick-color="none">Fjern farve fra denne forekomst</button>`;
+ const pick=$('#actorPicker');pick.classList.add('open');pick.setAttribute('aria-hidden','false');
+ const rect=button.getBoundingClientRect();const width=pick.offsetWidth,height=pick.offsetHeight;
+ const left=Math.min(Math.max(12,rect.left-8),Math.max(12,window.innerWidth-width-12));
+ const top=rect.bottom+12+height<window.innerHeight?rect.bottom+8:Math.max(10,rect.top-height-8);
+ pick.style.left=left+'px';pick.style.top=top+'px';
+ pick.querySelector('.actor-choice[aria-pressed="true"]')?.focus()||pick.querySelector('.actor-choice')?.focus();
+}
+function hideActorPicker(restoreFocus=false){
+ const pick=$('#actorPicker');pick.classList.remove('open');pick.setAttribute('aria-hidden','true');
+ if(restoreFocus&&pickedActorToken?.isConnected)pickedActorToken.focus();
+ pickedActorToken=null;
+}
+function setActorColor(color){
+ const e=current(),btn=pickedActorToken;if(!e||!btn)return;
+ const key=btn.dataset.actorField+':'+btn.dataset.actorPos;
+ if(!e.actorAnnotations||typeof e.actorAnnotations!=='object')e.actorAnnotations={};
+ e.actorAnnotations[key]=color;
+ const newRole=color==='none'?'':color;
+ btn.classList.toggle('has-actor',!!newRole);
+ if(newRole)btn.setAttribute('data-actor-color',newRole);else btn.removeAttribute('data-actor-color');
+ const word=btn.textContent;btn.title=actorWordTitle(word,newRole);btn.setAttribute('aria-label',btn.title);
+ save();hideActorPicker(true);toast(newRole?`Markeret som ${newRole} på ${e.id}`:`Farven fjernet på ${e.id}`);
+}
+$('#detailContent').addEventListener('click',ev=>{const b=ev.target.closest('.actor-word');if(b)showActorPicker(b)});
+$('#actorPickerOptions').addEventListener('click',ev=>{const b=ev.target.closest('[data-pick-color]');if(b)setActorColor(b.dataset.pickColor)});
+$('#actorPickerClose').addEventListener('click',()=>hideActorPicker(true));
+document.addEventListener('pointerdown',ev=>{if(pickedActorToken&&!ev.target.closest('#actorPicker')&&!ev.target.closest('.actor-word'))hideActorPicker()});
+$('#detailContent').addEventListener('scroll',()=>{if(pickedActorToken)hideActorPicker()},true);
+function actorSummary(e){
+ const annotations=e.actorAnnotations||{};
+ const items=Object.entries(annotations).filter(([key,value])=>value&&value!=='none').map(([key,value])=>{
+   const m=key.match(/^(\w+):(\d+)$/);if(!m)return null;
+   const raw=clean(e[m[1]]),index=Number(m[2]);
+   const word=raw.slice(index).match(/^[\p{L}\p{N}_]+/u)?.[0]||'';
+   const context=raw.slice(Math.max(0,index-25),Math.min(raw.length,index+word.length+30)).replace(/\s+/g,' ');
+   return `${m[1]} / position ${index}: »${word}« → ${value} (…${context}…)`;
+ }).filter(Boolean);
+ return items.length?'\nAktørtildelinger pr. forekomst:\n'+items.join('\n'):'\nAktørtildelinger: Ingen individuelt registreret. Eksplicitte Hvid/Sort-etiketter vises dog med standardfarver.';
+}
+
+function exampleSection(e){
+ return `<section class="section" id="exampleSection"><div class="section-head"><h3>Eksempel fra kilden</h3><button class="inline-edit" id="editExample" type="button">✎ Redigér eksempel</button></div>
+ <div class="example-view quote" id="exampleView">${wordHtml(e,'examples',e.examples||'')}</div>
+ <div class="example-editor" id="exampleEditor" hidden><textarea id="exampleInput" aria-label="Redigér eksempel" spellcheck="true">${esc(e.examples||'')}</textarea>
+ <div class="example-actions"><span class="help">Gemmer teksten og aktørfarverne til dette kort.</span><button type="button" class="btn ghost tiny" id="cancelExample">Annuller</button><button type="button" class="btn dark tiny" id="saveExample">Gem eksempel</button></div></div>
+ <p class="example-status">Klik på ord i eksemplet for at tildele aktørfarver. Vælg »Redigér eksempel« for at ændre selve teksten.</p></section>`;
+}
+// Ved tekstændringer knyttes farver igen til de samme bevarede ord.
+function allWordTokens(text){
+ const regex=/[\p{L}\p{N}]+/gu,tokens=[];let m;
+ while((m=regex.exec(text))!==null)tokens.push({word:m[0].toLocaleLowerCase('da'),pos:m.index});
+ return tokens;
+}
+function preserveExampleAnnotations(e,previous,next){
+ const prior=e.actorAnnotations||{};
+ const tracked=Object.entries(prior).filter(([key])=>key.startsWith('examples:'));
+ if(!tracked.length)return;
+ const oldWords=allWordTokens(previous),newWords=allWordTokens(next);
+ const oldLength=oldWords.length,newLength=newWords.length;
+ const atOld=new Map();oldWords.forEach((token,i)=>atOld.set(token.pos,i));
+ const annotated=[];
+ tracked.forEach(([key,color])=>{const ix=Number(key.slice('examples:'.length));const oi=atOld.get(ix);if(oi!==undefined)annotated.push({oi,color});});
+ // Anchor exact common prefix/suffix. Middle alignment uses LCS for individual words.
+ let prefix=0;while(prefix<oldLength&&prefix<newLength&&oldWords[prefix].word===newWords[prefix].word)prefix++;
+ let suffix=0;while(suffix<oldLength-prefix&&suffix<newLength-prefix&&oldWords[oldLength-1-suffix].word===newWords[newLength-1-suffix].word)suffix++;
+ const align=new Map();for(let i=0;i<prefix;i++)align.set(i,i);
+ for(let i=0;i<suffix;i++)align.set(oldLength-1-i,newLength-1-i);
+ const ol=oldLength-prefix-suffix,nl=newLength-prefix-suffix;
+ if(ol*nl<=1000000){
+  const dp=Array.from({length:ol+1},()=>new Uint16Array(nl+1));
+  for(let i=ol-1;i>=0;i--)for(let j=nl-1;j>=0;j--){dp[i][j]=oldWords[prefix+i].word===newWords[prefix+j].word?dp[i+1][j+1]+1:Math.max(dp[i+1][j],dp[i][j+1]);}
+  for(let i=0,j=0;i<ol&&j<nl;){
+   if(oldWords[prefix+i].word===newWords[prefix+j].word){align.set(prefix+i,prefix+j);i++;j++}
+   else if(dp[i+1][j]>=dp[i][j+1])i++;else j++;
+  }
+ }
+ const kept={};for(const [key,color] of Object.entries(prior))if(!key.startsWith('examples:'))kept[key]=color;
+ for(const a of annotated){const ni=align.get(a.oi);if(ni!==undefined)kept['examples:'+newWords[ni].pos]=a.color;}
+ e.actorAnnotations=kept;
+}
+function bindExampleEditor(e){
+ const btn=$('#editExample'),view=$('#exampleView'),editor=$('#exampleEditor'),input=$('#exampleInput');
+ const cancel=()=>{editor.hidden=true;view.hidden=false;btn.hidden=false};
+ btn.addEventListener('click',()=>{view.hidden=true;editor.hidden=false;btn.hidden=true;input.value=e.examples||'';input.focus();});
+ $('#cancelExample').addEventListener('click',cancel);
+ $('#saveExample').addEventListener('click',()=>{
+  const previous=e.examples||'',next=input.value;
+  if(previous!==next){preserveExampleAnnotations(e,previous,next);e.examples=next;save();render();}
+  view.innerHTML=wordHtml(e,'examples',e.examples);cancel();
+  toast('Eksempel gemt på '+e.id);
+ });
+ input.addEventListener('keydown',ev=>{
+  if((ev.ctrlKey||ev.metaKey)&&ev.key==='Enter'){ev.preventDefault();$('#saveExample').click()}
+  if(ev.key==='Escape'){ev.stopPropagation();cancel()}
+ });
+}
+
+function render(){const arr=visible();currentOrder=arr.map(x=>x.id);$('#count').textContent=`${arr.length} af ${entries.length} kort`;$('#cards').innerHTML=arr.length?arr.map(e=>`<button class="card" type="button" data-id="${esc(e.id)}" data-origin="${esc(e.origin)}"><span class="card-number">${esc(e.id)}</span><h2 class="card-title">${esc(e.name)}</h2><div class="card-summary">${esc(capitalRoleText(e.plain||e.examples||'Foreløbig registrering. Beskrivelse afventer.'))}</div><div class="card-bottom"><span class="card-origin">${e.origin==='manuskript'?'Manuskript':e.origin==='samtalen'?'Samtalen':'Ny registrering'}${e.status==='Forslag'?' · forslag':''}</span><span class="card-arrow" aria-hidden="true">↗</span></div></button>`).join(''):'<div class="empty">Ingen kort matcher søgningen. Prøv et andet ord, eller registrér en ny gambit.</div>';}
+function section(label,text,cls='',e=null,field=''){return clean(text).trim()?`<section class="section"><h3>${esc(label)}</h3><div class="${cls||'text'}">${cls==='quote'?(e&&field?wordHtml(e,field,text):esc(capitalRoleText(text))):`<p>${e&&field?wordHtml(e,field,text):esc(capitalRoleText(text))}</p>`}</div></section>`:''}
+function open(id){const e=entries.find(x=>x.id===id);if(!e)return;activeId=id;lastFocus=document.activeElement;$('#detailCode').textContent=e.id;$('#detailTitle').textContent=e.name;$('#detailOrigin').textContent=(e.origin==='manuskript'?'Fra manuskriptet':e.origin==='samtalen'?'Fra samtalen':'Egen registrering')+(e.status==='Forslag'?' · forslag':'');hideActorPicker();$('#detailContent').innerHTML=actorIntroduction(e)+section('Kort beskrivelse',e.plain,'',e,'plain')+exampleSection(e)+section('Beskrivelse af samtaleoperationen',e.mechanism,'',e,'mechanism')+section('Supplerende kildekommentar',e.theory,'',e,'theory')+section('Forslag til modtræk',e.countermove,'',e,'countermove')+assessSection(e)+(e.source_label?section('Oprindelig kildebetegnelse',e.source_label):'')+(e.source_url?`<section class="section"><h3>Kilde</h3><p><a target="_blank" rel="noopener noreferrer" href="${esc(e.source_url)}">Åbn kildedokument</a></p></section>`:'')+`<section class="section"><h3>Noter</h3><textarea class="notes" id="notes" placeholder="Skriv en observation, et nyt eksempel eller et spørgsmål ...">${esc(e.notes)}</textarea><p style="color:#8a958f;font-size:11px;margin:8px 0 0">Gemmes centralt i Supabase.</p></section>`;$('#notes').addEventListener('input',ev=>{e.notes=ev.target.value;save()});bindAssessments(e);bindExampleEditor(e);$('#backdrop').classList.add('open');document.body.style.overflow='hidden';$('#close').focus();const i=currentOrder.indexOf(id);$('#previous').disabled=i<=0;$('#next').disabled=i<0||i===currentOrder.length-1;}
+function close(){hideActorPicker();activeId=null;$('#backdrop').classList.remove('open');document.body.style.overflow='';if(lastFocus&&lastFocus.isConnected)lastFocus.focus();}
+async function copy(text){try{await navigator.clipboard.writeText(text);toast('Kopieret. Indsæt det i en chat.')}catch{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();toast(ok?'Kopieret. Indsæt det i en chat.':'Kopiering mislykkedes. Markér teksten manuelt.')}}
+function chatPrompt(e){
+ const assessed=PRINCIPLES.map(p=>{const v=e.assessments?.[p.key]||'unknown';return p.label+': '+(ASSESS_VALUES.find(x=>x[0]===v)?.[1]||v)}).join('\n');
+ return `Lad os tale om ${e.id}: ${e.name}, fra Gambitregisteret.\n\nBeskrivelse: ${e.plain||'Endnu ikke beskrevet.'}\n\nEksempel: ${e.examples||'Endnu ikke registreret.'}\n\nSamtaleoperation: ${e.mechanism||'Ikke fastlagt.'}\n\nVurdering af samtaleprincipper:\n${assessed}\n\nBegrundelse: ${e.assessmentNotes||'Ikke registreret.'}\n\n${actorSummary(e)}\n\nLad os vurdere om etiketterne er begrundet i konkrete data. Vi er fortsat i den empiriske indsamlingsfase og bygger ikke taksonomi endnu.`
+}
+$('#cards').addEventListener('click',ev=>{const c=ev.target.closest('.card');if(c)open(c.dataset.id)});
+$('#search').addEventListener('input',render);$('#sort').addEventListener('change',render);
+$('.filters').addEventListener('click',ev=>{const b=ev.target.closest('[data-filter]');if(!b)return;selectedFilter=b.dataset.filter;document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('selected',x===b));render()});
+$('#close').addEventListener('click',close);$('#backdrop').addEventListener('click',ev=>{if(ev.target.id==='backdrop')close()});
+$('#copyId').addEventListener('click',()=>{const e=current();if(e)copy(e.id)});$('#copyChat').addEventListener('click',()=>{const e=current();if(e)copy(chatPrompt(e))});
+$('#previous').addEventListener('click',()=>{const i=currentOrder.indexOf(activeId);if(i>0)open(currentOrder[i-1])});$('#next').addEventListener('click',()=>{const i=currentOrder.indexOf(activeId);if(i>=0&&i<currentOrder.length-1)open(currentOrder[i+1])});
+window.addEventListener('keydown',ev=>{if(ev.key==='Escape'){if($('#actorPicker').classList.contains('open'))hideActorPicker(true);else if($('#addBackdrop').classList.contains('open'))closeAdd();else if(activeId)close()};if(activeId&&!['TEXTAREA','INPUT','SELECT'].includes(document.activeElement.tagName) && !document.activeElement.closest('.example-editor')){const i=currentOrder.indexOf(activeId);if(ev.key==='ArrowLeft'&&i>0)open(currentOrder[i-1]);if(ev.key==='ArrowRight'&&i<currentOrder.length-1)open(currentOrder[i+1])}});
+function closeAdd(){$('#addBackdrop').classList.remove('open');document.body.style.overflow=''}
+$('#add').addEventListener('click',()=>{$('#newForm').reset();$('#newError').textContent='';$('#addBackdrop').classList.add('open');document.body.style.overflow='hidden';$('#newName').focus()});$('#cancelAdd').addEventListener('click',closeAdd);$('#addBackdrop').addEventListener('click',ev=>{if(ev.target.id==='addBackdrop')closeAdd()});
+$('#newForm').addEventListener('submit',async ev=>{
+ ev.preventDefault();const submit=$('#newForm button[type="submit"]');
+ const name=$('#newName').value.trim();if(!name)return;
+ if(!session){$('#newError').textContent='Du skal logge ind med Supabase først.';showAuth();return;}
+ submit.disabled=true;$('#newError').textContent='Opretter i Supabase…';
+ try{
+  const response=await api('/rest/v1/rpc/smfi_gambit_create',{method:'POST',body:{
+   p_title:name,p_example:$('#newExample').value.trim(),p_short_description:$('#newPlain').value.trim()
+  }});
+  const created=Array.isArray(response)?response[0]:response;
+  if(!created?.id)throw Error('Supabase returnerede intet ID.');
+  const e=displayEntry(created);
+  entries.push(e);selectedFilter='alle';
+  document.querySelectorAll('.filter').forEach(x=>x.classList.toggle('selected',x.dataset.filter==='alle'));
+  $('#search').value='';render();closeAdd();open(e.id);toast(`${e.id} oprettet i Supabase`);
+ }catch(err){$('#newError').textContent='IKKE OPRETTET: '+errorText(err);}
+ finally{submit.disabled=false;}
+});
+$('#export').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({format:'Gambit-kort',version:5,exported:new Date().toISOString(),entries,rolePrefs},null,2)],{type:'application/json'});const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download='gambitregister-backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1200)});
+$('#import').addEventListener('click',()=>toast('Import til central database er endnu ikke aktiveret. Eksportér først en backup.'));
+render();consumeAuthCallback().then(consumed=>{if(!consumed)initAuth()});
+})();
+</script>
+</body></html>
