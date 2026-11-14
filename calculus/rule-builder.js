@@ -179,6 +179,65 @@ const RULE_LABELS = {
 
 var ruleBuilderAutoAdvanceTimeout = null;
 
+const RULE_BUILDER_FILTER_KEY = 'calculus_rule_builder_filter';
+const RULE_BUILDER_FILTERS = ['both', 'integration', 'differentiation'];
+let selectedRuleBuilderFilter = 'both';
+
+function loadRuleBuilderFilter() {
+    try {
+        const stored = localStorage.getItem(RULE_BUILDER_FILTER_KEY);
+        if (RULE_BUILDER_FILTERS.includes(stored)) return stored;
+    } catch (e) {}
+    return 'both';
+}
+
+function saveRuleBuilderFilter(filter) {
+    selectedRuleBuilderFilter = filter;
+    try {
+        localStorage.setItem(RULE_BUILDER_FILTER_KEY, filter);
+    } catch (e) {}
+}
+
+function getRuleBuilderProblems(filter = selectedRuleBuilderFilter) {
+    if (filter === 'integration') {
+        return RULE_BUILDER_PROBLEMS.filter(p => p.correctRule === 'substitution');
+    }
+    if (filter === 'differentiation') {
+        return RULE_BUILDER_PROBLEMS.filter(p =>
+            p.correctRule === 'chain' || p.correctRule === 'product' || p.correctRule === 'quotient'
+        );
+    }
+    return RULE_BUILDER_PROBLEMS.slice();
+}
+
+function updateRuleBuilderBadge() {
+    const badge = document.getElementById('rule-builder-badge');
+    if (!badge) return;
+    const count = getRuleBuilderProblems().length;
+    badge.textContent = count === 1 ? '1 opgave' : `${count} opgaver`;
+}
+
+function initRuleBuilderMenu() {
+    selectedRuleBuilderFilter = loadRuleBuilderFilter();
+    const container = document.getElementById('rule-builder-toggle-container');
+    if (container) {
+        const buttons = container.querySelectorAll('.toggle-btn');
+        buttons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.filter === selectedRuleBuilderFilter);
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const filter = btn.dataset.filter;
+                if (!RULE_BUILDER_FILTERS.includes(filter)) return;
+                saveRuleBuilderFilter(filter);
+                buttons.forEach(b => b.classList.toggle('active', b === btn));
+                updateRuleBuilderBadge();
+            });
+        });
+    }
+    updateRuleBuilderBadge();
+}
+
 let ruleBuilderState = {
     problems: [],
     currentProblem: 0,
@@ -193,7 +252,7 @@ let ruleBuilderState = {
 
 function startRuleBuilder() {
     document.getElementById('formula-ref-btn').classList.add('hidden');
-    ruleBuilderState.problems = shuffleArray([...RULE_BUILDER_PROBLEMS]);
+    ruleBuilderState.problems = shuffleArray(getRuleBuilderProblems());
     ruleBuilderState.currentProblem = 0;
     ruleBuilderState.xp = 0;
     ruleBuilderState.streak = 0;

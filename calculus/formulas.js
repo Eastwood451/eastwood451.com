@@ -450,6 +450,28 @@ function replaceLaTeXVars(str, varMap) {
 
 const STORAGE_KEY = 'calculus_enabled_formulas_v2';
 const STORAGE_KEY_PERF = 'calculus_formula_performance';
+const FORMULA_FILTER_KEY = 'calculus_formula_filter';
+const FORMULA_CONST_KEY = 'calculus_formula_constant_mode';
+
+function loadFormulaMenuPrefs() {
+    try {
+        const filter = localStorage.getItem(FORMULA_FILTER_KEY);
+        if (filter === 'both' || filter === 'derivatives' || filter === 'antiderivatives') {
+            selectedFormulaFilter = filter;
+        }
+        const mode = localStorage.getItem(FORMULA_CONST_KEY);
+        if (mode === 'symbols' || mode === 'numbers') {
+            selectedFormulaConstantMode = mode;
+        }
+    } catch (e) {}
+}
+
+function saveFormulaMenuPrefs() {
+    try {
+        localStorage.setItem(FORMULA_FILTER_KEY, selectedFormulaFilter);
+        localStorage.setItem(FORMULA_CONST_KEY, selectedFormulaConstantMode);
+    } catch (e) {}
+}
 
 function getEnabledFormulas() {
     const state = {

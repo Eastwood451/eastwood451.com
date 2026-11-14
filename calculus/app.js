@@ -475,6 +475,7 @@ function init() {
                 btn.classList.add('active');
                 
                 selectedFormulaFilter = btn.dataset.filter;
+                saveFormulaMenuPrefs();
                 updateFormulaBadge();
             });
         });
@@ -491,15 +492,32 @@ function init() {
                 btn.classList.add('active');
                 
                 selectedFormulaConstantMode = btn.dataset.const;
+                saveFormulaMenuPrefs();
             });
         });
     }
+
+    // Restore saved formula toggle state
+    loadFormulaMenuPrefs();
+    restoreToggleSelection('formula-toggle-container', 'data-filter', selectedFormulaFilter);
+    restoreToggleSelection('formula-constant-container', 'data-const', selectedFormulaConstantMode);
+
+    // Rule builder tilstand (Integration / Differentiering / Begge)
+    initRuleBuilderMenu();
 
     // Show menu
     showMenu();
     
     // Update badge on load
     updateFormulaBadge();
+}
+
+function restoreToggleSelection(containerId, attr, value) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute(attr) === value);
+    });
 }
 
 function showMenu() {
