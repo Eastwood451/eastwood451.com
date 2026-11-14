@@ -176,23 +176,42 @@ entries=[];
 const SUPABASE_URL='https://wpriingzftsboauvkmsj.supabase.co';
 const PUBLISHABLE_KEY='sb_publishable_bSvkvx_Lqd5ZEt94oVdMaw_44WV2fYE';
 const SESSION_KEY='smfi-gambits-auth-session-v1';
-let session=null,flushing=false,flushTimer=null,saveQueue=new Map(),flushPromise=null,titleSaveInProgress=false;
+let session=null,flushing=false,flushTimer=null,saveQueue=new Map(),flushPromise=null,titleSaveInProgress=false,refreshPromise=null;
 function storageState(message,kind='connected'){const n=$('#storageState');n.textContent=message;n.dataset.state=kind;}
 function errorText(err){return err?.message||'Ukendt fejl';}
+// Send aldrig et skrivekald med et kendt udløbet token. Forny først, og gentag højst én gang ved JWT-udløb.
 async function api(path,{method='GET',body,auth=true}={}){
- const headers={'apikey':PUBLISHABLE_KEY,'Content-Type':'application/json'};
- if(auth&&session?.access_token)headers.Authorization='Bearer '+session.access_token;
- if(method==='PATCH'||method==='POST')headers.Prefer='return=representation';
- let result;
- try{result=await fetch(SUPABASE_URL+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body),cache:'no-store'});}
- catch(e){throw new Error('Ingen forbindelse til Supabase (adgangskoden er endnu ikke blevet kontrolleret): '+e.message)}
- let data=null;try{data=await result.json()}catch{}
- if(!result.ok){
+ if(auth&&session?.access_token&&session?.refresh_token&&session.expires_at&&
+    Date.now()/1000>=Number(session.expires_at)-60){
+  try{await refreshSession();}
+  catch(err){throw new Error('Kunne ikke forny login. Ændringen er IKKE gemt: '+errorText(err));}
+ }
+ const execute=async()=>{
+  const headers={'apikey':PUBLISHABLE_KEY,'Content-Type':'application/json'};
+  if(auth&&session?.access_token)headers.Authorization='Bearer '+session.access_token;
+  if(method==='PATCH'||method==='POST')headers.Prefer='return=representation';
+  let result;
+  try{result=await fetch(SUPABASE_URL+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body),cache:'no-store'});}
+  catch(e){throw new Error('Ingen forbindelse til Supabase: '+e.message)}
+  let data=null;try{data=await result.json()}catch{}
+  return {result,data};
+ };
+ let response=await execute();
+ const jwtExpired=()=>/jwt expired|token.*expired|expired.*token|pgrst301/i.test(
+  [response.data?.message,response.data?.msg,response.data?.error,response.data?.code].filter(Boolean).join(' ')
+ );
+ if(auth&&response.result.status===401&&jwtExpired()&&session?.refresh_token){
+  try{await refreshSession();}
+  catch(err){throw new Error('Login er udløbet, og det kunne ikke fornys. Ændringen er IKKE gemt: '+errorText(err));}
+  response=await execute();
+ }
+ if(!response.result.ok){
+  const data=response.data,result=response.result;
   const explanation=data?.message||data?.msg||data?.error_description||data?.error||`HTTP ${result.status}`;
-  if(result.status===401)storageState('Login udløbet. Log ind igen.','error');
+  if(result.status===401)storageState('Login udløbet. Ændringen er ikke gemt. Log ind igen.','error');
   throw new Error(explanation);
  }
- return data;
+ return response.data;
 }
 function displayEntry(row){
  const base=row.source_meta||{};
@@ -245,9 +264,21 @@ async function enterSession(data){
  await loadRegistry();hideAuth();
 }
 async function refreshSession(){
- if(!session?.refresh_token)throw Error('Ingen session');
- const data=await api('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:{refresh_token:session.refresh_token},auth:false});
- session=data;sessionStorage.setItem(SESSION_KEY,JSON.stringify(data));return data;
+ if(refreshPromise)return refreshPromise;
+ if(!session?.refresh_token)throw Error('Der findes ingen session, som kan fornys');
+ const previous=session;
+ refreshPromise=(async()=>{
+  const data=await api('/auth/v1/token?grant_type=refresh_token',{
+   method:'POST',body:{refresh_token:previous.refresh_token},auth:false
+  });
+  if(!data?.access_token||!data?.refresh_token)throw Error('Supabase returnerede ikke en gyldig ny session');
+  if(!data.expires_at&&data.expires_in)data.expires_at=Math.floor(Date.now()/1000)+Number(data.expires_in);
+  session={...previous,...data};
+  sessionStorage.setItem(SESSION_KEY,JSON.stringify(session));
+  return session;
+ })();
+ try{return await refreshPromise;}
+ finally{refreshPromise=null;}
 }
 async function initAuth(){
  try{
