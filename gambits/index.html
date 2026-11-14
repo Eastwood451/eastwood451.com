@@ -270,7 +270,7 @@ async function flushDatabase(){
    const rows=await api('/rest/v1/smfi_gambits'+q,{method:'PATCH',body:payload});
    if(!rows||rows.length!==1)throw Error('Konflikt: Kortet er ændret i databasen af en anden session. Eksportér ændringerne og genindlæs.');
    e.dbVersion=rows[0].version;
-   if(saveQueue.size===0)storageState(`Ændringer gemt centralt · ${id}`);
+   if(saveQueue.size===0){storageState(`Ændringer gemt centralt · ${id}`);toast(`Gemt i Supabase · ${id}`);}
   }catch(err){
    saveQueue.set(id,payload);
    storageState('IKKE GEMT! '+errorText(err),'error');
@@ -487,7 +487,7 @@ function bindExampleEditor(e){
   const previous=e.examples||'',next=input.value;
   if(previous!==next){preserveExampleAnnotations(e,previous,next);e.examples=next;save();render();}
   view.innerHTML=wordHtml(e,'examples',e.examples);cancel();
-  toast('Eksempel gemt på '+e.id);
+  toast(previous!==next?'Ændringen sendes til Supabase…':'Ingen ændringer at gemme');
  });
  input.addEventListener('keydown',ev=>{
   if((ev.ctrlKey||ev.metaKey)&&ev.key==='Enter'){ev.preventDefault();$('#saveExample').click()}
