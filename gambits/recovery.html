@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="da"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gambitregister · Redning af tidligere rettelser</title>
+<style>
+:root{color-scheme:light}body{margin:0;background:#f3f1e9;color:#26333a;font:16px/1.55 system-ui,sans-serif}
+main{max-width:780px;padding:28px 22px 80px;margin:auto}h1{font:500 clamp(28px,5vw,43px) Georgia,serif}
+.panel{background:#fffefa;border:1px solid #d5d8d1;padding:24px;border-radius:15px;box-shadow:0 10px 25px #2221;margin:24px 0}
+button{background:#193d4a;color:white;border:0;border-radius:9px;font-size:16px;font-weight:650;padding:13px 18px;cursor:pointer;margin:4px 6px 4px 0}
+button.secondary{background:#e6eee9;color:#163a40}button:disabled{opacity:.5}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;border-radius:8px;background:#f0f3f0;padding:14px;max-height:350px;overflow:auto}
+small{color:#526570}strong{color:#173f4b}.warn{border-left:4px solid #cc7443;padding-left:14px}
+</style></head>
+<body><main>
+<p><small>Gambitregister · sikkerhedskopi</small></p>
+<h1>Red dine tidligere rettelser</h1>
+<p>Denne side læser kun gamle gambitdata fra browserens lokale lager. Den ændrer <strong>intet</strong> i Supabase og skriver <strong>intet</strong> til browserlageret.</p>
+<div class="panel">
+ <h2>1. Kontroller denne browsers lager</h2>
+ <p>Åbn denne side i <strong>den samme Chrome-profil</strong>, hvor du foretog rettelserne. Browserdata afhænger også af webstedet, så en gammel lokal HTML-fil kan have haft et andet lager.</p>
+ <button id="check" type="button">Find gamle rettelser</button>
+ <div id="result" role="status" aria-live="polite"></div>
+</div>
+<div class="panel">
+ <h2>2. Eksportér før vi ændrer noget</h2>
+ <p>Hvis der findes data, kan du gemme dem som en JSON-fil og uploade filen i ChatGPT. Det er en kopi, ikke en flytning.</p>
+ <button id="export" disabled type="button">Download fundet sikkerhedskopi</button>
+</div>
+<div class="panel warn">
+ <h2>Hvis der står »Ingen gamle data fundet«</h2>
+ <p>Det betyder <strong>ikke</strong>, at de er slettet. Det kan blot betyde, at du redigerede i en anden udgave eller på en anden browseradresse, for eksempel en HTML-fil åbnet lokalt eller fra ChatGPT. Find i så fald den <strong>samme gamle fil eller fane</strong>, du redigerede i, og brug dens knap »Eksportér«. Undlad at rydde browserdata.</p>
+</div>
+<p><small>Denne side udfører ikke login, kræver ingen adgangskode og henter ikke oplysninger fra databasen.</small></p>
+</main>
+<script>
+(function(){
+'use strict';
+const keys=['gambitregister-kort-v3','jacob-gambit-kort-v1','gambitregister-kort-v2','gambitregister-kort-v1'];
+const result=document.getElementById('result');
+const exportButton=document.getElementById('export');
+let found=null;
+document.getElementById('check').onclick=function(){
+ found=null;exportButton.disabled=true;
+ const lines=[];let available=false;
+ try{
+  for(const key of keys){
+   const raw=localStorage.getItem(key);
+   if(!raw){lines.push(key+': ingen data');continue;}
+   let parsed;
+   try{parsed=JSON.parse(raw)}catch(e){lines.push(key+': fundet, men JSON kan ikke læses ('+raw.length+' tegn)');if(!found)found={key,raw,entries:null};continue;}
+   const entries=Array.isArray(parsed)?parsed:parsed?.entries;
+   const count=Array.isArray(entries)?entries.length:'ukendt antal';
+   lines.push(key+': FUNDET ('+count+' gambits, '+raw.length+' tegn)');
+   if(!found||(Array.isArray(entries)&&entries.length>(found.entries?.length||0)))found={key,raw,entries};
+  }
+  if(found){
+    const changed=Array.isArray(found.entries)?found.entries.filter(x=>x&&x.id&&(/^(GAM-)/.test(x.id))).length:'ukendt';
+    lines.unshift('Der findes tidligere gemte gambitdata! Vælg »Download fundet sikkerhedskopi«.');
+    exportButton.disabled=false;
+  }else lines.unshift('Ingen tidligere gambitdata fundet på netop denne webadresse. Prøv den oprindelige HTML-fil.');
+ }catch(err){lines.unshift('Browseren tillader ikke adgang til dette lager: '+err.message);}
+ result.replaceChildren();
+ const pre=document.createElement('pre');pre.textContent=lines.join('\n');result.appendChild(pre);
+};
+exportButton.onclick=function(){
+ if(!found)return;
+ const data=found.entries?JSON.stringify({format:'Gambit-recovery',origin:location.origin,sourceKey:found.key,exported:new Date().toISOString(),entries:found.entries},null,2):found.raw;
+ const blob=new Blob([data],{type:'application/json'});
+ const url=URL.createObjectURL(blob),link=document.createElement('a');
+ link.href=url;link.download='gambitregister-REDNING-'+new Date().toISOString().slice(0,10)+'.json';
+ document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);
+};
+document.getElementById('check').click();
+})();
+</script></body></html>
