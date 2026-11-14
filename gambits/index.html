@@ -108,7 +108,7 @@ button[disabled]{cursor:not-allowed;opacity:.55}
   <select id="sort" aria-label="Sortér"><option value="id">ID-rækkefølge</option><option value="name">Navn A–Å</option></select>
   <button class="btn dark" id="add">+ Ny gambit</button>
   <button class="btn" id="export">Eksportér</button>
-  <button class="btn" id="import">Importér</button><span class="storage-state" id="storageState" data-state="loading" aria-live="polite">Forbinder til Supabase…</span><button class="btn tiny" id="retrySave">Genindlæs / prøv at gemme igen</button><button class="btn tiny" id="resolveConflict" hidden>Løs versionskonflikt</button><button class="btn tiny" id="logout">Log ud</button>
+  <button class="btn" id="import">Importér</button><span class="storage-state" id="storageState" data-state="loading" aria-live="polite">Forbinder til Supabase…</span><button class="btn tiny" id="retrySave">Genindlæs / prøv at gemme igen</button><button class="btn tiny" id="resolveConflict" hidden>Løs versionskonflikt</button><button class="btn tiny" id="recoverOtherTabs" hidden>Find nødudkast fra andre faner</button><button class="btn tiny" id="logout">Log ud</button>
   <input id="file" type="file" accept="application/json,.json" hidden>
  </div>
  <details class="role-config" id="roleConfig"><summary>Roller, køn og pronomener · indstillinger for visningen</summary>
@@ -206,6 +206,25 @@ function stageText(id,field,value){
  if(persistTyping())storageState('Redigering sikret lokalt · tryk Gem for at synkronisere','loading');
 }
 function clearStage(id,field){delete typingDrafts[typingKey(id,field)];persistTyping()}
+function allEmergencyCopies(){
+ const result=[];
+ try{
+  for(let i=0;i<localStorage.length;i++){
+   const key=localStorage.key(i);
+   if(!key||(key!==LEGACY_PENDING_KEY&&key!==LEGACY_TYPING_KEY&&
+     !key.startsWith(LEGACY_PENDING_KEY+':')&&!key.startsWith(LEGACY_TYPING_KEY+':')))continue;
+   const raw=localStorage.getItem(key);
+   if(!raw)continue;
+   try{result.push({key,data:JSON.parse(raw)})}catch{result.push({key,rawUnreadable:true})}
+  }
+ }catch{}
+ return result;
+}
+function updateRecoveryControl(){
+ const extra=allEmergencyCopies().filter(x=>x.key!==PENDING_KEY&&x.key!==TYPING_KEY);
+ const b=document.querySelector('#recoverOtherTabs');
+ if(b)b.hidden=!extra.length;
+}
 const DB_EDITABLE_FIELDS=['title','short_description','example','operation','notes','actors','principles','theory','countermove'];
 let serverBase=new Map(),retryDelay=1500,retryTimer=null;
 const sameValue=(a,b)=>JSON.stringify(canonical(a))===JSON.stringify(canonical(b));
@@ -563,6 +582,43 @@ $('#retrySave').addEventListener('click',()=>{
  if(saveQueue.size){retryDelay=1500;flushDatabase()}
  else loadRegistry().catch(err=>storageState('Kunne ikke opdatere: '+errorText(err),'error'));
 });
+$('#recoverOtherTabs').addEventListener('click',async()=>{
+ const all=allEmergencyCopies().filter(item=>item.key!==PENDING_KEY&&item.key!==TYPING_KEY);
+ if(!all.length){toast('Ingen andre nødudkast fundet');return;}
+ if(!confirm('Der findes '+all.length+' ældre browserkopier. Vil du hente deres uafsluttede ændringer ind i denne fane? Eksisterende kladder overskrives ikke.'))return;
+ let imported=0,skipped=0;
+ for(const file of all){
+  if(file.key.startsWith(LEGACY_PENDING_KEY)){
+   for(const item of file.data?.items||[]){
+    if(!/^GAM-[0-9]{4}$/.test(item.id)){skipped++;continue;}
+    if(saveQueue.has(item.id)){skipped++;continue;}
+    const fields={},base={};
+    for(const col of DB_EDITABLE_FIELDS)if(Object.hasOwn(item.fields||{},col)){
+      fields[col]=item.fields[col];
+      if(Object.hasOwn(item.base||{},col))base[col]=item.base[col];
+    }
+    if(Object.keys(fields).length){
+     saveQueue.set(item.id,{fields,base,blocked:item.blocked||''});
+     imported++;
+    }
+   }
+  }
+  if(file.key.startsWith(LEGACY_TYPING_KEY)){
+   for(const [key,value] of Object.entries(file.data||{})){
+    if(!Object.hasOwn(typingDrafts,key)&&typeof value==='string'){
+     typingDrafts[key]=value;imported++;
+    }
+   }
+  }
+ }
+ persistOutbox();persistTyping();updateRecoveryControl();
+ pendingLabel();
+ toast(imported+' nødudkast hentet. '+skipped+' var allerede til stede.');
+ if(session){
+  try{await loadRegistry()}catch(err){storageState('Gendan lykkedes lokalt, men Supabase kan ikke kontaktes: '+errorText(err),'error')}
+ }else showAuth();
+});
+window.addEventListener('storage',updateRecoveryControl);
 $('#resolveConflict').addEventListener('click',async()=>{
  const conflict=[...saveQueue.entries()].find(([,draft])=>draft.blocked);
  if(!conflict)return;
@@ -930,9 +986,9 @@ $('#newForm').addEventListener('submit',async ev=>{
  }catch(err){$('#newError').textContent='IKKE OPRETTET: '+errorText(err);}
  finally{submit.disabled=false;}
 });
-$('#export').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({format:'Gambit-kort',version:6,exported:new Date().toISOString(),entries,rolePrefs,typingDrafts,pendingEdits:[...saveQueue].map(([id,record])=>({id,fields:record.fields,base:record.base,blocked:record.blocked||''}))},null,2)],{type:'application/json'});const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download='gambitregister-backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1200)});
+$('#export').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({format:'Gambit-kort',version:6,exported:new Date().toISOString(),entries,rolePrefs,typingDrafts,pendingEdits:[...saveQueue],allBrowserRecoveryCopies:allEmergencyCopies().map(([id,record])=>({id,fields:record.fields,base:record.base,blocked:record.blocked||''}))},null,2)],{type:'application/json'});const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download='gambitregister-backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1200)});
 $('#import').addEventListener('click',()=>toast('Import til central database er endnu ikke aktiveret. Eksportér først en backup.'));
-render();consumeAuthCallback().then(consumed=>{if(!consumed)initAuth()});
+render();updateRecoveryControl();consumeAuthCallback().then(consumed=>{if(!consumed)initAuth()});
 })();
 </script>
 </body></html>
