@@ -1367,13 +1367,16 @@ input:checked + .slider:before {
     color: var(--text);
     font-weight: 700;
     font-size: 0.95rem;
-    line-height: 1.45;
+    line-height: 1.7;
     text-align: left;
-    overflow-x: auto;
+    padding: 4px 0;
+    overflow-x: hidden;
+    overflow-y: hidden;
 }
 
 .skeleton-parts-row mjx-container {
     margin: 0 !important;
+    max-width: 100%;
 }
 
 .skeleton-main {
