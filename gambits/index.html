@@ -10,7 +10,16 @@
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,textarea,select{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #b57f42;outline-offset:3px}a{color:var(--navy)}
 .page{max-width:1190px;margin:auto;padding:0 32px 90px}.top{padding:44px 0 28px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:20px}.eyebrow{font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#67807d}.top h1{font:500 clamp(40px,5.2vw,69px)/1.05 Georgia,serif;letter-spacing:-.045em;margin:9px 0 0}.top h1 i{font-weight:400;color:#a16e40}.top p{margin:16px 0 0;line-height:1.6;color:var(--muted);max-width:680px;font-size:14px}.top-right{background:#e4e9e3;border:1px solid #d3dad4;border-radius:50%;width:87px;height:87px;flex:0 0 auto;display:grid;place-items:center;font:500 41px Georgia,serif;color:#2b5152}.toolbar{display:flex;align-items:center;gap:10px;padding:23px 0 12px;flex-wrap:wrap}.search-wrap{flex:1;min-width:220px;position:relative}.search-wrap svg{position:absolute;left:14px;top:12px;width:18px;height:18px;opacity:.6}.search-wrap input{background:var(--paper);color:var(--ink);border:1px solid #dcdcd4;border-radius:11px;padding:13px 13px 13px 44px;width:100%;box-shadow:0 1px 2px #3333}.btn,select{border:1px solid #dcdcd4;border-radius:10px;background:#fffefa;padding:12px 16px;color:#30444b;font-size:13px;font-weight:650;min-height:44px}.btn:hover,select:hover{background:#e9efec;border-color:#9db1aa}.btn.dark{background:var(--navy);color:white;border-color:var(--navy)}.btn.dark:hover{background:#315865}.btn.ghost{background:transparent}.filters{display:flex;gap:7px;margin:0 0 20px;align-items:center;flex-wrap:wrap}.filter{border:1px solid transparent;background:transparent;padding:9px 13px;border-radius:40px;color:#647278;font-size:12px;font-weight:650}.filter.selected{background:#dce7e1;border-color:#c8d7ce;color:#24494d}.filter:hover{background:#e7ece7}.spacer{flex:1}.count{font-size:12px;color:var(--muted)}
 .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}.card{position:relative;aspect-ratio:3 / 4;min-width:0;text-align:left;border:1px solid #dddcd3;border-radius:14px;background:var(--paper);padding:24px 23px 23px;color:inherit;display:flex;flex-direction:column;overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s;box-shadow:0 2px 4px #202a2a0a}.card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:#9eaca5}.card:before{content:"";position:absolute;top:0;left:0;width:100%;height:5px;background:#365e61}.card[data-origin="samtalen"]:before{background:#b17d4d}.card-number{font:500 11px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.11em;color:#718381}.card-title{font:500 clamp(23px,2.5vw,34px)/1.12 Georgia,serif;letter-spacing:-.03em;margin:35px 0 14px;overflow-wrap:anywhere}.card-summary{font-size:14px;line-height:1.65;color:#64717a;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}.card-bottom{margin-top:auto;display:flex;gap:8px;align-items:center;justify-content:space-between;border-top:1px solid #ede9e0;padding-top:17px}.card-origin{font-size:10px;font-weight:750;letter-spacing:.08em;text-transform:uppercase;color:#87908b}.card-arrow{font-size:24px;color:#2d5a5d;line-height:1}.empty{grid-column:1/-1;text-align:center;padding:90px 20px;color:#69777d;border:1px dashed #c7c8c0;border-radius:15px;background:#fffdfa}
-.backdrop{position:fixed;inset:0;background:#172b2f94;z-index:10;display:none;justify-content:flex-end}.backdrop.open{display:flex}.drawer{width:min(720px,100%);height:100%;background:var(--paper);overflow:auto;box-shadow:-15px 0 65px #0003;display:flex;flex-direction:column}.drawer-head{position:sticky;top:0;background:var(--paper);z-index:2;border-bottom:1px solid #e4e1d9;padding:24px 32px 18px}.drawer-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.drawer-code{font-size:12px;color:#5c7779;letter-spacing:.1em;font-weight:750}.close{border:1px solid #e0ded7;background:#f9f7f2;border-radius:9px;padding:4px 12px;font-size:26px;line-height:1.2}.drawer h2{font:500 clamp(31px,4vw,49px)/1.1 Georgia,serif;letter-spacing:-.03em;margin:26px 0 11px}.drawer-origin{font-size:12px;color:#75817e}.drawer-content{padding:24px 32px 50px;flex:1}.section{padding:15px 0 23px;border-bottom:1px solid #ebe8df}.section h3{color:#617c7d;letter-spacing:.12em;text-transform:uppercase;font-size:11px;margin:0 0 13px}.section p{font-size:15px;line-height:1.75;color:#37474d;white-space:pre-wrap;margin:0}.quote{background:#f0f3ef;border-left:3px solid #69918a;padding:22px 23px;border-radius:0 11px 11px 0;font:17px/1.7 Georgia,serif;white-space:pre-wrap}.notes{width:100%;border:1px solid #dcdcd4;border-radius:10px;padding:15px;background:#fff;min-height:110px;resize:vertical;line-height:1.5;color:var(--ink)}.drawer-actions{position:sticky;bottom:0;background:#fffef9ef;backdrop-filter:blur(14px);border-top:1px solid #e6e4dd;padding:15px 24px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}.drawer-actions .nav{margin-right:auto;display:flex;gap:6px}.tiny{padding:10px 12px;font-size:12px;min-height:40px}.footer{text-align:center;margin:48px 0 0;color:#86908d;font-size:12px;line-height:1.65}.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:23px;background:#203d42;color:white;padding:13px 20px;border-radius:12px;box-shadow:0 10px 35px #0002;z-index:30;opacity:0;pointer-events:none;transition:opacity .18s}.toast.visible{opacity:1}.dialog-panel{border:1px solid #dddcd3;border-radius:16px;padding:23px;background:#fffefa;max-width:530px;width:calc(100% - 30px);margin:auto;box-shadow:0 25px 70px #0003}.dialog-panel h2{margin:0 0 18px;font:30px Georgia,serif}.dialog-panel label{display:block;font-size:12px;font-weight:750;margin:16px 0 7px}.dialog-panel input,.dialog-panel textarea{width:100%;border:1px solid #dcdcd4;border-radius:9px;padding:12px}.dialog-panel textarea{min-height:110px}.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.backdrop{position:fixed;inset:0;background:#172b2f94;z-index:10;display:none;justify-content:flex-end}.backdrop.open{display:flex}.drawer{width:min(720px,100%);height:100%;background:var(--paper);overflow:auto;box-shadow:-15px 0 65px #0003;display:flex;flex-direction:column}.drawer-head{position:sticky;top:0;background:var(--paper);z-index:2;border-bottom:1px solid #e4e1d9;padding:24px 32px 18px}.drawer-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.drawer-code{font-size:12px;color:#5c7779;letter-spacing:.1em;font-weight:750}.close{border:1px solid #e0ded7;background:#f9f7f2;border-radius:9px;padding:4px 12px;font-size:26px;line-height:1.2}.drawer h2{font:500 clamp(31px,4vw,49px)/1.1 Georgia,serif;letter-spacing:-.03em;margin:26px 0 11px}.drawer-origin{font-size:12px;color:#75817e}
+[hidden]{display:none!important}
+.title-actions{display:flex;align-items:center;gap:10px;margin:0 0 10px}
+.title-edit-btn{min-height:34px;font-size:12px}
+.title-editor{margin:15px 0 13px;padding:15px;border-radius:10px;border:1px solid #d5ddd7;background:#f5f8f5}
+.title-editor label{display:block;margin-bottom:8px;font-weight:700;font-size:12px;color:var(--navy)}
+.title-editor input{display:block;width:100%;min-height:43px;border-radius:8px;border:1px solid #b4c7bd;padding:9px 12px;font-size:19px;color:var(--ink);background:white}
+.title-editor-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.title-editor-status{margin:10px 0 0;font-size:12px;color:#4b6161}
+.title-editor-status[data-state="error"]{color:#ad2c2c;font-weight:700}.drawer-content{padding:24px 32px 50px;flex:1}.section{padding:15px 0 23px;border-bottom:1px solid #ebe8df}.section h3{color:#617c7d;letter-spacing:.12em;text-transform:uppercase;font-size:11px;margin:0 0 13px}.section p{font-size:15px;line-height:1.75;color:#37474d;white-space:pre-wrap;margin:0}.quote{background:#f0f3ef;border-left:3px solid #69918a;padding:22px 23px;border-radius:0 11px 11px 0;font:17px/1.7 Georgia,serif;white-space:pre-wrap}.notes{width:100%;border:1px solid #dcdcd4;border-radius:10px;padding:15px;background:#fff;min-height:110px;resize:vertical;line-height:1.5;color:var(--ink)}.drawer-actions{position:sticky;bottom:0;background:#fffef9ef;backdrop-filter:blur(14px);border-top:1px solid #e6e4dd;padding:15px 24px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}.drawer-actions .nav{margin-right:auto;display:flex;gap:6px}.tiny{padding:10px 12px;font-size:12px;min-height:40px}.footer{text-align:center;margin:48px 0 0;color:#86908d;font-size:12px;line-height:1.65}.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:23px;background:#203d42;color:white;padding:13px 20px;border-radius:12px;box-shadow:0 10px 35px #0002;z-index:30;opacity:0;pointer-events:none;transition:opacity .18s}.toast.visible{opacity:1}.dialog-panel{border:1px solid #dddcd3;border-radius:16px;padding:23px;background:#fffefa;max-width:530px;width:calc(100% - 30px);margin:auto;box-shadow:0 25px 70px #0003}.dialog-panel h2{margin:0 0 18px;font:30px Georgia,serif}.dialog-panel label{display:block;font-size:12px;font-weight:750;margin:16px 0 7px}.dialog-panel input,.dialog-panel textarea{width:100%;border:1px solid #dcdcd4;border-radius:9px;padding:12px}.dialog-panel textarea{min-height:110px}.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(max-width:1000px){.page{padding:0 23px 75px}.cards{gap:13px}.card{padding:20px}.card-title{margin-top:23px;font-size:clamp(21px,2.4vw,29px)}.card-summary{font-size:12px;-webkit-line-clamp:4}}
 @media(max-width:720px){.page{padding:0 15px 60px}.top{padding:30px 0 22px}.top-right{width:53px;height:53px;font-size:29px}.cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.card{padding:15px;border-radius:11px}.card-title{margin-top:15px;font-size:clamp(18px,4.5vw,26px)}.card-summary{font-size:11px;line-height:1.5;-webkit-line-clamp:3}.card-bottom{padding-top:10px}.card-origin{font-size:9px}.drawer-head,.drawer-content{padding-left:18px;padding-right:18px}.drawer-actions{padding:13px}.toolbar{gap:7px}.btn,select{padding:11px 12px}}
 @media(max-width:430px){.cards{grid-template-columns:1fr}.card{padding:21px 23px}.card-title{font-size:32px;margin-top:28px}.card-summary{font-size:14px;-webkit-line-clamp:5}.card-origin{font-size:10px}.top-right{display:none}.drawer-actions .nav{width:100%}}
@@ -116,7 +125,13 @@ button[disabled]{cursor:not-allowed;opacity:.55}
  <div class="footer">Et åbent, uafsluttet empirisk register. Samtaleprincippers overholdelse er en vurdering, ikke en automatisk egenskab. Kilderne er særskilt mærket, og forslag er ikke automatisk dokumenterede mekanismer.<br>Registerets indhold læses fra og gemmes i Supabase. En ændring regnes først for gemt, når serveren har bekræftet den. Eksportér gerne sikkerhedskopier.</div>
 </div>
 <div class="backdrop" id="backdrop" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
- <div class="drawer"><div class="drawer-head"><div class="drawer-top"><span class="drawer-code" id="detailCode"></span><button class="close" id="close" aria-label="Luk detaljer">×</button></div><h2 id="detailTitle"></h2><div class="drawer-origin" id="detailOrigin"></div></div><div class="drawer-content" id="detailContent"></div><div class="drawer-actions"><span class="nav"><button class="btn tiny" id="previous">← Forrige</button><button class="btn tiny" id="next">Næste →</button></span><button class="btn tiny" id="copyId">Kopiér ID</button><button class="btn dark tiny" id="copyChat">Kopiér til chatten</button></div></div>
+ <div class="drawer"><div class="drawer-head"><div class="drawer-top"><span class="drawer-code" id="detailCode"></span><button class="close" id="close" aria-label="Luk detaljer">×</button></div><h2 id="detailTitle"></h2><div class="title-actions"><button class="btn ghost tiny title-edit-btn" type="button" id="editGambitTitle">✎ Redigér navn</button></div>
+ <form class="title-editor" id="gambitTitleEditor" hidden>
+ <label for="gambitTitleInput">Gambittens navn</label>
+ <input id="gambitTitleInput" type="text" maxlength="300" required autocomplete="off">
+ <div class="title-editor-actions"><button class="btn dark tiny" type="submit" id="saveGambitTitle">Gem navn i Supabase</button><button class="btn ghost tiny" type="button" id="cancelGambitTitle">Annuller</button></div>
+ <p class="title-editor-status" id="gambitTitleStatus" role="status" aria-live="polite"></p></form>
+ <div class="drawer-origin" id="detailOrigin"></div></div><div class="drawer-content" id="detailContent"></div><div class="drawer-actions"><span class="nav"><button class="btn tiny" id="previous">← Forrige</button><button class="btn tiny" id="next">Næste →</button></span><button class="btn tiny" id="copyId">Kopiér ID</button><button class="btn dark tiny" id="copyChat">Kopiér til chatten</button></div></div>
 </div>
 <div class="backdrop" id="addBackdrop" role="dialog" aria-modal="true" aria-labelledby="addTitle"><form class="dialog-panel" id="newForm"><h2 id="addTitle">Registrér en gambit</h2><p>Kun et navn og en iagttagelse er nødvendig. Resten kan komme senere.</p><label for="newName">Navn</label><input id="newName" required maxlength="160" placeholder="Et navn for trækket"><label for="newExample">Replik / observation</label><textarea id="newExample" placeholder="Hvad blev sagt eller gjort?"></textarea><label for="newPlain">Foreløbig beskrivelse</label><textarea id="newPlain" placeholder="Hvad kendetegner strukturen?"></textarea><p id="newError" class="help" role="status" aria-live="polite"></p><div class="dialog-actions"><button type="button" class="btn" id="cancelAdd">Annuller</button><button type="submit" class="btn dark">Gem med nyt ID</button></div></form></div>
 <div class="actor-picker" id="actorPicker" role="dialog" aria-label="Vælg aktørfarve" aria-hidden="true">
@@ -148,7 +163,7 @@ entries=[];
 const SUPABASE_URL='https://wpriingzftsboauvkmsj.supabase.co';
 const PUBLISHABLE_KEY='sb_publishable_bSvkvx_Lqd5ZEt94oVdMaw_44WV2fYE';
 const SESSION_KEY='smfi-gambits-auth-session-v1';
-let session=null,flushing=false,flushTimer=null,saveQueue=new Map();
+let session=null,flushing=false,flushTimer=null,saveQueue=new Map(),flushPromise=null,titleSaveInProgress=false;
 function storageState(message,kind='connected'){const n=$('#storageState');n.textContent=message;n.dataset.state=kind;}
 function errorText(err){return err?.message||'Ukendt fejl';}
 async function api(path,{method='GET',body,auth=true}={}){
@@ -257,30 +272,36 @@ function save(){
  storageState('Ikke gemt endnu · sender til Supabase…','loading');
  clearTimeout(flushTimer);flushTimer=setTimeout(flushDatabase,450);
 }
+
 async function flushDatabase(){
- if(flushing||!session||saveQueue.size===0)return;
+ if(flushPromise)return flushPromise;
+ if(titleSaveInProgress||!session||saveQueue.size===0)return;
  flushing=true;
- while(saveQueue.size){
-  const [id,payload]=saveQueue.entries().next().value;
-  saveQueue.delete(id);
-  const e=entries.find(x=>x.id===id);
-  if(!e)continue;
-  try{
-   const q='?id=eq.'+encodeURIComponent(id)+'&version=eq.'+encodeURIComponent(String(e.dbVersion))+'&select=*';
-   const rows=await api('/rest/v1/smfi_gambits'+q,{method:'PATCH',body:payload});
-   if(!rows||rows.length!==1)throw Error('Konflikt: Kortet er ændret i databasen af en anden session. Eksportér ændringerne og genindlæs.');
-   e.dbVersion=rows[0].version;
-   if(saveQueue.size===0){storageState(`Ændringer gemt centralt · ${id}`);toast(`Gemt i Supabase · ${id}`);}
-  }catch(err){
-   saveQueue.set(id,payload);
-   storageState('IKKE GEMT! '+errorText(err),'error');
-   console.error('Supabase-skrivning mislykkedes',err);
-   break;
+ flushPromise=(async()=>{
+  while(saveQueue.size){
+   const [id,payload]=saveQueue.entries().next().value;
+   saveQueue.delete(id);
+   const e=entries.find(x=>x.id===id);
+   if(!e)continue;
+   try{
+    const q='?id=eq.'+encodeURIComponent(id)+'&version=eq.'+encodeURIComponent(String(e.dbVersion))+'&select=*';
+    const rows=await api('/rest/v1/smfi_gambits'+q,{method:'PATCH',body:payload});
+    if(!rows||rows.length!==1)throw Error('Konflikt: Kortet er ændret i databasen af en anden session. Eksportér ændringerne og genindlæs.');
+    e.dbVersion=rows[0].version;
+    if(saveQueue.size===0){storageState('Ændringer gemt centralt · '+id);toast('Gemt i Supabase · '+id);}
+   }catch(err){
+    saveQueue.set(id,payload);
+    storageState('IKKE GEMT! '+errorText(err),'error');
+    console.error('Supabase-skrivning mislykkedes',err);
+    break;
+   }
   }
- }
- flushing=false;
- if(saveQueue.size&&($('#storageState').dataset.state!=='error')){clearTimeout(flushTimer);flushTimer=setTimeout(flushDatabase,200);}
+  if(saveQueue.size&&($('#storageState').dataset.state!=='error')){clearTimeout(flushTimer);flushTimer=setTimeout(flushDatabase,200);}
+ })();
+ try{return await flushPromise;}
+ finally{flushing=false;flushPromise=null;}
 }
+
 $('#retrySave').addEventListener('click',()=>{if(saveQueue.size)flushDatabase();else loadRegistry().catch(err=>storageState('Kunne ikke opdatere: '+errorText(err),'error'))});
 
 function current(){return entries.find(x=>x.id===activeId)}
@@ -497,7 +518,63 @@ function bindExampleEditor(e){
 
 function render(){const arr=visible();currentOrder=arr.map(x=>x.id);$('#count').textContent=`${arr.length} af ${entries.length} kort`;$('#cards').innerHTML=arr.length?arr.map(e=>`<button class="card" type="button" data-id="${esc(e.id)}" data-origin="${esc(e.origin)}"><span class="card-number">${esc(e.id)}</span><h2 class="card-title">${esc(e.name)}</h2><div class="card-summary">${esc(capitalRoleText(e.plain||e.examples||'Foreløbig registrering. Beskrivelse afventer.'))}</div><div class="card-bottom"><span class="card-origin">${e.origin==='manuskript'?'Manuskript':e.origin==='samtalen'?'Samtalen':'Ny registrering'}${e.status==='Forslag'?' · forslag':''}</span><span class="card-arrow" aria-hidden="true">↗</span></div></button>`).join(''):'<div class="empty">Ingen kort matcher søgningen. Prøv et andet ord, eller registrér en ny gambit.</div>';}
 function section(label,text,cls='',e=null,field=''){return clean(text).trim()?`<section class="section"><h3>${esc(label)}</h3><div class="${cls||'text'}">${cls==='quote'?(e&&field?wordHtml(e,field,text):esc(capitalRoleText(text))):`<p>${e&&field?wordHtml(e,field,text):esc(capitalRoleText(text))}</p>`}</div></section>`:''}
-function open(id){const e=entries.find(x=>x.id===id);if(!e)return;activeId=id;lastFocus=document.activeElement;$('#detailCode').textContent=e.id;$('#detailTitle').textContent=e.name;$('#detailOrigin').textContent=(e.origin==='manuskript'?'Fra manuskriptet':e.origin==='samtalen'?'Fra samtalen':'Egen registrering')+(e.status==='Forslag'?' · forslag':'');hideActorPicker();$('#detailContent').innerHTML=actorIntroduction(e)+section('Kort beskrivelse',e.plain,'',e,'plain')+exampleSection(e)+section('Beskrivelse af samtaleoperationen',e.mechanism,'',e,'mechanism')+section('Supplerende kildekommentar',e.theory,'',e,'theory')+section('Forslag til modtræk',e.countermove,'',e,'countermove')+assessSection(e)+(e.source_label?section('Oprindelig kildebetegnelse',e.source_label):'')+(e.source_url?`<section class="section"><h3>Kilde</h3><p><a target="_blank" rel="noopener noreferrer" href="${esc(e.source_url)}">Åbn kildedokument</a></p></section>`:'')+`<section class="section"><h3>Noter</h3><textarea class="notes" id="notes" placeholder="Skriv en observation, et nyt eksempel eller et spørgsmål ...">${esc(e.notes)}</textarea><p style="color:#8a958f;font-size:11px;margin:8px 0 0">Gemmes centralt i Supabase.</p></section>`;$('#notes').addEventListener('input',ev=>{e.notes=ev.target.value;save()});bindAssessments(e);bindExampleEditor(e);$('#backdrop').classList.add('open');document.body.style.overflow='hidden';$('#close').focus();const i=currentOrder.indexOf(id);$('#previous').disabled=i<=0;$('#next').disabled=i<0||i===currentOrder.length-1;}
+function open(id){const e=entries.find(x=>x.id===id);if(!e)return;activeId=id;lastFocus=document.activeElement;$('#detailCode').textContent=e.id;$('#detailTitle').textContent=e.name;$('#gambitTitleEditor').hidden=true;$('#editGambitTitle').hidden=false;$('#gambitTitleStatus').textContent='';$('#gambitTitleInput').value=e.name;$('#detailOrigin').textContent=(e.origin==='manuskript'?'Fra manuskriptet':e.origin==='samtalen'?'Fra samtalen':'Egen registrering')+(e.status==='Forslag'?' · forslag':'');hideActorPicker();$('#detailContent').innerHTML=actorIntroduction(e)+section('Kort beskrivelse',e.plain,'',e,'plain')+exampleSection(e)+section('Beskrivelse af samtaleoperationen',e.mechanism,'',e,'mechanism')+section('Supplerende kildekommentar',e.theory,'',e,'theory')+section('Forslag til modtræk',e.countermove,'',e,'countermove')+assessSection(e)+(e.source_label?section('Oprindelig kildebetegnelse',e.source_label):'')+(e.source_url?`<section class="section"><h3>Kilde</h3><p><a target="_blank" rel="noopener noreferrer" href="${esc(e.source_url)}">Åbn kildedokument</a></p></section>`:'')+`<section class="section"><h3>Noter</h3><textarea class="notes" id="notes" placeholder="Skriv en observation, et nyt eksempel eller et spørgsmål ...">${esc(e.notes)}</textarea><p style="color:#8a958f;font-size:11px;margin:8px 0 0">Gemmes centralt i Supabase.</p></section>`;$('#notes').addEventListener('input',ev=>{e.notes=ev.target.value;save()});bindAssessments(e);bindExampleEditor(e);$('#backdrop').classList.add('open');document.body.style.overflow='hidden';$('#close').focus();const i=currentOrder.indexOf(id);$('#previous').disabled=i<=0;$('#next').disabled=i<0||i===currentOrder.length-1;}
+
+function cancelTitleEditing(){
+ $('#gambitTitleEditor').hidden=true;
+ $('#editGambitTitle').hidden=false;
+ $('#gambitTitleStatus').textContent='';
+}
+$('#editGambitTitle').addEventListener('click',()=>{
+ const e=current();if(!e)return;
+ $('#gambitTitleInput').value=e.name;
+ $('#gambitTitleStatus').textContent='';
+ $('#gambitTitleEditor').hidden=false;
+ $('#editGambitTitle').hidden=true;
+ $('#gambitTitleInput').focus();
+ $('#gambitTitleInput').select();
+});
+$('#cancelGambitTitle').addEventListener('click',cancelTitleEditing);
+$('#gambitTitleInput').addEventListener('keydown',ev=>{
+ if(ev.key==='Escape'){ev.preventDefault();ev.stopPropagation();cancelTitleEditing();}
+});
+$('#gambitTitleEditor').addEventListener('submit',async ev=>{
+ ev.preventDefault();
+ const e=current(),submit=$('#saveGambitTitle'),status=$('#gambitTitleStatus');
+ if(!e)return;
+ const name=$('#gambitTitleInput').value.trim();
+ if(!name||name.length>300){status.dataset.state='error';status.textContent='Skriv et navn på højst 300 tegn.';return;}
+ if(name===e.name){cancelTitleEditing();return;}
+ if(!session){status.dataset.state='error';status.textContent='IKKE GEMT: Log ind på Supabase først.';showAuth();return;}
+ submit.disabled=true;
+ status.dataset.state='loading';status.textContent='Kontrollerer ikke-gemte ændringer…';
+ try{
+  // Gem eksisterende redigeringer før navneændringen, så version og øvrige felter stemmer.
+  clearTimeout(flushTimer);
+  await flushDatabase();
+  if(saveQueue.size)throw Error('Der findes ikke-gemte ændringer. Brug »Genindlæs / prøv at gemme igen«, før du ændrer navnet.');
+  titleSaveInProgress=true;
+  status.textContent='Gemmer nyt navn i Supabase…';
+  const q='?id=eq.'+encodeURIComponent(e.id)+'&version=eq.'+encodeURIComponent(String(e.dbVersion))+'&select=id,title,version';
+  const rows=await api('/rest/v1/smfi_gambits'+q,{method:'PATCH',body:{title:name}});
+  if(!Array.isArray(rows)||rows.length!==1||rows[0].title!==name)throw Error('Ingen gemmebekræftelse. Kortet kan være ændret i en anden session.');
+  e.name=rows[0].title;
+  e.dbVersion=rows[0].version;
+  if(saveQueue.has(e.id))saveQueue.set(e.id,entryPayload(e));
+  $('#detailTitle').textContent=e.name;
+  render();
+  cancelTitleEditing();
+  storageState('Navnet er gemt centralt · '+e.id);
+  toast('Navn gemt i Supabase · '+e.id);
+ }catch(err){
+  status.dataset.state='error';status.textContent='IKKE GEMT: '+errorText(err);
+  storageState('Navneændring IKKE GEMT · '+e.id,'error');
+ }finally{
+  titleSaveInProgress=false;
+  submit.disabled=false;
+  if(saveQueue.size){clearTimeout(flushTimer);flushTimer=setTimeout(flushDatabase,250);}
+ }
+});
 function close(){hideActorPicker();activeId=null;$('#backdrop').classList.remove('open');document.body.style.overflow='';if(lastFocus&&lastFocus.isConnected)lastFocus.focus();}
 async function copy(text){try{await navigator.clipboard.writeText(text);toast('Kopieret. Indsæt det i en chat.')}catch{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();toast(ok?'Kopieret. Indsæt det i en chat.':'Kopiering mislykkedes. Markér teksten manuelt.')}}
 function chatPrompt(e){
