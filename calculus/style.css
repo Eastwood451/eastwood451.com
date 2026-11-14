@@ -1334,7 +1334,7 @@ input:checked + .slider:before {
 
 .skeleton-board.has-parts {
     display: grid;
-    grid-template-columns: minmax(148px, 210px) minmax(0, 1fr);
+    grid-template-columns: minmax(168px, 240px) minmax(0, 1fr);
     gap: 16px 18px;
     align-items: start;
 }
@@ -1367,13 +1367,16 @@ input:checked + .slider:before {
     color: var(--text);
     font-weight: 700;
     font-size: 0.95rem;
-    line-height: 1.45;
+    line-height: 1.7;
     text-align: left;
-    overflow-x: auto;
+    padding: 4px 0;
+    overflow-x: hidden;
+    overflow-y: hidden;
 }
 
 .skeleton-parts-row mjx-container {
     margin: 0 !important;
+    max-width: 100%;
 }
 
 .skeleton-main {
@@ -1506,8 +1509,9 @@ input:checked + .slider:before {
     }
 
     .skeleton-parts-list {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 4px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
     }
 
     .skeleton-parts {
