@@ -457,25 +457,41 @@ async function flushDatabase(){
    const patchKeys=Object.keys(patch);
    if(!patchKeys.length){saveQueue.delete(id);persistOutbox();continue;}
    try{
-    const checkBase=(remote)=>patchKeys.filter(f=>Object.hasOwn(pending.base,f)&&!sameValue(remote[f],pending.base[f]));
-    let rows;
-    const attempt=async(version)=>api('/rest/v1/smfi_gambits?id=eq.'+encodeURIComponent(id)
-      +'&version=eq.'+encodeURIComponent(String(version))+'&select=*',{method:'PATCH',body:patch});
-    // Recover safely if another tab updated this card. Never discard local edits or overwrite conflicting fields.
-    rows=await attempt(e.dbVersion);
-    if(!Array.isArray(rows)||rows.length!==1){
-     const latest=await api('/rest/v1/smfi_gambits?id=eq.'+encodeURIComponent(id)+'&select=*');
-     if(!Array.isArray(latest)||latest.length!==1)throw Error('Kan ikke hente nyeste version af '+id);
-     const collision=checkBase(latest[0]);
-     if(collision.length){
-      pending.blocked='Konflikt på '+collision.join(', ')+' i '+id+'. Lokalt udkast er bevaret. Eksportér en sikkerhedskopi.';
-      persistOutbox();continue;
+    // Check the persisted base before the very first write (including after reopening the page).
+    // A changed remote field is a conflict unless it already equals the desired saved value.
+    const checkBase=(remote)=>patchKeys.filter(f=>Object.hasOwn(pending.base,f)&&
+      !sameValue(remote[f],pending.base[f])&&!sameValue(remote[f],patch[f]));
+    const matchesPatch=(remote)=>patchKeys.every(f=>sameValue(remote[f],patch[f]));
+    const blockConflict=(fields)=>{
+      pending.blocked='Konflikt på '+fields.join(', ')+' i '+id+'. Lokalt udkast er bevaret. Eksportér en sikkerhedskopi.';
+      persistOutbox();
+    };
+    let saved;
+    const initial=serverBase.get(id);
+    const preflight=initial?checkBase(initial):[];
+    if(preflight.length){blockConflict(preflight);continue;}
+    if(initial&&matchesPatch(initial)){saved=initial;}
+    else{
+     const attempt=async(version)=>api('/rest/v1/smfi_gambits?id=eq.'+encodeURIComponent(id)
+       +'&version=eq.'+encodeURIComponent(String(version))+'&select=*',{method:'PATCH',body:patch});
+     let rows=await attempt(e.dbVersion);
+     if(Array.isArray(rows)&&rows.length===1)saved=rows[0];
+     else{
+      const latest=await api('/rest/v1/smfi_gambits?id=eq.'+encodeURIComponent(id)+'&select=*');
+      if(!Array.isArray(latest)||latest.length!==1)throw Error('Kan ikke hente nyeste version af '+id);
+      const remote=latest[0],collision=checkBase(remote);
+      // Covers the lost-response case: the original write succeeded, but its acknowledgement vanished.
+      if(matchesPatch(remote))saved=remote;
+      else if(collision.length){blockConflict(collision);continue;}
+      else{
+       e.dbVersion=remote.version;serverBase.set(id,remote);
+       rows=await attempt(e.dbVersion);
+       if(!Array.isArray(rows)||rows.length!==1)throw Error('Versionskonflikt. Lokalt udkast er bevaret.');
+       saved=rows[0];
+      }
      }
-     e.dbVersion=latest[0].version;serverBase.set(id,latest[0]);
-     rows=await attempt(e.dbVersion);
-     if(!Array.isArray(rows)||rows.length!==1)throw Error('Versionskonflikt. Lokalt udkast er bevaret.');
     }
-    const saved=rows[0];e.dbVersion=saved.version;serverBase.set(id,saved);
+    e.dbVersion=saved.version;serverBase.set(id,saved);
     const live=saveQueue.get(id);
     if(live){
      for(const f of patchKeys){
