@@ -146,8 +146,21 @@ button[disabled]{cursor:not-allowed;opacity:.55}
   <p>Alle kort, eksempler og farvemarkeringer gemmes centralt. Brug din <strong>appbruger i Supabase Auth</strong>. Adgangskoden til <em>supabase.com-dashboardet</em> er ikke nødvendigvis den samme.</p>
   <label for="authEmail">E-mail</label><input id="authEmail" type="email" autocomplete="username" required>
   <label for="authPassword">Adgangskode</label><input id="authPassword" type="password" autocomplete="current-password">
-  <div class="dialog-actions"><button class="btn dark" type="submit" id="authSubmit">Log ind</button><button class="btn" type="button" id="authMagic">Send loginlink</button></div>
+  <div class="dialog-actions"><button class="btn dark" type="submit" id="authSubmit">Log ind</button><button class="btn" type="button" id="authMagic">Send loginlink</button><button class="btn" type="button" id="authRecover">Glemt app-adgangskode</button></div>
   <p id="authMessage" class="auth-message" role="status" aria-live="polite"></p><p class="auth-message" id="connectionMessage" role="status" aria-live="polite"></p><div class="dialog-actions"><button class="btn tiny" id="checkConnection" type="button">Test forbindelsen til Supabase</button><a href="https://wpriingzftsboauvkmsj.supabase.co/auth/v1/health" target="_blank" rel="noopener noreferrer">Åbn Supabase-status i ny fane</a></div>
+ </form>
+</div>
+<div class="backdrop" id="recoveryBackdrop" role="dialog" aria-modal="true" aria-labelledby="recoveryHeading">
+ <form class="dialog-panel auth-panel" id="recoveryForm" autocomplete="off">
+  <div class="eyebrow">App-adgangskode · Supabase Auth</div>
+  <h2 id="recoveryHeading">Vælg ny adgangskode</h2>
+  <p>Dette ændrer kun adgangskoden til Gambitregisterets bruger. Det ændrer ikke dit GitHub- eller Supabase-dashboard-login.</p>
+  <label for="recoveryPassword">Ny adgangskode</label>
+  <input type="password" id="recoveryPassword" minlength="8" autocomplete="new-password" required>
+  <label for="recoveryConfirm">Gentag adgangskoden</label>
+  <input type="password" id="recoveryConfirm" minlength="8" autocomplete="new-password" required>
+  <div class="dialog-actions"><button class="btn dark" type="submit" id="recoverySubmit">Gem ny adgangskode</button></div>
+  <p class="auth-message" role="status" aria-live="polite" id="recoveryStatus"></p>
  </form>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -257,6 +270,36 @@ $('#authForm').addEventListener('submit',async ev=>{
  catch(err){authStatus('Login mislykkedes: '+errorText(err));showAuth();}
  finally{button.disabled=false;}
 });
+$('#authRecover').addEventListener('click',async()=>{
+ const email=$('#authEmail').value.trim(),button=$('#authRecover');
+ if(!email){authStatus('Skriv din appbrugers e-mail først.');$('#authEmail').focus();return;}
+ button.disabled=true;
+ authStatus('Sender gendannelseslink til appbrugeren…');
+ try{
+  const redirect=location.origin+'/gambits/';
+  await api('/auth/v1/recover?redirect_to='+encodeURIComponent(redirect),{method:'POST',body:{email},auth:false});
+  authStatus('Hvis e-mailadressen findes, er der sendt et link til at ændre app-adgangskoden. Kontrollér indbakke og spam.');
+ }catch(err){
+  authStatus('Kunne ikke sende gendannelseslink: '+errorText(err));
+ }finally{button.disabled=false;}
+});
+$('#recoveryForm').addEventListener('submit',async ev=>{
+ ev.preventDefault();
+ const password=$('#recoveryPassword').value,confirm=$('#recoveryConfirm').value,
+  status=$('#recoveryStatus'),button=$('#recoverySubmit');
+ if(password.length<8){status.textContent='Brug mindst 8 tegn.';return;}
+ if(password!==confirm){status.textContent='Adgangskoderne er ikke ens.';return;}
+ if(!session?.access_token){status.textContent='Gendannelsessessionen er udløbet. Bed om et nyt link.';return;}
+ button.disabled=true;status.textContent='Gemmer adgangskoden…';
+ try{
+  await api('/auth/v1/user',{method:'PUT',body:{password}});
+  $('#recoveryPassword').value='';$('#recoveryConfirm').value='';
+  $('#recoveryBackdrop').classList.remove('open');
+  toast('App-adgangskoden er ændret');
+  storageState('Adgangskode ændret · Supabase forbundet');
+ }catch(err){status.textContent='IKKE GEMT: '+errorText(err);}
+ finally{button.disabled=false;}
+});
 $('#authMagic').addEventListener('click',async()=>{
  const email=$('#authEmail').value.trim();if(!email){authStatus('Skriv din Supabase-e-mail først.');return;}
  try{
@@ -272,7 +315,14 @@ async function consumeAuthCallback(){
     expires_in:Number(fragment.get('expires_in')||3600)};
   d.expires_at=Math.floor(Date.now()/1000)+d.expires_in;
   history.replaceState(null,'',location.pathname+location.search);
-  try{await enterSession(d)}catch(err){showAuth();authStatus('Loginlink fejlede: '+errorText(err))}
+  try{
+   await enterSession(d);
+   if(fragment.get('type')==='recovery'){
+    $('#recoveryBackdrop').classList.add('open');
+    $('#recoveryStatus').textContent='';
+    $('#recoveryPassword').focus();
+   }
+  }catch(err){showAuth();authStatus('Loginlink eller gendannelse fejlede: '+errorText(err))}
   return true;
  }
  return false;
