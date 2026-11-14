@@ -10,7 +10,7 @@
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,textarea,select{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #b57f42;outline-offset:3px}a{color:var(--navy)}
 .page{max-width:1190px;margin:auto;padding:0 32px 90px}.top{padding:44px 0 28px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:20px}.eyebrow{font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#67807d}.top h1{font:500 clamp(40px,5.2vw,69px)/1.05 Georgia,serif;letter-spacing:-.045em;margin:9px 0 0}.top h1 i{font-weight:400;color:#a16e40}.top p{margin:16px 0 0;line-height:1.6;color:var(--muted);max-width:680px;font-size:14px}.top-right{background:#e4e9e3;border:1px solid #d3dad4;border-radius:50%;width:87px;height:87px;flex:0 0 auto;display:grid;place-items:center;font:500 41px Georgia,serif;color:#2b5152}.toolbar{display:flex;align-items:center;gap:10px;padding:23px 0 12px;flex-wrap:wrap}.search-wrap{flex:1;min-width:220px;position:relative}.search-wrap svg{position:absolute;left:14px;top:12px;width:18px;height:18px;opacity:.6}.search-wrap input{background:var(--paper);color:var(--ink);border:1px solid #dcdcd4;border-radius:11px;padding:13px 13px 13px 44px;width:100%;box-shadow:0 1px 2px #3333}.btn,select{border:1px solid #dcdcd4;border-radius:10px;background:#fffefa;padding:12px 16px;color:#30444b;font-size:13px;font-weight:650;min-height:44px}.btn:hover,select:hover{background:#e9efec;border-color:#9db1aa}.btn.dark{background:var(--navy);color:white;border-color:var(--navy)}.btn.dark:hover{background:#315865}.btn.ghost{background:transparent}.filters{display:flex;gap:7px;margin:0 0 20px;align-items:center;flex-wrap:wrap}.filter{border:1px solid transparent;background:transparent;padding:9px 13px;border-radius:40px;color:#647278;font-size:12px;font-weight:650}.filter.selected{background:#dce7e1;border-color:#c8d7ce;color:#24494d}.filter:hover{background:#e7ece7}.spacer{flex:1}.count{font-size:12px;color:var(--muted)}
 .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}.card{position:relative;aspect-ratio:3 / 4;min-width:0;text-align:left;border:1px solid #dddcd3;border-radius:14px;background:var(--paper);padding:24px 23px 23px;color:inherit;display:flex;flex-direction:column;overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s;box-shadow:0 2px 4px #202a2a0a}.card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:#9eaca5}.card:before{content:"";position:absolute;top:0;left:0;width:100%;height:5px;background:#365e61}.card[data-origin="samtalen"]:before{background:#b17d4d}.card-number{font:500 11px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.11em;color:#718381}.card-title{font:500 clamp(23px,2.5vw,34px)/1.12 Georgia,serif;letter-spacing:-.03em;margin:35px 0 14px;overflow-wrap:anywhere}.card-summary{font-size:14px;line-height:1.65;color:#64717a;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}.card-bottom{margin-top:auto;display:flex;gap:8px;align-items:center;justify-content:space-between;border-top:1px solid #ede9e0;padding-top:17px}.card-origin{font-size:10px;font-weight:750;letter-spacing:.08em;text-transform:uppercase;color:#87908b}.card-arrow{font-size:24px;color:#2d5a5d;line-height:1}.empty{grid-column:1/-1;text-align:center;padding:90px 20px;color:#69777d;border:1px dashed #c7c8c0;border-radius:15px;background:#fffdfa}
-.backdrop{position:fixed;inset:0;background:#172b2f94;z-index:10;display:none;justify-content:flex-end}.backdrop.open{display:flex}.drawer{width:min(720px,100%);height:100%;background:var(--paper);overflow:auto;box-shadow:-15px 0 65px #0003;display:flex;flex-direction:column}.drawer-head{position:sticky;top:0;background:var(--paper);z-index:2;border-bottom:1px solid #e4e1d9;padding:24px 32px 18px}.drawer-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.drawer-code{font-size:12px;color:#5c7779;letter-spacing:.1em;font-weight:750}.close{border:1px solid #e0ded7;background:#f9f7f2;border-radius:9px;padding:4px 12px;font-size:26px;line-height:1.2}.drawer h2{font:500 clamp(31px,4vw,49px)/1.1 Georgia,serif;letter-spacing:-.03em;margin:26px 0 11px}.drawer-origin{font-size:12px;color:#75817e}
+.backdrop{position:fixed;inset:0;background:#172b2f94;z-index:10;display:none;justify-content:flex-end}.backdrop.open{display:flex}.drawer{width:min(720px,100%);height:100%;background:var(--paper);overflow:auto;box-shadow:-15px 0 65px #0003;display:flex;flex-direction:column}.drawer-head{position:sticky;top:0;background:var(--paper);z-index:2;border-bottom:1px solid #e4e1d9;padding:24px 32px 18px}.drawer-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.drawer-code{font-size:12px;color:#5c7779;letter-spacing:.1em;font-weight:750}.close{border:1px solid #e0ded7;background:#f9f7f2;border-radius:9px;padding:4px 12px;font-size:26px;line-height:1.2}.drawer h2{font:500 clamp(31px,4vw,49px)/1.1 Georgia,serif;letter-spacing:-.03em;margin:26px 0 11px}.drawer-origin{font-size:12px;color:#75817e}.detail-save-status{font-size:12px;margin:12px 0 0;line-height:1.4;color:#476b63}.detail-save-status[data-state="loading"]{color:#795c2e}.detail-save-status[data-state="error"]{color:#a62626}
 [hidden]{display:none!important}
 .title-actions{display:flex;align-items:center;gap:10px;margin:0 0 10px}
 .title-edit-btn{min-height:34px;font-size:12px}
@@ -108,7 +108,7 @@ button[disabled]{cursor:not-allowed;opacity:.55}
   <select id="sort" aria-label="Sortér"><option value="id">ID-rækkefølge</option><option value="name">Navn A–Å</option></select>
   <button class="btn dark" id="add">+ Ny gambit</button>
   <button class="btn" id="export">Eksportér</button>
-  <button class="btn" id="import">Importér</button><span class="storage-state" id="storageState" data-state="loading" aria-live="polite">Forbinder til Supabase…</span><button class="btn tiny" id="retrySave">Genindlæs / prøv at gemme igen</button><button class="btn tiny" id="logout">Log ud</button>
+  <button class="btn" id="import">Importér</button><span class="storage-state" id="storageState" data-state="loading" aria-live="polite">Forbinder til Supabase…</span><button class="btn tiny" id="retrySave">Genindlæs / prøv at gemme igen</button><button class="btn tiny" id="resolveConflict" hidden>Løs versionskonflikt</button><button class="btn tiny" id="logout">Log ud</button>
   <input id="file" type="file" accept="application/json,.json" hidden>
  </div>
  <details class="role-config" id="roleConfig"><summary>Roller, køn og pronomener · indstillinger for visningen</summary>
@@ -131,7 +131,7 @@ button[disabled]{cursor:not-allowed;opacity:.55}
  <input id="gambitTitleInput" type="text" maxlength="300" required autocomplete="off">
  <div class="title-editor-actions"><button class="btn dark tiny" type="submit" id="saveGambitTitle">Gem navn i Supabase</button><button class="btn ghost tiny" type="button" id="cancelGambitTitle">Annuller</button></div>
  <p class="title-editor-status" id="gambitTitleStatus" role="status" aria-live="polite"></p></form>
- <div class="drawer-origin" id="detailOrigin"></div></div><div class="drawer-content" id="detailContent"></div><div class="drawer-actions"><span class="nav"><button class="btn tiny" id="previous">← Forrige</button><button class="btn tiny" id="next">Næste →</button></span><button class="btn tiny" id="copyId">Kopiér ID</button><button class="btn dark tiny" id="copyChat">Kopiér til chatten</button></div></div>
+ <div class="drawer-origin" id="detailOrigin"></div><p class="detail-save-status" id="detailSaveStatus" role="status" aria-live="polite">Gambitregisteret er forbundet til Supabase.</p></div><div class="drawer-content" id="detailContent"></div><div class="drawer-actions"><span class="nav"><button class="btn tiny" id="previous">← Forrige</button><button class="btn tiny" id="next">Næste →</button></span><button class="btn tiny" id="copyId">Kopiér ID</button><button class="btn dark tiny" id="copyChat">Kopiér til chatten</button></div></div>
 </div>
 <div class="backdrop" id="addBackdrop" role="dialog" aria-modal="true" aria-labelledby="addTitle"><form class="dialog-panel" id="newForm"><h2 id="addTitle">Registrér en gambit</h2><p>Kun et navn og en iagttagelse er nødvendig. Resten kan komme senere.</p><label for="newName">Navn</label><input id="newName" required maxlength="160" placeholder="Et navn for trækket"><label for="newExample">Replik / observation</label><textarea id="newExample" placeholder="Hvad blev sagt eller gjort?"></textarea><label for="newPlain">Foreløbig beskrivelse</label><textarea id="newPlain" placeholder="Hvad kendetegner strukturen?"></textarea><p id="newError" class="help" role="status" aria-live="polite"></p><div class="dialog-actions"><button type="button" class="btn" id="cancelAdd">Annuller</button><button type="submit" class="btn dark">Gem med nyt ID</button></div></form></div>
 <div class="actor-picker" id="actorPicker" role="dialog" aria-label="Vælg aktørfarve" aria-hidden="true">
@@ -228,7 +228,13 @@ function pendingLabel(){
  else storageState('Alle ændringer bekræftet i Supabase','connected');
 }
 restoreOutbox();
-function storageState(message,kind='connected'){const n=$('#storageState');n.textContent=message;n.dataset.state=kind;}
+function storageState(message,kind='connected'){
+ const n=$('#storageState');n.textContent=message;n.dataset.state=kind;
+ const detail=$('#detailSaveStatus');
+ if(detail){detail.textContent=message;detail.dataset.state=kind;}
+ const conflicts=$('#resolveConflict');
+ if(conflicts)conflicts.hidden=![...saveQueue.values()].some(v=>v.blocked);
+}
 function errorText(err){return err?.message||'Ukendt fejl';}
 // Send aldrig et skrivekald med et kendt udløbet token. Forny først, og gentag højst én gang ved JWT-udløb.
 async function api(path,{method='GET',body,auth=true}={}){
@@ -525,6 +531,24 @@ async function flushDatabase(){
 $('#retrySave').addEventListener('click',()=>{
  if(saveQueue.size){retryDelay=1500;flushDatabase()}
  else loadRegistry().catch(err=>storageState('Kunne ikke opdatere: '+errorText(err),'error'));
+});
+$('#resolveConflict').addEventListener('click',async()=>{
+ const conflict=[...saveQueue.entries()].find(([,draft])=>draft.blocked);
+ if(!conflict)return;
+ const [id,draft]=conflict;
+ const confirmText='Der er en nyere ændring af samme felt i '+id+
+ '. Vil du bevidst erstatte den med dit gemte lokale udkast? Den tidligere version bevares i Supabases revisionshistorik.';
+ if(!confirm(confirmText))return;
+ try{
+  const latest=await api('/rest/v1/smfi_gambits?id=eq.'+encodeURIComponent(id)+'&select=*');
+  if(!Array.isArray(latest)||latest.length!==1)throw Error('Kunne ikke hente seneste databaseversion');
+  serverBase.set(id,latest[0]);
+  const e=entries.find(x=>x.id===id);
+  if(e)e.dbVersion=latest[0].version;
+  for(const field of Object.keys(draft.fields))draft.base[field]=latest[0][field]??null;
+  draft.blocked='';persistOutbox();retryDelay=1500;
+  await flushDatabase();
+ }catch(error){storageState('Konflikten kunne ikke løses: '+errorText(error),'error');}
 });
 window.addEventListener('online',()=>{retryDelay=1500;flushDatabase()});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&saveQueue.size)flushDatabase()});
@@ -868,7 +892,7 @@ $('#newForm').addEventListener('submit',async ev=>{
  }catch(err){$('#newError').textContent='IKKE OPRETTET: '+errorText(err);}
  finally{submit.disabled=false;}
 });
-$('#export').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({format:'Gambit-kort',version:5,exported:new Date().toISOString(),entries,rolePrefs},null,2)],{type:'application/json'});const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download='gambitregister-backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1200)});
+$('#export').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({format:'Gambit-kort',version:6,exported:new Date().toISOString(),entries,rolePrefs,pendingEdits:[...saveQueue].map(([id,record])=>({id,fields:record.fields,base:record.base,blocked:record.blocked||''}))},null,2)],{type:'application/json'});const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download='gambitregister-backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1200)});
 $('#import').addEventListener('click',()=>toast('Import til central database er endnu ikke aktiveret. Eksportér først en backup.'));
 render();consumeAuthCallback().then(consumed=>{if(!consumed)initAuth()});
 })();
