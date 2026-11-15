@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
 <title>Gambitregister · kortoversigt</title>
+<link rel="stylesheet" href="analysis.css?v=1">
 <style>
 :root {--bg:#f5f3ef;--paper:#fffefa;--ink:#202930;--muted:#66737b;--line:#dedbd2;--navy:#193d4a;--pale:#e9efec;--warm:#f4eee4;--accent:#be7e47;--shadow:0 14px 42px #152b2d18;}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,textarea,select{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #b57f42;outline-offset:3px}a{color:var(--navy)}
@@ -165,6 +166,7 @@ button[disabled]{cursor:not-allowed;opacity:.55}
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<script src="analysis.js?v=1"></script>
 <script>
 (()=>{'use strict';
 const SEED=[];
@@ -225,7 +227,7 @@ function updateRecoveryControl(){
  const b=document.querySelector('#recoverOtherTabs');
  if(b)b.hidden=!extra.length;
 }
-const DB_EDITABLE_FIELDS=['title','short_description','example','operation','notes','actors','principles','theory','countermove'];
+const DB_EDITABLE_FIELDS=['title','short_description','example','operation','notes','actors','principles','theory','countermove','analysis_purpose','analysis_mechanism','analysis_culpability'];
 let serverBase=new Map(),retryDelay=1500,retryTimer=null;
 const sameValue=(a,b)=>JSON.stringify(canonical(a))===JSON.stringify(canonical(b));
 function canonical(x){
@@ -256,6 +258,7 @@ function restoreOutbox(){
  }catch(err){storageState('Nødudkast kunne ikke læses · eksporter browserdata','error')}
 }
 function applyDraft(e,fields){
+ for(const field of Object.keys(GambitAnalysis.fields))if(Object.hasOwn(fields,field))e[field]=fields[field];
  if(Object.hasOwn(fields,'title'))e.name=fields.title;
  if(Object.hasOwn(fields,'short_description'))e.plain=fields.short_description;
  if(Object.hasOwn(fields,'example'))e.examples=fields.example;
@@ -322,6 +325,7 @@ function displayEntry(row){
  const base=row.source_meta||{};
  return {
   ...base,id:row.id,name:row.title,plain:row.short_description||'',examples:row.example||'',
+  analysis_purpose:row.analysis_purpose||{},analysis_mechanism:row.analysis_mechanism||{},analysis_culpability:row.analysis_culpability||{},
   mechanism:row.operation||'',notes:row.notes||'',
   actorAnnotations:row.actors?.annotations||{},assessments:row.principles?.assessments||{},
   assessmentNotes:row.principles?.assessmentNotes||'',
@@ -333,6 +337,7 @@ function displayEntry(row){
 function entryPayload(e){return {
  title:e.name,short_description:e.plain||'',example:e.examples||'',operation:e.mechanism||'',notes:e.notes||'',
  theory:e.theory||'',countermove:e.countermove||'',
+ analysis_purpose:e.analysis_purpose||{},analysis_mechanism:e.analysis_mechanism||{},analysis_culpability:e.analysis_culpability||{},
  actors:{annotations:e.actorAnnotations||{}},
  principles:{assessments:e.assessments||{},assessmentNotes:e.assessmentNotes||''}
 };}
@@ -646,7 +651,7 @@ window.addEventListener('beforeunload',ev=>{
 setInterval(()=>{if(saveQueue.size&&session&&!flushing)flushDatabase()},30000);
 
 function current(){return entries.find(x=>x.id===activeId)}
-function visible(){const q=$('#search').value.toLocaleLowerCase('da').trim();return entries.filter(e=>(selectedFilter==='alle'||e.origin===selectedFilter)&&(!q||[e.id,e.name,e.plain,e.examples,e.mechanism,e.notes].some(v=>clean(v).toLocaleLowerCase('da').includes(q)))).sort((a,b)=>$('#sort').value==='name'?a.name.localeCompare(b.name,'da'):Number(a.id.split('-')[1])-Number(b.id.split('-')[1]));}
+function visible(){const q=$('#search').value.toLocaleLowerCase('da').trim();return entries.filter(e=>(selectedFilter==='alle'||e.origin===selectedFilter)&&(!q||[e.id,e.name,e.plain,e.examples,e.mechanism,e.notes,GambitAnalysis.summary(e)].some(v=>clean(v).toLocaleLowerCase('da').includes(q)))).sort((a,b)=>$('#sort').value==='name'?a.name.localeCompare(b.name,'da'):Number(a.id.split('-')[1])-Number(b.id.split('-')[1]));}
 const ROLE_KEY='gambitregister-roller-v3';
 const ROLE_DEFAULT={whiteGender:'unknown',blackGender:'unknown',whiteTerm:'Hvid',blackTerm:'Sort'};
 let rolePrefs={...ROLE_DEFAULT};
@@ -908,7 +913,59 @@ $('#detailContent').addEventListener('click',async ev=>{
  finally{button.disabled=false;}
 });
 
-function open(id){const e=entries.find(x=>x.id===id);if(!e)return;activeId=id;lastFocus=document.activeElement;$('#detailCode').textContent=e.id;$('#detailTitle').textContent=e.name;$('#gambitTitleEditor').hidden=true;$('#editGambitTitle').hidden=false;$('#gambitTitleStatus').textContent='';$('#gambitTitleInput').value=e.name;$('#detailOrigin').textContent=(e.origin==='manuskript'?'Fra manuskriptet':e.origin==='samtalen'?'Fra samtalen':'Egen registrering')+(e.status==='Forslag'?' · forslag':'');hideActorPicker();$('#detailContent').innerHTML=actorIntroduction(e)+editableSection(e,'short_description')+exampleSection(e)+editableSection(e,'operation')+editableSection(e,'theory')+editableSection(e,'countermove')+assessSection(e)+(e.source_label?section('Oprindelig kildebetegnelse',e.source_label):'')+(e.source_url?`<section class="section"><h3>Kilde</h3><p><a target="_blank" rel="noopener noreferrer" href="${esc(e.source_url)}">Åbn kildedokument</a></p></section>`:'')+`<section class="section"><h3>Noter</h3><textarea class="notes" id="notes" placeholder="Skriv en observation, et nyt eksempel eller et spørgsmål ...">${esc(e.notes)}</textarea><p style="color:#8a958f;font-size:11px;margin:8px 0 0">Sikres som nødudkast og synkroniseres til Supabase.</p></section>`;$('#notes').addEventListener('input',ev=>{e.notes=ev.target.value;save(['notes'])});bindAssessments(e);bindExampleEditor(e);$('#backdrop').classList.add('open');document.body.style.overflow='hidden';$('#close').focus();const i=currentOrder.indexOf(id);$('#previous').disabled=i<=0;$('#next').disabled=i<0||i===currentOrder.length-1;}
+function analysisSections(e){return Object.keys(GambitAnalysis.fields).map(field=>GambitAnalysis.section(field,e[field])).join('')}
+function analysisDraft(e,field){
+ try{return JSON.parse(stagedText(e.id,field,JSON.stringify(e[field]||{})))}catch{return e[field]||{}}
+}
+$('#detailContent').addEventListener('click',ev=>{
+ const button=ev.target.closest('[data-analysis-open],[data-analysis-cancel]');if(!button)return;
+ const e=current(),field=button.dataset.analysisOpen||button.dataset.analysisCancel;
+ if(!e||!Object.hasOwn(GambitAnalysis.fields,field))return;
+ const section=button.closest('[data-analysis-section]'),editor=section.querySelector('[data-analysis-editor]'),view=section.querySelector('[data-analysis-view]'),opener=section.querySelector('[data-analysis-open]');
+ if(button.dataset.analysisOpen){
+  editor.innerHTML=GambitAnalysis.editor(field,analysisDraft(e,field));editor.hidden=false;view.hidden=true;opener.hidden=true;
+  editor.querySelector('select,textarea,input')?.focus();
+ }else{
+  clearStage(e.id,field);editor.innerHTML='';editor.hidden=true;view.hidden=false;opener.hidden=false;pendingLabel();opener.focus();
+ }
+});
+function stageAnalysis(ev){
+ const form=ev.target.closest('[data-analysis-form]'),e=current();if(!form||!e)return;
+ const field=form.dataset.analysisForm;
+ if(!Object.hasOwn(GambitAnalysis.fields,field))return;
+ GambitAnalysis.update(form);
+ const draft=GambitAnalysis.read(field,form,analysisDraft(e,field));
+ stageText(e.id,field,JSON.stringify(draft));
+}
+$('#detailContent').addEventListener('input',stageAnalysis);
+$('#detailContent').addEventListener('change',stageAnalysis);
+$('#detailContent').addEventListener('submit',async ev=>{
+ const form=ev.target.closest('[data-analysis-form]');if(!form)return;ev.preventDefault();
+ const e=current(),field=form.dataset.analysisForm;if(!e||!Object.hasOwn(GambitAnalysis.fields,field))return;
+ const section=form.closest('[data-analysis-section]'),status=form.querySelector('[data-analysis-status]'),button=form.querySelector('[type="submit"]');
+ const value=GambitAnalysis.read(field,form,analysisDraft(e,field));
+ if(field==='analysis_culpability'&&value.kind!=='unknown'&&!value.effect.trim()){
+  status.textContent='Angiv den handling eller følge, tilregnelsen vedrører.';form.querySelector('[data-analysis-key="effect"]').focus();return;
+ }
+ button.disabled=true;status.textContent='Gemmer…';
+ try{
+  e[field]=value;
+  if(!save([field]))throw Error('Kunne ikke sikre nødudkastet. Din formular er bevaret.');
+  clearStage(e.id,field);
+  await flushDatabase();
+  if(Object.hasOwn(saveQueue.get(e.id)?.fields||{},field)){
+   status.textContent=saveQueue.get(e.id)?.blocked||'Nødudkast sikret. Afventer bekræftelse fra Supabase og prøver igen automatisk.';return;
+  }
+  section.querySelector('[data-analysis-view]').innerHTML=GambitAnalysis.view(field,value);
+  section.querySelector('[data-analysis-view]').hidden=false;
+  section.querySelector('[data-analysis-editor]').hidden=true;
+  section.querySelector('[data-analysis-open]').hidden=false;
+  render();toast(GambitAnalysis.fields[field]+' gemt');
+ }catch(err){status.textContent='Ikke gemt centralt: '+errorText(err)}
+ finally{button.disabled=false;}
+});
+
+function open(id){const e=entries.find(x=>x.id===id);if(!e)return;activeId=id;lastFocus=document.activeElement;$('#detailCode').textContent=e.id;$('#detailTitle').textContent=e.name;$('#gambitTitleEditor').hidden=true;$('#editGambitTitle').hidden=false;$('#gambitTitleStatus').textContent='';$('#gambitTitleInput').value=e.name;$('#detailOrigin').textContent=(e.origin==='manuskript'?'Fra manuskriptet':e.origin==='samtalen'?'Fra samtalen':'Egen registrering')+(e.status==='Forslag'?' · forslag':'');hideActorPicker();$('#detailContent').innerHTML=actorIntroduction(e)+editableSection(e,'short_description')+exampleSection(e)+analysisSections(e)+editableSection(e,'operation')+editableSection(e,'theory')+editableSection(e,'countermove')+assessSection(e)+(e.source_label?section('Kildehenvisning',e.source_label):'')+(e.source_url?`<section class="section"><h3>Kilde</h3><p><a target="_blank" rel="noopener noreferrer" href="${esc(e.source_url)}">Åbn kildedokument</a></p></section>`:'')+`<section class="section"><h3>Noter</h3><textarea class="notes" id="notes" placeholder="Skriv en observation, et nyt eksempel eller et spørgsmål ...">${esc(e.notes)}</textarea><p style="color:#8a958f;font-size:11px;margin:8px 0 0">Sikres som nødudkast og synkroniseres til Supabase.</p></section>`;$('#notes').addEventListener('input',ev=>{e.notes=ev.target.value;save(['notes'])});bindAssessments(e);bindExampleEditor(e);$('#backdrop').classList.add('open');document.body.style.overflow='hidden';$('#close').focus();const i=currentOrder.indexOf(id);$('#previous').disabled=i<=0;$('#next').disabled=i<0||i===currentOrder.length-1;}
 
 function cancelTitleEditing(){
  $('#gambitTitleEditor').hidden=true;
@@ -957,7 +1014,7 @@ function close(){hideActorPicker();activeId=null;$('#backdrop').classList.remove
 async function copy(text){try{await navigator.clipboard.writeText(text);toast('Kopieret. Indsæt det i en chat.')}catch{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();toast(ok?'Kopieret. Indsæt det i en chat.':'Kopiering mislykkedes. Markér teksten manuelt.')}}
 function chatPrompt(e){
  const assessed=PRINCIPLES.map(p=>{const v=e.assessments?.[p.key]||'unknown';return p.label+': '+(ASSESS_VALUES.find(x=>x[0]===v)?.[1]||v)}).join('\n');
- return `Lad os tale om ${e.id}: ${e.name}, fra Gambitregisteret.\n\nBeskrivelse: ${e.plain||'Endnu ikke beskrevet.'}\n\nEksempel: ${e.examples||'Endnu ikke registreret.'}\n\nSamtaleoperation: ${e.mechanism||'Ikke fastlagt.'}\n\nVurdering af samtaleprincipper:\n${assessed}\n\nBegrundelse: ${e.assessmentNotes||'Ikke registreret.'}\n\n${actorSummary(e)}\n\nLad os vurdere om etiketterne er begrundet i konkrete data. Vi er fortsat i den empiriske indsamlingsfase og bygger ikke taksonomi endnu.`
+ return `Lad os tale om ${e.id}: ${e.name}, fra Gambitregisteret.\n\nBeskrivelse: ${e.plain||'Endnu ikke beskrevet.'}\n\nEksempel: ${e.examples||'Endnu ikke registreret.'}\n\nSamtaleoperation: ${e.mechanism||'Ikke fastlagt.'}\n\n${GambitAnalysis.summary(e)}\n\nVurdering af samtaleprincipper:\n${assessed}\n\nBegrundelse: ${e.assessmentNotes||'Ikke registreret.'}\n\n${actorSummary(e)}\n\nLad os vurdere om etiketterne er begrundet i konkrete data. Skeln mellem formål, virkende mekanisme og tilregnelse. Begrund vurderingerne i de konkrete eksempler.`
 }
 $('#cards').addEventListener('click',ev=>{const c=ev.target.closest('.card');if(c)open(c.dataset.id)});
 $('#search').addEventListener('input',render);$('#sort').addEventListener('change',render);

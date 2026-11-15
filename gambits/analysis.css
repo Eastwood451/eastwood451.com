@@ -1,0 +1,14 @@
+.analysis-section{background:#f7f8f3;border:1px solid #dce3da;border-radius:12px;padding:18px;margin:14px 0}
+.analysis-section>.help{margin:0 0 15px!important;font-size:12px!important;color:#65776e!important}
+.analysis-label{display:block;font-size:12px;font-weight:700;color:#3a5555;margin:16px 0}
+.analysis-label select,.analysis-label textarea{display:block;width:100%;margin-top:7px;border:1px solid #bccdc2;border-radius:8px;background:#fffefa;padding:11px;color:#203940;font-weight:400;min-width:0}
+.analysis-label textarea{min-height:90px;resize:vertical;line-height:1.65}
+.analysis-checks{border:1px solid #d8e0d6;border-radius:9px;padding:12px;margin:16px 0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.analysis-checks legend{font-size:12px;font-weight:700;color:#3a5555;padding:0 5px}
+.analysis-checks label{display:flex;gap:8px;align-items:flex-start;min-width:0;font-size:12px;line-height:1.5;padding:7px;background:#fffefa;border-radius:6px;cursor:pointer;overflow-wrap:anywhere}
+.analysis-checks input{flex:0 0 auto;margin:3px 0 0;accent-color:#365e61;width:16px;height:16px}
+.analysis-values{margin:0}.analysis-values dt{font-size:11px;color:#617c7d;font-weight:750;margin:13px 0 4px}.analysis-values dd{margin:0;font-size:14px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
+.analysis-unset{color:#829087!important;font-style:italic;font-size:13px!important}
+.analysis-dictionary{border-top:1px solid #dbe2d7;margin-top:16px;padding-top:13px;font-size:12px;line-height:1.6;color:#4d625d}
+.analysis-dictionary summary{cursor:pointer;font-weight:700;min-height:32px}.analysis-dictionary p{font-size:12px!important;margin:8px 0!important}.analysis-dictionary dt{font-weight:750;margin-top:12px}.analysis-dictionary dd{margin:3px 0 0}.analysis-section .example-actions{align-items:center}.analysis-section [data-analysis-status]{white-space:pre-wrap}
+@media(max-width:530px){.analysis-section{padding:14px;margin:12px 0}.analysis-checks{grid-template-columns:1fr}.analysis-section .section-head{gap:10px}.analysis-section .section-head h3{line-height:1.5}.analysis-section .example-actions .btn{width:100%}}

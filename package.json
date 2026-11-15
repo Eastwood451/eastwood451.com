@@ -5,7 +5,8 @@
   "scripts": {
     "test:library": "node --test tests/library.test.mjs",
     "test:pwa": "node --test tests/pwa.test.mjs",
-    "build:library": "npm run test:pwa && node tools/matematikbibliotek/build.mjs"
+    "build:library": "npm run test:gambits && npm run test:pwa && node tools/matematikbibliotek/build.mjs",
+    "test:gambits": "node --test tests/gambit-analysis.test.mjs"
   },
   "devDependencies": {
     "linkedom": "0.18.15",

@@ -23,3 +23,20 @@ En manuelt eksporteret JSON-backup blev sammenholdt felt for felt med Supabase.
 Et forældet navn i backupfilen (`GAM-0040`) blev med vilje **ikke** importeret, fordi Supabase allerede indeholdt en nyere version.
 
 Gendannelsen ændrede ingen andre felter end de 16 eksempler. Hele backupfilen og de potentielt private eksempler er holdt uden for det offentlige repository.
+
+
+## Struktureret analyse
+
+Hvert kort har tre selvstændige JSONB-felter, alle tomme indtil en vurdering gemmes:
+
+- `analysis_purpose`: Sorts formål (ΔS), ét primært og flere sekundære målområder, konkret tilstandsændring, søgt rolle og grundlag.
+- `analysis_mechanism`: primært og supplerende greb, reaktion hos Hvid, kausal kæde, kontekst/modtagelighed og grundlag.
+- `analysis_culpability`: prototypisk træk eller konkret episode, den relevante handling/følge, dolus/culpa/casus/uafklaret, særskilte underdimensioner og grundlag.
+
+Kodebogen og formularerne ligger i `analysis.js`. Formål, mekanisme og tilregnelse er uafhængige dimensioner. Ét kausalt deltrin klassificeres efter den variabel, det påvirker; flere trin kan indgå i samme gambit.
+
+Mekanismens ni områder er: informationsgrundlag; slutning og fortolkning; normativ selvbinding; selvvurdering og social værdi; belønning og sanktion; tilknytning og tilhørsforhold; affektsmitte og samregulering; bearbejdningskapacitet; adgang og handlemuligheder. Reaktioner (fx skyldfølelse og udmattelse) og modtagelighed (fx stærkt overjeg eller vanskeligheder med egne kropssignaler) registreres på særskilte niveauer.
+
+Alle tre felter bruger den eksisterende gemmekø, versionskontrol, RLS og revisionshistorik. Forskellige felter kan gemmes uafhængigt; samtidige ændringer af samme felt giver konflikt. Formularudkast sikres før gemning og kan genåbnes efter navigation eller genindlæsning. Eksport, søgning og »Kopiér til chatten« inkluderer analysen. Ingen eksisterende kort er automatisk klassificeret.
+
+Kør `npm run test:gambits` for kodebog, formularer, sikker tekstvisning, kladder, offline-gemning og samtidige rettelser. Testene kører også ved den almindelige sidebygning.
